@@ -21,4 +21,20 @@ export const etichetteSegmento: Record<string, string> = {
   clienti: "Clienti",
   scadenze: "Scadenze",
   impostazioni: "Impostazioni",
+  esercizi: "Esercizi",
+  nuovo: "Nuovo",
+  modifica: "Modifica",
 };
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isIdentificativo(segmento: string): boolean {
+  return UUID.test(segmento);
+}
+
+/** Etichetta leggibile per un identificativo, in base al segmento che lo precede. */
+export function etichettaIdentificativo(precedente: string | undefined): string {
+  if (precedente === "clienti") return "Scheda";
+  if (precedente === "esercizi") return "Esercizio";
+  return "Dettaglio";
+}

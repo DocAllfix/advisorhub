@@ -6,18 +6,31 @@ import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 
 import { Button } from "@/components/ui/button";
-import { etichetteSegmento } from "@/lib/navigazione";
+import { etichettaIdentificativo, etichetteSegmento, isIdentificativo } from "@/lib/navigazione";
 
-type Briciola = { label: string; href: string };
+type Briciola = { label: string; href: string; navigabile: boolean };
 
+/**
+ * Costruisce il percorso: gli identificativi diventano etichette leggibili
+ * ("Scheda", "Esercizio") e solo i segmenti che sono rotte reali sono link.
+ */
 function briciole(pathname: string): Briciola[] {
-  const segmenti = pathname.split("/").filter(Boolean); // es. ["app","clienti"]
+  const segmenti = pathname.split("/").filter(Boolean); // es. ["app","clienti","<id>"]
   const out: Briciola[] = [];
   let acc = "";
-  for (const seg of segmenti) {
+  segmenti.forEach((seg, i) => {
     acc += `/${seg}`;
-    out.push({ label: etichetteSegmento[seg] ?? seg, href: acc });
-  }
+    const precedente = segmenti[i - 1];
+    const identificativo = isIdentificativo(seg);
+    const label = identificativo
+      ? etichettaIdentificativo(precedente)
+      : (etichetteSegmento[seg] ?? seg);
+    const navigabile =
+      seg === "app" || seg === "clienti" || seg === "impostazioni"
+        ? true
+        : identificativo && precedente === "clienti";
+    out.push({ label, href: acc, navigabile });
+  });
   return out;
 }
 
@@ -55,13 +68,15 @@ export function Topbar({
                     <span className="truncate font-medium text-foreground" aria-current="page">
                       {b.label}
                     </span>
-                  ) : (
+                  ) : b.navigabile ? (
                     <Link
                       href={b.href}
                       className="truncate text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {b.label}
                     </Link>
+                  ) : (
+                    <span className="truncate text-muted-foreground">{b.label}</span>
                   )}
                 </li>
               </Fragment>

@@ -1,15 +1,31 @@
-import { FileBarChart } from "lucide-react";
 import { notFound } from "next/navigation";
 
-import { EmptyState } from "@/components/ui/empty-state";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { getCliente } from "@/lib/clienti/queries";
 import { etichettaDimensione } from "@/lib/clienti/schema";
+import { listEsercizi } from "@/lib/esercizi/queries";
+
+import { EserciziPannello } from "../esercizi-pannello";
 
 export default async function SchedaClientePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const cliente = await getCliente(id);
   if (!cliente) notFound();
+
+  const esercizi = await listEsercizi(id);
+  const righe = esercizi.map((e) => ({
+    id: e.id,
+    anno: e.anno,
+    valProd: e.valProd,
+    fatturato: e.fatturato,
+    ebitda: e.ebitda,
+    pfn: e.pfn,
+    haPrevisionale:
+      e.liquiditaIniziale !== null &&
+      e.entrate6m !== null &&
+      e.uscite6m !== null &&
+      e.debito6m !== null,
+  }));
 
   return (
     <div>
@@ -24,11 +40,11 @@ export default async function SchedaClientePage({ params }: { params: Promise<{ 
           )}
           {cliente.codiceAteco && (
             <>
-              <span aria-hidden>·</span>
+              {cliente.dimensione && <span aria-hidden>·</span>}
               <span className="font-mono nums">ATECO {cliente.codiceAteco}</span>
             </>
           )}
-          <span aria-hidden>·</span>
+          {(cliente.dimensione || cliente.codiceAteco) && <span aria-hidden>·</span>}
           <JudgmentBadge tone="nd">Da analizzare</JudgmentBadge>
         </div>
         {cliente.note && (
@@ -37,11 +53,7 @@ export default async function SchedaClientePage({ params }: { params: Promise<{ 
       </header>
 
       <div className="mt-8">
-        <EmptyState
-          icon={FileBarChart}
-          titolo="Nessun esercizio caricato"
-          descrizione="Carica i dati di bilancio di un esercizio per calcolare indicatori, giudizi e DSCR prospettico. L'inserimento arriva con la prossima fase."
-        />
+        <EserciziPannello clienteId={cliente.id} esercizi={righe} />
       </div>
     </div>
   );

@@ -20,6 +20,13 @@ export {
   calcolaSintesi,
 } from "./sintesi";
 export { formatEuro, formatNumero, parseNumeroIt } from "./numeri";
+export {
+  INTESTAZIONI_EXPORT,
+  mappaBilancioDaCsv,
+  rigaExport,
+  serializzaCsv,
+  type BilancioDaCsv,
+} from "./csv";
 export type {
   Analisi,
   DatiBilancio,
