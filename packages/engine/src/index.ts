@@ -1,2 +1,32 @@
-// Placeholder Fase 0: il motore KPI arriva in Fase 2.
-export const ENGINE_VERSION = "0.0.1";
+export { analizza } from "./analizza";
+export { calcolaIndicatori } from "./indicatori";
+export {
+  calcolaGiudizi,
+  giudicaDscr,
+  giudicaDscrProspettico,
+  giudicaGi,
+  giudicaRoe,
+  giudicaRoi,
+  giudicaRoiIndustriale,
+  giudicaRos,
+  giudicaTurnover,
+} from "./giudizi";
+export {
+  calcolaAnalisiEstesa,
+  calcolaAreeAttenzione,
+  calcolaAzionePrioritaria,
+  calcolaPuntiForza,
+  calcolaScore,
+  calcolaSintesi,
+} from "./sintesi";
+export { formatEuro, formatNumero, parseNumeroIt } from "./numeri";
+export type {
+  Analisi,
+  DatiBilancio,
+  DatiPrevisionali6M,
+  Giudizio,
+  Indicatori,
+  Sintesi,
+  Tono,
+  VoceElenco,
+} from "./types";

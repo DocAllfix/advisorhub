@@ -137,3 +137,17 @@ Creati al root: **PRODUCT.md** (registro `product`; utenti: commercialisti; JTBD
 - https://www.teamsystem.com/fintech/check-up-impresa/funzionalita/analisi-di-bilancio/
 - https://www.contify.it/blog/i-migliori-software-di-analisi-di-bilancio-in-italia-2026
 - https://www.incentivimpresa.it/calcolo-dscr-automatico/
+
+---
+
+## Addendum 21/07/2026 — Prototipo v3c2 (richiesta del committente)
+
+Nuovo file `archivio/Dashboard-Roi-Strategie-Imprese3c2.html` con il **DSCR previsionale a 6 mesi** richiesto dall'ordine dei commercialisti. Differenze rispetto al v3b:
+
+- **4 nuovi input di tesoreria** (14 cursori totali): Liquidità Iniziale (default 150k), Entrate Previste 6M (1,2M), Uscite Previste 6M escl. servizio debito (950k), Debito da Servire 6M (180k).
+- **Nuovo pannello "DSCR Prospettico 6M - CNDCEC"**: `Disponibile 6M = Liquidità + Entrate − Uscite`; `DSCR 6M = Disponibile / Debito 6M`. Soglie: <1 Critico "crisi probabile ex art. 3 CCII" (score 10), 1–1.1 Attenzione (45), 1.1–1.3 Adeguato (75), ≥1.3 Ottimo (100). Warning UI sotto 1.1: "presidia tesoreria e segnala all'organo di controllo se persistente".
+- **Score invariato**: resta la media dei 7 indicatori storici; il DSCR 6M ha lettura autonoma.
+- **Analisi estesa** fino a 8 frasi (blocco prospettico), punti di forza/aree di attenzione con voci DSCR6M, **export CSV a 26 colonne** (+Liquidita Iniziale, Entrate 6M, Uscite 6M, Debito 6M, Disponibile 6M, DSCR Prospettico 6M).
+- **Richieste esplicite del committente**: mantenere una grafica accattivante (→ design system Fase 1) e generare un report PDF dei contenuti a video (→ Fase 9, che dovrà includere il pannello 6M).
+
+**Recepito nel motore** (`packages/engine`, Fase 2): `DatiPrevisionali6M`, `dscrProspettico`/`disponibile6m`, `giudicaDscrProspettico` con soglie CNDCEC, blocco nell'analisi estesa, punti forza/aree aggiornati. Impatti sulle fasi successive: Fase 4 (colonne previsionali su `esercizi`), Fase 7 (import/export CSV 26 colonne), Fase 8 (pannello DSCR 6M nella dashboard), Fase 9 (pannello nel report).
