@@ -10,14 +10,17 @@ import { Topbar } from "./topbar";
 
 export type DatiStudio = { nome: string };
 export type DatiUtente = { nome: string; email: string };
+export type ClienteRicerca = { id: string; ragioneSociale: string };
 
 export function AppShell({
   studio,
   utente,
+  clienti,
   children,
 }: {
   studio: DatiStudio;
   utente: DatiUtente;
+  clienti: ClienteRicerca[];
   children: React.ReactNode;
 }) {
   const [drawerAperto, setDrawerAperto] = useState(false);
@@ -40,7 +43,7 @@ export function AppShell({
           {children}
         </main>
       </div>
-      <CommandMenu aperto={cercaAperto} onCambioApertura={setCercaAperto} />
+      <CommandMenu aperto={cercaAperto} onCambioApertura={setCercaAperto} clienti={clienti} />
       <Toaster position="bottom-center" />
     </div>
   );

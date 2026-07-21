@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Settings, Users } from "lucide-react";
+import { Building2, LayoutDashboard, Settings, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -14,16 +14,19 @@ import {
   CommandList,
 } from "@/components/ui/command";
 
+import type { ClienteRicerca } from "./app-shell";
+
 /**
- * Command palette (Ctrl/Cmd-K). In Fase 5 è il guscio: naviga tra le sezioni.
- * La ricerca dei clienti si aggancia in Fase 6 (gruppo "Clienti").
+ * Command palette (Ctrl/Cmd-K): naviga tra le sezioni e salta a un cliente.
  */
 export function CommandMenu({
   aperto,
   onCambioApertura,
+  clienti,
 }: {
   aperto: boolean;
   onCambioApertura: (v: boolean) => void;
+  clienti: ClienteRicerca[];
 }) {
   const router = useRouter();
 
@@ -68,6 +71,20 @@ export function CommandMenu({
               Impostazioni studio
             </CommandItem>
           </CommandGroup>
+          {clienti.length > 0 && (
+            <CommandGroup heading="Clienti">
+              {clienti.map((c) => (
+                <CommandItem
+                  key={c.id}
+                  value={`cliente ${c.ragioneSociale}`}
+                  onSelect={() => vai(`/app/clienti/${c.id}`)}
+                >
+                  <Building2 className="size-4" />
+                  {c.ragioneSociale}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </Command>
     </CommandDialog>
