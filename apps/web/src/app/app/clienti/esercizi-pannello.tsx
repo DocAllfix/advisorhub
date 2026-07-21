@@ -1,7 +1,7 @@
 "use client";
 
 import { formatEuro } from "@advisorhub/engine";
-import { Download, FileBarChart, MoreHorizontal, Plus } from "lucide-react";
+import { BarChart3, Download, FileBarChart, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -83,10 +83,18 @@ export function EserciziPannello({
         </h2>
         <div className="flex gap-2">
           {esercizi.length > 0 && (
-            <Button variant="outline" size="sm" onClick={esporta} disabled={esportando}>
-              <Download className="size-4" />
-              {esportando ? "Esporto…" : "Esporta CSV"}
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={esporta} disabled={esportando}>
+                <Download className="size-4" />
+                {esportando ? "Esporto…" : "Esporta CSV"}
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/app/clienti/${clienteId}/analisi`}>
+                  <BarChart3 className="size-4" />
+                  Apri analisi
+                </Link>
+              </Button>
+            </>
           )}
           <Button size="sm" asChild>
             <Link href={`/app/clienti/${clienteId}/esercizi/nuovo`}>
@@ -166,6 +174,13 @@ export function EserciziPannello({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              router.push(`/app/clienti/${clienteId}/analisi?esercizio=${e.id}`)
+                            }
+                          >
+                            Apri analisi
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onSelect={() =>
                               router.push(`/app/clienti/${clienteId}/esercizi/${e.id}/modifica`)

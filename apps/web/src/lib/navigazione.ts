@@ -24,6 +24,7 @@ export const etichetteSegmento: Record<string, string> = {
   esercizi: "Esercizi",
   nuovo: "Nuovo",
   modifica: "Modifica",
+  analisi: "Analisi",
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

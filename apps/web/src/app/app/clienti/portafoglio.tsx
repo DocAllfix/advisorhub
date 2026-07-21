@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { JudgmentBadge } from "@/components/ui/judgment-badge";
+import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
 import {
   Table,
   TableBody,
@@ -164,7 +166,19 @@ export function Portafoglio({ clienti }: { clienti: ClienteLista[] }) {
     {
       id: "salute",
       header: "Salute",
-      cell: () => <span className="text-sm text-muted-foreground">Da analizzare</span>,
+      cell: ({ row }) => {
+        const score = row.original.score;
+        if (score === null) {
+          return <span className="text-sm text-muted-foreground">Da analizzare</span>;
+        }
+        const s = sinteticoDaScore(score);
+        return (
+          <span className="relative z-10 inline-flex items-center gap-2">
+            <JudgmentBadge tone={s.tone}>{s.label}</JudgmentBadge>
+            <span className="font-mono nums text-xs text-muted-foreground">{score}/100</span>
+          </span>
+        );
+      },
     },
     {
       accessorKey: "updatedAt",
