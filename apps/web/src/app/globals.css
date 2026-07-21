@@ -179,3 +179,54 @@
     }
   }
 }
+
+/*
+ * Stampa del report (pagina /stampa). Il prototipo stampava la dashboard e
+ * produceva pagine mezze vuote: qui l'impaginazione è esplicita, i blocchi non
+ * si spezzano e i colori di sfondo vengono conservati.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    background: #fff;
+    font-size: 10.5pt;
+  }
+
+  .no-print,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  /* Ogni sezione .pagina inizia su una pagina nuova, l'ultima non aggiunge fogli */
+  .report .pagina {
+    break-after: page;
+    page-break-after: always;
+  }
+  .report .pagina-ultima {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* Card, tabelle e blocchi non si spezzano a metà */
+  .report .blocco,
+  .report table,
+  .report tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report {
+    color: #111;
+  }
+
+  /* Conserva i fondini delle righe alternate e dei riquadri */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

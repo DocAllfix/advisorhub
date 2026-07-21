@@ -6,7 +6,8 @@ import {
   type DatiBilancio,
   type DatiPrevisionali6M,
 } from "@advisorhub/engine";
-import { RotateCcw, SlidersHorizontal } from "lucide-react";
+import { Printer, RotateCcw, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -99,6 +100,18 @@ export function AnalisiDashboard({
             <SlidersHorizontal className="size-4" />
             {inSimulazione ? "Esci dalla simulazione" : "Simula"}
           </Button>
+          {!inSimulazione && (
+            <Button asChild>
+              <Link
+                href={`/stampa/${clienteId}?esercizio=${esercizioSelezionatoId}`}
+                target="_blank"
+                rel="noopener"
+              >
+                <Printer className="size-4" />
+                Stampa / Scarica PDF
+              </Link>
+            </Button>
+          )}
         </div>
       </header>
 
