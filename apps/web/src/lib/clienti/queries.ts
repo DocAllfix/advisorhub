@@ -4,7 +4,7 @@ import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
 import { requireStudio } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { analisi, clienti } from "@/lib/schema-dominio";
+import { analisi, clienti, esercizi } from "@/lib/schema-dominio";
 
 export type ClienteLista = {
   id: string;
@@ -36,7 +36,11 @@ export async function listClienti(): Promise<ClienteLista[]> {
 }
 
 /**
- * Punteggio dell'analisi più recente per ogni cliente dello studio.
+ * Punteggio della salute corrente di ogni cliente: l'analisi dell'esercizio
+ * più recente (non quella inserita per ultima, altrimenti caricare a posteriori
+ * un anno vecchio farebbe regredire il punteggio mostrato). A parità di anno
+ * vince la versione più recente.
+ *
  * Query separata con alias espliciti: in un template SQL Drizzle non qualifica
  * i nomi di colonna, e una subquery correlata finirebbe per confrontare
  * colonne della tabella sbagliata.
@@ -46,8 +50,9 @@ async function ultimiPunteggi(organizationId: string): Promise<Map<string, numbe
     select distinct on (a.cliente_id) a.cliente_id, a.score
     from ${analisi} a
     join ${clienti} c on c.id = a.cliente_id
+    left join ${esercizi} e on e.id = a.esercizio_id
     where c.organization_id = ${organizationId}
-    order by a.cliente_id, a.created_at desc
+    order by a.cliente_id, e.anno desc nulls last, a.created_at desc
   `);
   const righe =
     "rows" in res ? res.rows : (res as unknown as { cliente_id: string; score: number }[]);
