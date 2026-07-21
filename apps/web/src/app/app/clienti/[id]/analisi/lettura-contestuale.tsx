@@ -52,6 +52,13 @@ export function LetturaContestuale() {
           </li>
         ))}
       </ul>
+      <p className="border-t border-border px-5 py-3 text-xs leading-relaxed text-muted-foreground">
+        <span className="font-semibold text-foreground/80">Nota metodo: </span>
+        il Turnover è calcolato sul fatturato mentre il ROS sul valore della produzione, quindi ROI
+        ≈ ROS × Turnover è un&apos;approssimazione e non un&apos;identità. L&apos;IC è il capitale
+        necessario per 1 € di fatturato, il GI è espresso in anni. Il DSCR prospettico 6M non
+        concorre al punteggio di sintesi: è una lettura di continuità a sé.
+      </p>
     </section>
   );
 }

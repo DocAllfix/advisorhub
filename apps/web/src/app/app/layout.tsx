@@ -1,24 +1,16 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-
 import { AppShell } from "@/components/app-shell/app-shell";
-import { auth } from "@/lib/auth";
+import { requireStudio } from "@/lib/auth-helpers";
 import { listClientiPerRicerca } from "@/lib/clienti/queries";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const h = await headers();
-  const sessione = await auth.api.getSession({ headers: h });
-  if (!sessione) redirect("/login");
-
-  const [studio, clienti] = await Promise.all([
-    auth.api.getFullOrganization({ headers: h }).catch(() => null),
-    listClientiPerRicerca().catch(() => []),
-  ]);
+  // requireStudio è memoizzata per render: layout, pagina e query la
+  // condividono senza rileggere sessione e studio ogni volta.
+  const [studio, clienti] = await Promise.all([requireStudio(), listClientiPerRicerca()]);
 
   return (
     <AppShell
-      studio={{ nome: studio?.name ?? "Il tuo studio" }}
-      utente={{ nome: sessione.user.name, email: sessione.user.email }}
+      studio={{ nome: studio.nomeStudio }}
+      utente={{ nome: studio.nomeUtente, email: studio.email }}
       clienti={clienti}
     >
       {children}

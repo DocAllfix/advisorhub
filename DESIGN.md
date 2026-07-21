@@ -4,7 +4,13 @@ Seed pre-implementazione (nessun codice ancora). Da rigenerare con `/impeccable 
 
 ## Theme
 
-Tema chiaro come default. Scena: commercialista in studio di giorno, monitor 24-27", luce ambiente, documenti stampati accanto alla tastiera; il report a schermo deve somigliare al report su carta che consegnerà. Dark mode: superficie secondaria opzionale, non prioritaria (anti-reference: crypto/neon).
+**Tema scuro come base, chiaro disponibile dal selettore** (decisione del committente, luglio 2026). Scena: lo strumento resta aperto per ore accanto al gestionale, spesso in stanze con luce artificiale; un fondo profondo riduce l'affaticamento e fa risaltare i numeri, che sono il contenuto.
+
+Il tema scuro è **scelto, non invertito**: passi propri sulla superficie scura (fondo ~oklch(0.17), card ~oklch(0.215), sidebar più profonda a ~oklch(0.14)), accento e semantica rialzati in chiarezza per reggere il contrasto, bordi in tinta piena (~oklch(0.32)) e non in bianco trasparente, che su tabelle dense sparisce.
+
+Distanza dall'anti-riferimento crypto/neon: nessun glow, nessuna saturazione estrema, nessun nero puro; il colore resta confinato ai giudizi e all'accento.
+
+**Il report di stampa resta sempre su fondo chiaro** (classe `.forza-chiaro`), anche con l'app in scuro: è un documento destinato alla carta, al cliente e alla banca.
 
 ## Color
 

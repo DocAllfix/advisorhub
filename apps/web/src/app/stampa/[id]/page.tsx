@@ -83,7 +83,9 @@ export default async function StampaPage({
   ];
 
   return (
-    <>
+    // Il report resta sempre su fondo chiaro, anche con l'app in tema scuro:
+    // è un documento destinato alla carta e al cliente.
+    <div className="forza-chiaro min-h-screen bg-background text-foreground">
       <BarraStampa clienteId={cliente.id} esercizioId={e.id} />
 
       <main className="report mx-auto max-w-[820px] px-6 py-8 print:max-w-none print:px-0 print:py-0">
@@ -283,6 +285,6 @@ export default async function StampaPage({
           </footer>
         </section>
       </main>
-    </>
+    </div>
   );
 }

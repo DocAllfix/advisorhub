@@ -58,11 +58,16 @@
 }
 
 /*
- * Palette advisorhub (da DESIGN.md): neutri "inchiostro su carta" tinti freddi,
- * accento ottanio/teal-ink, tricolore semantico riservato ai giudizi KPI.
- * Mai bianco/nero puri; chroma dei neutri 0.004-0.012.
+ * Palette advisorhub. Il tema di base è scuro; il chiaro resta disponibile dal
+ * selettore e viene forzato sul report di stampa (.forza-chiaro), perché su
+ * carta il fondo deve restare bianco.
+ *
+ * Neutri tinti verso il blu-inchiostro, accento ottanio, tricolore semantico
+ * riservato ai giudizi. Mai bianco o nero puri. I passi del tema scuro sono
+ * scelti sulla superficie scura, non ottenuti invertendo quelli chiari.
  */
-:root {
+:root,
+.forza-chiaro {
   --background: oklch(0.985 0.004 240);
   --foreground: oklch(0.22 0.012 250);
   --card: oklch(0.997 0.002 240);
@@ -107,48 +112,54 @@
   --danger-subtle: oklch(0.965 0.015 25);
 }
 
-/* Dark: superficie secondaria (DESIGN.md), non esposta nell'MVP. Tinta coerente. */
+/*
+ * Tema scuro: base dell'applicazione. Superfici a tre livelli (sidebar più
+ * profonda del fondo, card sopra il fondo) per dare struttura senza bordi
+ * pesanti; bordi in tinta piena e non in bianco trasparente, altrimenti su una
+ * tabella densa scompaiono.
+ */
 .dark {
-  --background: oklch(0.19 0.012 250);
-  --foreground: oklch(0.96 0.005 240);
-  --card: oklch(0.23 0.012 250);
-  --card-foreground: oklch(0.96 0.005 240);
-  --popover: oklch(0.23 0.012 250);
-  --popover-foreground: oklch(0.96 0.005 240);
-  --primary: oklch(0.72 0.09 210);
-  --primary-foreground: oklch(0.17 0.03 220);
-  --secondary: oklch(0.27 0.012 250);
-  --secondary-foreground: oklch(0.96 0.005 240);
-  --muted: oklch(0.27 0.012 250);
-  --muted-foreground: oklch(0.72 0.01 245);
-  --accent: oklch(0.3 0.03 215);
-  --accent-foreground: oklch(0.9 0.03 210);
-  --destructive: oklch(0.68 0.17 25);
-  --border: oklch(0.96 0.005 240 / 12%);
-  --input: oklch(0.96 0.005 240 / 16%);
-  --ring: oklch(0.72 0.09 210);
-  --chart-1: oklch(0.72 0.09 210);
-  --chart-2: oklch(0.68 0.08 255);
-  --chart-3: oklch(0.75 0.06 190);
-  --chart-4: oklch(0.72 0.01 245);
-  --chart-5: oklch(0.5 0.01 240);
-  --sidebar: oklch(0.17 0.012 250);
-  --sidebar-foreground: oklch(0.96 0.005 240);
-  --sidebar-primary: oklch(0.72 0.09 210);
-  --sidebar-primary-foreground: oklch(0.17 0.03 220);
-  --sidebar-accent: oklch(0.27 0.012 250);
-  --sidebar-accent-foreground: oklch(0.96 0.005 240);
-  --sidebar-border: oklch(0.96 0.005 240 / 12%);
-  --sidebar-ring: oklch(0.72 0.09 210);
-  --success: oklch(0.72 0.12 155);
-  --success-foreground: oklch(0.82 0.1 155);
-  --success-subtle: oklch(0.28 0.04 155);
-  --warning: oklch(0.78 0.12 80);
-  --warning-foreground: oklch(0.85 0.1 85);
-  --warning-subtle: oklch(0.3 0.04 80);
-  --danger: oklch(0.68 0.17 25);
-  --danger-foreground: oklch(0.8 0.12 25);
-  --danger-subtle: oklch(0.3 0.05 25);
+  --background: oklch(0.17 0.014 250);
+  --foreground: oklch(0.95 0.006 240);
+  --card: oklch(0.215 0.014 250);
+  --card-foreground: oklch(0.95 0.006 240);
+  --popover: oklch(0.235 0.014 250);
+  --popover-foreground: oklch(0.95 0.006 240);
+  --primary: oklch(0.76 0.11 205);
+  --primary-foreground: oklch(0.16 0.03 220);
+  --secondary: oklch(0.27 0.014 250);
+  --secondary-foreground: oklch(0.95 0.006 240);
+  --muted: oklch(0.26 0.014 250);
+  --muted-foreground: oklch(0.74 0.012 245);
+  --accent: oklch(0.31 0.045 208);
+  --accent-foreground: oklch(0.88 0.07 205);
+  --destructive: oklch(0.65 0.17 25);
+  --border: oklch(0.32 0.016 250);
+  --input: oklch(0.36 0.016 250);
+  --ring: oklch(0.76 0.11 205);
+  --chart-1: oklch(0.76 0.11 205);
+  --chart-2: oklch(0.7 0.1 260);
+  --chart-3: oklch(0.8 0.09 180);
+  --chart-4: oklch(0.74 0.012 245);
+  --chart-5: oklch(0.52 0.014 250);
+  --sidebar: oklch(0.14 0.014 250);
+  --sidebar-foreground: oklch(0.95 0.006 240);
+  --sidebar-primary: oklch(0.76 0.11 205);
+  --sidebar-primary-foreground: oklch(0.16 0.03 220);
+  --sidebar-accent: oklch(0.24 0.016 250);
+  --sidebar-accent-foreground: oklch(0.95 0.006 240);
+  --sidebar-border: oklch(0.28 0.016 250);
+  --sidebar-ring: oklch(0.76 0.11 205);
+  /* Giudizi: tinte chiare per il testo, fondi profondi per i badge */
+  --success: oklch(0.76 0.14 155);
+  --success-foreground: oklch(0.86 0.12 155);
+  --success-subtle: oklch(0.27 0.05 155);
+  --warning: oklch(0.82 0.14 80);
+  --warning-foreground: oklch(0.88 0.12 85);
+  --warning-subtle: oklch(0.29 0.05 75);
+  --danger: oklch(0.7 0.18 25);
+  --danger-foreground: oklch(0.83 0.14 25);
+  --danger-subtle: oklch(0.29 0.07 25);
 }
 
 @layer base {

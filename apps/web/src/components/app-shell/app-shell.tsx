@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
+import { useSidebarRidotta } from "@/lib/preferenza-sidebar";
 
 import { CommandMenu } from "./command-menu";
 import { Sidebar } from "./sidebar";
@@ -25,14 +26,23 @@ export function AppShell({
 }) {
   const [drawerAperto, setDrawerAperto] = useState(false);
   const [cercaAperto, setCercaAperto] = useState(false);
+  const [ridotta, cambiaRidotta] = useSidebarRidotta();
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[248px_1fr]">
+    <div
+      className={
+        ridotta
+          ? "min-h-screen lg:grid lg:grid-cols-[68px_1fr]"
+          : "min-h-screen lg:grid lg:grid-cols-[248px_1fr]"
+      }
+    >
       <Sidebar
         studio={studio}
         utente={utente}
         drawerAperto={drawerAperto}
         onChiudiDrawer={() => setDrawerAperto(false)}
+        ridotta={ridotta}
+        onCambiaRidotta={cambiaRidotta}
       />
       <div className="flex min-h-screen min-w-0 flex-col">
         <Topbar

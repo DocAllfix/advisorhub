@@ -51,18 +51,39 @@ export function AnalisiDashboard({
 }) {
   const router = useRouter();
   const [simulazione, setSimulazione] = useState<DatiBilancio | null>(null);
+  // Se l'esercizio non ha previsionali salvati si parte da zero: così il DSCR
+  // prospettico si può comunque simulare, come faceva il prototipo a 14 cursori.
+  const previsionaleBase: DatiPrevisionali6M = previsionale ?? {
+    liquiditaIniziale: 0,
+    entrate6m: 0,
+    uscite6m: 0,
+    debito6m: 0,
+  };
+  const [simPrevisionale, setSimPrevisionale] = useState<DatiPrevisionali6M | null>(null);
 
   const datiCorrenti = simulazione ?? dati;
-  // Ricalcolo locale con lo stesso motore del server: nessun salvataggio
-  const analisiCorrente = useMemo(
-    () => (simulazione ? analizza(simulazione, previsionale ?? undefined) : analisi),
-    [simulazione, previsionale, analisi],
-  );
-
+  const previsionaleCorrente = simPrevisionale ?? previsionale;
   const inSimulazione = simulazione !== null;
 
+  // Ricalcolo locale con lo stesso motore del server: nessun salvataggio
+  const analisiCorrente = useMemo(
+    () => (inSimulazione ? analizza(datiCorrenti, previsionaleCorrente ?? undefined) : analisi),
+    [inSimulazione, datiCorrenti, previsionaleCorrente, analisi],
+  );
+
+  function avviaSimulazione() {
+    setSimulazione({ ...dati });
+    setSimPrevisionale({ ...previsionaleBase });
+  }
+  function chiudiSimulazione() {
+    setSimulazione(null);
+    setSimPrevisionale(null);
+  }
   function cambiaValore(campo: keyof DatiBilancio, valore: number) {
     setSimulazione((prec) => ({ ...(prec ?? dati), [campo]: valore }));
+  }
+  function cambiaPrevisionale(campo: keyof DatiPrevisionali6M, valore: number) {
+    setSimPrevisionale((prec) => ({ ...(prec ?? previsionaleBase), [campo]: valore }));
   }
 
   return (
@@ -94,7 +115,7 @@ export function AnalisiDashboard({
           )}
           <Button
             variant={inSimulazione ? "default" : "outline"}
-            onClick={() => setSimulazione(inSimulazione ? null : { ...dati })}
+            onClick={() => (inSimulazione ? chiudiSimulazione() : avviaSimulazione())}
             aria-pressed={inSimulazione}
           >
             <SlidersHorizontal className="size-4" />
@@ -124,7 +145,7 @@ export function AnalisiDashboard({
             <span className="font-semibold">Stai simulando.</span> I dati salvati non vengono
             modificati.
           </p>
-          <Button variant="outline" size="sm" onClick={() => setSimulazione({ ...dati })}>
+          <Button variant="outline" size="sm" onClick={avviaSimulazione}>
             <RotateCcw className="size-4" />
             Ripristina
           </Button>
@@ -149,8 +170,15 @@ export function AnalisiDashboard({
           ))}
         </div>
         {inSimulazione && (
-          <aside className="lg:sticky lg:top-20 lg:self-start">
-            <Simulatore dati={datiCorrenti} datiSalvati={dati} onCambio={cambiaValore} />
+          <aside className="lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+            <Simulatore
+              dati={datiCorrenti}
+              datiSalvati={dati}
+              previsionale={previsionaleCorrente ?? previsionaleBase}
+              previsionaleSalvato={previsionale}
+              onCambio={cambiaValore}
+              onCambioPrevisionale={cambiaPrevisionale}
+            />
           </aside>
         )}
       </div>

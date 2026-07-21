@@ -5,16 +5,45 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
+import { NumeroAnimato } from "@/components/ui/numero-animato";
 import type { MetaIndicatore } from "@/lib/analisi/indicatori-meta";
 import { cn } from "@/lib/utils";
 
-const barraPerTono: Record<Tono, string> = {
-  eccellente: "bg-primary",
-  buono: "bg-success",
-  attenzione: "bg-warning",
-  critico: "bg-danger",
-  nd: "bg-muted-foreground/40",
+const coloreTono: Record<Tono, string> = {
+  eccellente: "var(--primary)",
+  buono: "var(--success)",
+  attenzione: "var(--warning)",
+  critico: "var(--danger)",
+  nd: "var(--muted-foreground)",
 };
+
+/** Anello di posizione sulla scala, come nel prototipo. Ridondante col badge. */
+function AnelloIndicatore({ percentuale, colore }: { percentuale: number; colore: string }) {
+  const r = 17;
+  const circonferenza = 2 * Math.PI * r;
+  const quota = (Math.max(0, Math.min(100, percentuale)) / 100) * circonferenza;
+  return (
+    <div className="relative size-11 shrink-0" aria-hidden>
+      <svg width={44} height={44} className="-rotate-90">
+        <circle cx={22} cy={22} r={r} stroke="var(--muted)" strokeWidth={4} fill="none" />
+        <circle
+          cx={22}
+          cy={22}
+          r={r}
+          stroke={colore}
+          strokeWidth={4}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${quota} ${circonferenza}`}
+          className="motion-safe:transition-all motion-safe:duration-300"
+        />
+      </svg>
+      <span className="nums absolute inset-0 grid place-items-center font-mono text-[10px] text-muted-foreground">
+        {Math.round(percentuale)}%
+      </span>
+    </div>
+  );
+}
 
 export function CardIndicatore({
   meta,
@@ -46,25 +75,22 @@ export function CardIndicatore({
 
       <p className="mt-3 font-mono text-[11px] text-muted-foreground">{meta.formula}</p>
 
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-mono nums text-2xl font-semibold tracking-tight">{valore}</span>
-        {cambiato && (
-          <span className="nums text-xs text-muted-foreground">
-            da <span className="font-mono">{delta!.valorePrecedente}</span>
-          </span>
-        )}
+      <div className="mt-1 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-mono nums text-2xl font-semibold tracking-tight">
+            <NumeroAnimato testo={valore} />
+          </p>
+          {cambiato && (
+            <p className="nums text-xs text-muted-foreground">
+              da <span className="font-mono">{delta!.valorePrecedente}</span>
+            </p>
+          )}
+        </div>
+        {/* L'anello è ridondante col badge: il colore non è mai l'unico canale */}
+        <AnelloIndicatore percentuale={giudizio.score} colore={coloreTono[giudizio.tone]} />
       </div>
 
-      {/* Barra di stato: ridondante col badge, mai unico canale */}
-      <div className="mt-3 h-1 overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn("h-full rounded-full", barraPerTono[giudizio.tone])}
-          style={{ width: `${Math.max(4, Math.min(100, giudizio.score))}%` }}
-          aria-hidden
-        />
-      </div>
-
-      <p className="mt-3 text-xs text-muted-foreground">{meta.extra(analisi, dati)}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{meta.extra(analisi, dati)}</p>
 
       <p className="mt-3 text-sm">
         <span className="font-medium">Cosa puoi fare: </span>
