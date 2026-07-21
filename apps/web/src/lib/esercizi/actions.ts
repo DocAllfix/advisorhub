@@ -179,6 +179,9 @@ export async function eliminaEsercizio(esercizioId: string): Promise<RisultatoEs
     .limit(1);
   if (!esistente) return { ok: false, errore: "Esercizio non trovato." };
 
+  // Le analisi di un esercizio rimosso non hanno più significato: senza questa
+  // pulizia resterebbero orfane e il cliente mostrerebbe ancora un punteggio.
+  await db.delete(analisi).where(eq(analisi.esercizioId, esercizioId));
   await db.delete(esercizi).where(eq(esercizi.id, esercizioId));
   await db.insert(auditLog).values({
     organizationId,

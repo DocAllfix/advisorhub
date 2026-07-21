@@ -29,4 +29,27 @@
 
 ## CONTESTO DEL PROGETTO
 
-Stiamo realizzando un SaaS di altissimo livello per commercialisti.La priorità assoluta e l'analisi dell'archivio e il portarle su framework e stack moderni creando un feelng moderno per le interfacce è l'applicazione di standard distanziandosi nettamente dai layout base o raw HTML, per puntare a un'estetica premium e iper-funzionale.POi una volta che avrai una visione chiara del progetto e mi dirai consa vuoi fare, aggiungere, e avremo un'idea del prodotto finale, aggiusterai questo md con il conteso del progetto
+SaaS per commercialisti (nome di lavoro: **advisorhub**) che monitora la salute economico-finanziaria del portafoglio clienti dello studio. Nasce dal prototipo HTML in `archivio/` e ne conserva integralmente formule, soglie e testi, portandoli su uno stack moderno e su un'estetica premium, lontana dai layout raw.
+
+**MVP completato** (fasi 0-10). Stato e riferimenti:
+
+- `README.md` — avvio, variabili d'ambiente, comandi, deploy, sicurezza
+- `PRODUCT.md` — utenti, scopo, personalità, anti-riferimenti, principi (letto dalle skill di design)
+- `DESIGN.md` — tema, colore, tipografia, componenti, motion, divieti
+- `ANALISI.md` — radiografia del prototipo e addendum sul DSCR previsionale 6M
+
+### Stack
+
+Monorepo pnpm: `apps/web` (Next.js App Router, TypeScript, Tailwind v4, shadcn/ui) e `packages/engine` (motore di calcolo TypeScript puro). Database PostgreSQL su Supabase EU con Drizzle; autenticazione Better Auth con plugin organization (studio = organization).
+
+### Regole specifiche di questo progetto
+
+1. **Il motore è l'unica fonte di verità** di formule, soglie, giudizi e testi. Dashboard, report, import/export e simulatore leggono da lì: nessun calcolo duplicato nella UI.
+2. **I golden test non si toccano.** `packages/engine/test/golden.test.ts` verifica l'output sui due CSV reali dell'archivio (score 91 "Eccellenza gestionale" e 49 "Equilibrio fragile"): se cambiano, il prodotto non è più coerente con i report già consegnati al committente.
+3. **Tenant scoping sempre da `requireStudio()`**, mai da input del client. Ogni nuova query o azione di dominio parte da lì; per ogni superficie nuova va verificato che un altro studio riceva 404.
+4. **Prima di costruire interfacce** si passa da `/impeccable shape` con brief confermato dall'utente, poi critique/audit e screenshot ai breakpoint. `ui-ux-pro-max` si usa a supporto, filtrato dalle leggi di impeccable.
+5. **Ogni fase si chiude con una verifica eseguita**, non dichiarata: e2e Playwright su build di produzione, query dirette sul database, Lighthouse dove c'è UI. I dati di test vanno ripuliti a fine verifica.
+
+### Fuori scope MVP, già identificato
+
+Import XBRL dei bilanci CCIAA, funzioni AI (commento di bilancio, chat sui dati, estrazione da PDF), benchmark per ATECO, alert automatici sulle soglie CCII, portale cliente in sola lettura, billing, archivio server-side dei report.

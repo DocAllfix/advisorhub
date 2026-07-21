@@ -58,6 +58,20 @@ export const auth = betterAuth({
       maxAge: 60 * 5,
     },
   },
+  /**
+   * Rate limiting: soglia generale prudente, più stretta sugli endpoint che
+   * si prestano a tentativi ripetuti (login, registrazione, inviti).
+   */
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 60,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 300, max: 10 },
+      "/organization/invite-member": { window: 300, max: 20 },
+    },
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;

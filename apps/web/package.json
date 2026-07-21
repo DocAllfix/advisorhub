@@ -14,6 +14,7 @@
   "dependencies": {
     "@advisorhub/engine": "workspace:*",
     "@hookform/resolvers": "^5.4.0",
+    "@sentry/nextjs": "^10.67.0",
     "@tanstack/react-table": "^8.21.3",
     "better-auth": "^1.6.23",
     "class-variance-authority": "^0.7.1",

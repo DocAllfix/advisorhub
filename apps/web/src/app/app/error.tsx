@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { segnalaErrore } from "@/lib/telemetria";
 
 export default function AppError({
   error,
@@ -14,8 +15,8 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // In Fase 10 questo confluirà in Sentry
     console.error(error);
+    segnalaErrore(error, { digest: error.digest });
   }, [error]);
 
   return (
