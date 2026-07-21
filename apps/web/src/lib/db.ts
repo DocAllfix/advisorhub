@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 import * as authSchema from "./auth-schema";
+import * as dominioSchema from "./schema-dominio";
 
 /**
  * Connessione runtime via transaction pooler Supabase (porta 6543).
@@ -12,6 +13,6 @@ const pool = new Pool({
   max: 10,
 });
 
-export const schema = { ...authSchema };
+export const schema = { ...authSchema, ...dominioSchema };
 
 export const db = drizzle(pool, { schema });
