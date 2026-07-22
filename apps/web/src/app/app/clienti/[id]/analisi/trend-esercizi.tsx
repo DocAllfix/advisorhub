@@ -90,7 +90,7 @@ function MiniGrafico({
       ) : (
         <div className="mt-2 h-36">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={dati} margin={{ top: 6, right: 8, bottom: 0, left: -12 }}>
+            <LineChart data={dati} margin={{ top: 6, right: 8, bottom: 0, left: -4 }}>
               <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
               <XAxis
                 dataKey="anno"
@@ -102,9 +102,11 @@ function MiniGrafico({
                 tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                 tickLine={false}
                 axisLine={false}
-                width={44}
-                // Senza formatter recharts stampa 1.05 mentre la pagina scrive 1,40
-                tickFormatter={(v: number) => formatNumero(v, decimali)}
+                width={48}
+                // Senza formatter recharts stampa 1.05 mentre la pagina scrive 1,40.
+                // Sull'asse i decimali servono solo se il valore li ha davvero:
+                // "12,00" sfora la banda e verrebbe tagliato in "2,00".
+                tickFormatter={(v: number) => formatNumero(v, Number.isInteger(v) ? 0 : decimali)}
               />
               <Tooltip
                 cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1 }}

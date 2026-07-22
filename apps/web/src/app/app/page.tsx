@@ -1,4 +1,4 @@
-import { formatNumero, sintetizzaPortafoglio } from "@advisorhub/engine";
+import { formatNumero, sintetizzaPortafoglio, type Tono } from "@advisorhub/engine";
 import { ArrowRight, CalendarClock, Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -13,12 +13,17 @@ import { toniGrafica, toniTesto } from "@/lib/analisi/toni";
 import { cn } from "@/lib/utils";
 import { contatoreScadenze } from "@/lib/scadenze/queries";
 
-const FASCE: { chiave: FasciaSalute; label: string; colore: string }[] = [
-  { chiave: "eccellente", label: "Eccellenti", colore: "var(--primary)" },
-  { chiave: "sana", label: "Sane", colore: "var(--success)" },
-  { chiave: "migliorabile", label: "Migliorabili", colore: "var(--chart-3)" },
-  { chiave: "fragile", label: "Fragili", colore: "var(--warning)" },
-  { chiave: "ristrutturare", label: "Da ristrutturare", colore: "var(--danger)" },
+/*
+ * Le fasce prendono il colore dalla stessa scala dei badge: scriverli a mano
+ * qui faceva sì che "Eccellenti" fosse ottanio in legenda e verde nel badge
+ * della riga sottostante, sulla stessa schermata.
+ */
+const FASCE: { chiave: FasciaSalute; label: string; tono: Tono }[] = [
+  { chiave: "eccellente", label: "Eccellenti", tono: "eccellente" },
+  { chiave: "sana", label: "Sane", tono: "buono" },
+  { chiave: "migliorabile", label: "Migliorabili", tono: "buono" },
+  { chiave: "fragile", label: "Fragili", tono: "attenzione" },
+  { chiave: "ristrutturare", label: "Da ristrutturare", tono: "critico" },
 ];
 
 /** Una grandezza della striscia di stato: separata da filetti, non incassettata. */
@@ -119,10 +124,11 @@ export default async function PanoramicaPage() {
           valore={String(p.dscrSottoSoglia)}
           colore={p.dscrSottoSoglia > 0 ? "var(--danger-foreground)" : undefined}
         />
+        {/* Avere scadenze aperte e normale: in rosso va solo cio che e gia scaduto */}
         <Grandezza
           etichetta="Scadenze aperte"
           valore={String(scadenzeAperte)}
-          colore={scad.scadute > 0 ? "var(--danger-foreground)" : undefined}
+          colore={scad.scadute > 0 ? "var(--warning-foreground)" : undefined}
         />
       </div>
 
@@ -162,7 +168,7 @@ export default async function PanoramicaPage() {
                 className="h-full rounded-full"
                 style={{
                   width: `${(p.distribuzione[f.chiave] / p.conAnalisi) * 100}%`,
-                  backgroundColor: f.colore,
+                  backgroundColor: toniGrafica[f.tono],
                 }}
               />
             ))}
@@ -178,7 +184,7 @@ export default async function PanoramicaPage() {
                 >
                   <span
                     className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: f.colore }}
+                    style={{ backgroundColor: toniGrafica[f.tono] }}
                     aria-hidden
                   />
                   <span className="nums font-mono font-semibold">{n}</span>

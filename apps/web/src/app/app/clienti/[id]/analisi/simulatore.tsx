@@ -67,7 +67,32 @@ function Riga<T extends string>({
   // Mentre si digita si tiene il testo grezzo, così "-" e i campi vuoti non
   // vengono riscritti a 0 sotto le dita.
   const [inDigitazione, setInDigitazione] = useState<string | null>(null);
+  const [avviso, setAvviso] = useState<string | null>(null);
   const id = `sim-${cursore.campo}`;
+  const idAvviso = `${id}-avviso`;
+
+  /**
+   * Il campo è vincolato agli stessi estremi del cursore: senza clamp si poteva
+   * scrivere un valore fuori scala e ottenere un "Ottimo" su un ROS del
+   * 33.000%, cioè un numero da mostrare a un cliente senza che nulla avvertisse.
+   */
+  function scrivi(testo: string) {
+    setInDigitazione(testo);
+    if (testo.trim() === "" || testo.trim() === "-") return;
+    const pulito = testo.replace(/[^\d-]/g, "");
+    const n = Number(pulito);
+    if (pulito === "" || !Number.isFinite(n)) {
+      setAvviso("Serve un numero.");
+      return;
+    }
+    const limitato = Math.max(min, Math.min(max, n));
+    setAvviso(
+      limitato !== n
+        ? `Oltre il simulabile: portato a ${formatEuro(limitato)}.`
+        : null,
+    );
+    onCambio(cursore.campo, limitato);
+  }
 
   return (
     <div>
@@ -79,18 +104,26 @@ function Riga<T extends string>({
           type="text"
           inputMode="numeric"
           aria-label={`${cursore.label}, valore in euro`}
+          aria-invalid={avviso !== null}
+          aria-describedby={avviso ? idAvviso : undefined}
           value={inDigitazione ?? String(Math.round(valore))}
-          onChange={(e) => {
-            setInDigitazione(e.target.value);
-            const n = Number(e.target.value.replace(/[^\d-]/g, ""));
-            if (e.target.value.trim() !== "" && Number.isFinite(n)) onCambio(cursore.campo, n);
+          onChange={(e) => scrivi(e.target.value)}
+          onBlur={() => {
+            setInDigitazione(null);
+            setAvviso(null);
           }}
-          onBlur={() => setInDigitazione(null)}
-          className={`nums w-32 rounded border border-transparent bg-transparent px-1 py-0.5 text-right font-mono text-xs transition-colors hover:border-input focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none ${
-            modificato ? "font-semibold text-primary" : "text-muted-foreground"
+          className={`nums w-32 rounded border bg-transparent px-1 py-0.5 text-right font-mono text-xs transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none ${
+            avviso
+              ? "border-danger text-danger-foreground"
+              : `border-transparent hover:border-input ${modificato ? "font-semibold text-primary" : "text-muted-foreground"}`
           }`}
         />
       </div>
+      {avviso && (
+        <p id={idAvviso} role="alert" className="mt-1 text-right text-[10px] text-danger-foreground">
+          {avviso}
+        </p>
+      )}
       <input
         id={id}
         type="range"
