@@ -11,7 +11,7 @@ export type VoceNav = {
 export const navPrincipale: VoceNav[] = [
   { label: "Panoramica", href: "/app", icon: LayoutDashboard },
   { label: "Clienti", href: "/app/clienti", icon: Users },
-  { label: "Scadenze", href: "/app/scadenze", icon: CalendarClock, presto: true },
+  { label: "Scadenze", href: "/app/scadenze", icon: CalendarClock },
   { label: "Impostazioni", href: "/app/impostazioni", icon: Settings },
 ];
 

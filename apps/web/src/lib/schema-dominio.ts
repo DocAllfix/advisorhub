@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  date,
   index,
   integer,
   jsonb,
@@ -173,4 +174,38 @@ export const auditLog = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("audit_org_created_idx").on(t.organizationId, t.createdAt)],
+);
+
+/**
+ * Scadenze / adempimenti dello studio. Possono essere legate a un cliente
+ * (es. deposito bilancio Rossi Spa) o generali dello studio (clienteId null).
+ */
+export const scadenze = pgTable(
+  "scadenze",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    clienteId: uuid("cliente_id").references(() => clienti.id, { onDelete: "cascade" }),
+    titolo: text("titolo").notNull(),
+    data: date("data", { mode: "string" }).notNull(),
+    // bilancio | iva | imposte | contributi | adempimenti | altro
+    categoria: text("categoria").notNull().default("adempimenti"),
+    note: text("note"),
+    completataAt: timestamp("completata_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    index("scadenze_org_data_idx").on(t.organizationId, t.data),
+    index("scadenze_cliente_idx").on(t.clienteId),
+    check(
+      "scadenze_categoria_valida",
+      sql`${t.categoria} in ('bilancio','iva','imposte','contributi','adempimenti','altro')`,
+    ),
+  ],
 );

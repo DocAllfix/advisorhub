@@ -1,5 +1,5 @@
 import { formatNumero } from "@advisorhub/engine";
-import { AlertTriangle, ArrowRight, Plus, TrendingUp, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarClock, Plus, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { panoramicaStudio, type FasciaSalute } from "@/lib/analisi/panoramica";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
+import { contatoreScadenze } from "@/lib/scadenze/queries";
 
 const FASCE: { chiave: FasciaSalute; label: string; colore: string }[] = [
   { chiave: "eccellente", label: "Eccellenti", colore: "var(--primary)" },
@@ -90,7 +91,7 @@ function Tessera({
 }
 
 export default async function PanoramicaPage() {
-  const p = await panoramicaStudio();
+  const [p, scad] = await Promise.all([panoramicaStudio(), contatoreScadenze()]);
 
   if (p.totaleClienti === 0) {
     return (
@@ -174,6 +175,30 @@ export default async function PanoramicaPage() {
           allerta={p.dscrSottoSoglia > 0}
         />
       </div>
+
+      {(scad.scadute > 0 || scad.inArrivo > 0) && (
+        <Link
+          href="/app/scadenze"
+          className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <CalendarClock
+            className={scad.scadute > 0 ? "size-5 text-danger" : "size-5 text-warning"}
+            aria-hidden
+          />
+          <p className="flex-1 text-sm">
+            {scad.scadute > 0 && (
+              <span className="font-semibold text-danger-foreground">
+                {scad.scadute} {scad.scadute === 1 ? "scadenza scaduta" : "scadenze scadute"}
+              </span>
+            )}
+            {scad.scadute > 0 && scad.inArrivo > 0 && <span className="text-muted-foreground"> · </span>}
+            {scad.inArrivo > 0 && (
+              <span className="text-muted-foreground">{scad.inArrivo} in arrivo a 30 giorni</span>
+            )}
+          </p>
+          <ArrowRight className="size-4 text-muted-foreground" aria-hidden />
+        </Link>
+      )}
 
       {p.conAnalisi > 0 && (
         <div className="mt-4">
