@@ -19,6 +19,11 @@ export {
   calcolaScore,
   calcolaSintesi,
 } from "./sintesi";
+export {
+  sintetizzaPortafoglio,
+  type SintesiPortafoglio,
+  type StatoPortafoglio,
+} from "./portafoglio";
 export { formatEuro, formatNumero, parseNumeroIt } from "./numeri";
 export {
   INTESTAZIONI_EXPORT,

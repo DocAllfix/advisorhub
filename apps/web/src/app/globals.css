@@ -26,6 +26,7 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-hairline: var(--hairline);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -84,6 +85,8 @@
   --accent-foreground: oklch(0.35 0.07 210);
   --destructive: oklch(0.5 0.18 25);
   --border: oklch(0.9 0.008 240);
+  /* Filetto: separatore editoriale, più tenue del bordo di un contenitore */
+  --hairline: oklch(0.93 0.008 240);
   --input: oklch(0.9 0.008 240);
   --ring: oklch(0.5 0.09 210);
   --chart-1: oklch(0.5 0.09 210);
@@ -135,6 +138,8 @@
   --accent-foreground: oklch(0.88 0.07 205);
   --destructive: oklch(0.65 0.17 25);
   --border: oklch(0.32 0.016 250);
+  /* Sul fondo scuro il filetto sta sotto al bordo: struttura senza reticolo */
+  --hairline: oklch(0.27 0.016 250);
   --input: oklch(0.36 0.016 250);
   --ring: oklch(0.76 0.11 205);
   --chart-1: oklch(0.76 0.11 205);
@@ -179,6 +184,26 @@
   /* Dati numerici sempre in colonna (DESIGN.md) */
   .nums {
     font-variant-numeric: tabular-nums;
+  }
+  /*
+   * Cifra display: il numero è il protagonista (PRODUCT.md, principio 1).
+   * Mono tabellare con crenatura stretta, perché alle dimensioni grandi la
+   * spaziatura di default fa sembrare il numero slegato.
+   */
+  .cifra {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  /*
+   * L'anello della scena si disegna una sola volta all'ingresso: è l'unico
+   * movimento della Panoramica. Sotto prefers-reduced-motion la regola più
+   * in basso lo azzera, e l'anello appare già completo.
+   */
+  @keyframes anello-disegna {
+    from {
+      stroke-dashoffset: var(--anello-c);
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     *,

@@ -1,10 +1,12 @@
-import { formatNumero } from "@advisorhub/engine";
-import { AlertTriangle, ArrowRight, CalendarClock, Plus, TrendingUp, Users } from "lucide-react";
+import { formatNumero, sintetizzaPortafoglio } from "@advisorhub/engine";
+import { ArrowRight, CalendarClock, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
+import { Cifra } from "@/components/ui/cifra";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
+import { MicroEtichetta } from "@/components/ui/micro-etichetta";
+import { Scena } from "@/components/ui/scena";
 import { panoramicaStudio, type FasciaSalute } from "@/lib/analisi/panoramica";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
 import { contatoreScadenze } from "@/lib/scadenze/queries";
@@ -17,75 +19,28 @@ const FASCE: { chiave: FasciaSalute; label: string; colore: string }[] = [
   { chiave: "ristrutturare", label: "Da ristrutturare", colore: "var(--danger)" },
 ];
 
-function DistribuzioneSalute({
-  distribuzione,
-  totale,
-}: {
-  distribuzione: Record<FasciaSalute, number>;
-  totale: number;
-}) {
-  const presenti = FASCE.filter((f) => distribuzione[f.chiave] > 0);
-  return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-        Distribuzione della salute
-      </p>
-      {/* Barra segmentata: un colpo d'occhio su come sta il portafoglio */}
-      <div className="mt-3 flex h-3 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
-        {presenti.map((f) => (
-          <div
-            key={f.chiave}
-            style={{
-              width: `${(distribuzione[f.chiave] / totale) * 100}%`,
-              backgroundColor: f.colore,
-            }}
-            className="h-full first:rounded-l-full last:rounded-r-full"
-          />
-        ))}
-      </div>
-      <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-5">
-        {FASCE.map((f) => (
-          <li key={f.chiave} className="flex items-center gap-2 text-sm">
-            <span
-              className="size-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: f.colore }}
-              aria-hidden
-            />
-            <span className="nums font-mono font-semibold">{distribuzione[f.chiave]}</span>
-            <span className="truncate text-xs text-muted-foreground">{f.label}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+const coloreTono: Record<string, string> = {
+  eccellente: "var(--primary)",
+  buono: "var(--success)",
+  attenzione: "var(--warning)",
+  critico: "var(--danger)",
+  nd: "var(--muted-foreground)",
+};
 
-function Tessera({
+/** Una grandezza della striscia di stato: separata da filetti, non incassettata. */
+function Grandezza({
   etichetta,
   valore,
-  nota,
-  icona: Icona,
-  allerta = false,
+  colore,
 }: {
   etichetta: string;
   valore: string;
-  nota: string;
-  icona: typeof Users;
-  allerta?: boolean;
+  colore?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="flex items-center gap-2">
-        <Icona
-          className={allerta ? "size-4 text-warning" : "size-4 text-muted-foreground"}
-          aria-hidden
-        />
-        <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-          {etichetta}
-        </p>
-      </div>
-      <p className="nums mt-2 font-mono text-3xl font-semibold tracking-tight">{valore}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{nota}</p>
+    <div className="sm:px-7 sm:first:pl-0 sm:last:pr-0">
+      <Cifra valore={valore} dimensione="sm" style={colore ? { color: colore } : undefined} />
+      <MicroEtichetta className="mt-1.5">{etichetta}</MicroEtichetta>
     </div>
   );
 }
@@ -93,96 +48,89 @@ function Tessera({
 export default async function PanoramicaPage() {
   const [p, scad] = await Promise.all([panoramicaStudio(), contatoreScadenze()]);
 
+  const sintesi = sintetizzaPortafoglio({
+    totaleClienti: p.totaleClienti,
+    conAnalisi: p.conAnalisi,
+    punteggioMedio: p.punteggioMedio,
+    inAllerta: p.inAllerta,
+    dscrSottoSoglia: p.dscrSottoSoglia,
+    dscr6mSottoSoglia: p.dscr6mSottoSoglia,
+  });
+
+  const daAnalizzare = p.totaleClienti - p.conAnalisi;
+  const scadenzeAperte = scad.scadute + scad.inArrivo;
+
+  // Studio senza clienti: la scena resta senza anello e diventa un invito
   if (p.totaleClienti === 0) {
     return (
-      <div>
-        <header>
-          <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-            {p.nomeStudio}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Panoramica</h1>
-        </header>
-        <div className="mt-8">
-          <EmptyState
-            icon={Users}
-            titolo="La panoramica si popola con i tuoi clienti"
-            descrizione="Aggiungi la prima azienda per vedere qui punteggi di sintesi, segnali di allerta e le posizioni da presidiare."
-            azione={
-              <Button asChild>
-                <Link href="/app/clienti">
-                  <Plus className="size-4" />
-                  Aggiungi il primo cliente
-                </Link>
-              </Button>
-            }
-          />
-        </div>
-      </div>
+      <Scena
+        etichetta={p.nomeStudio}
+        punteggio={null}
+        titolo={sintesi.titolo}
+        frase={sintesi.frase}
+        azione={
+          <Button asChild>
+            <Link href="/app/clienti">
+              <Plus className="size-4" />
+              Aggiungi il primo cliente
+            </Link>
+          </Button>
+        }
+      />
     );
   }
 
-  const daAnalizzare = p.totaleClienti - p.conAnalisi;
-
   return (
-    <div>
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-            {p.nomeStudio}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Panoramica</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            La salute del portafoglio in un colpo d&apos;occhio.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/app/clienti">
-            Vai al portafoglio
-            <ArrowRight className="size-4" />
-          </Link>
-        </Button>
-      </header>
+    <div className="flex flex-col gap-9">
+      <Scena
+        etichetta={p.nomeStudio}
+        punteggio={p.punteggioMedio}
+        suffisso="su 100"
+        tono={p.punteggioMedio === null ? "nd" : sinteticoDaScore(p.punteggioMedio).tone}
+        titolo={sintesi.titolo}
+        frase={sintesi.frase}
+        trend={p.trend}
+        delta={p.deltaOmogeneo}
+        nota={
+          daAnalizzare > 0
+            ? `${daAnalizzare} ${daAnalizzare === 1 ? "cliente" : "clienti"} ancora da analizzare`
+            : undefined
+        }
+        azione={
+          p.conAnalisi === 0 ? (
+            <Button asChild>
+              <Link href="/app/clienti">Carica il primo esercizio</Link>
+            </Button>
+          ) : undefined
+        }
+      />
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Tessera
-          etichetta="Clienti seguiti"
-          valore={String(p.totaleClienti)}
-          nota={
-            daAnalizzare > 0
-              ? `${daAnalizzare} ancora da analizzare`
-              : "tutti con almeno un esercizio"
-          }
-          icona={Users}
-        />
-        <Tessera
-          etichetta="Punteggio medio"
-          valore={p.punteggioMedio === null ? "—" : `${p.punteggioMedio}`}
-          nota={p.conAnalisi > 0 ? `su ${p.conAnalisi} analizzati` : "nessuna analisi"}
-          icona={TrendingUp}
-        />
-        <Tessera
+      <div className="grid grid-cols-2 gap-x-6 gap-y-6 border-y border-hairline py-6 sm:grid-cols-4 sm:gap-0 sm:divide-x sm:divide-hairline">
+        <Grandezza etichetta="Clienti seguiti" valore={String(p.totaleClienti)} />
+        <Grandezza
           etichetta="In allerta"
           valore={String(p.inAllerta)}
-          nota="punteggio sotto 55"
-          icona={AlertTriangle}
-          allerta={p.inAllerta > 0}
+          colore={p.inAllerta > 0 ? "var(--warning)" : undefined}
         />
-        <Tessera
+        <Grandezza
           etichetta="DSCR sotto soglia"
           valore={String(p.dscrSottoSoglia)}
-          nota={`${p.dscr6mSottoSoglia} anche sul prospettico 6M`}
-          icona={AlertTriangle}
-          allerta={p.dscrSottoSoglia > 0}
+          colore={p.dscrSottoSoglia > 0 ? "var(--danger)" : undefined}
+        />
+        <Grandezza
+          etichetta="Scadenze aperte"
+          valore={String(scadenzeAperte)}
+          colore={scad.scadute > 0 ? "var(--danger)" : undefined}
         />
       </div>
 
-      {(scad.scadute > 0 || scad.inArrivo > 0) && (
+      {scadenzeAperte > 0 && (
         <Link
           href="/app/scadenze"
-          className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="-my-2 flex items-center gap-3 rounded-md py-3 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <CalendarClock
-            className={scad.scadute > 0 ? "size-5 text-danger" : "size-5 text-warning"}
+            className={scad.scadute > 0 ? "size-4 shrink-0 text-danger" : "size-4 shrink-0 text-warning"}
             aria-hidden
           />
           <p className="flex-1 text-sm">
@@ -191,80 +139,106 @@ export default async function PanoramicaPage() {
                 {scad.scadute} {scad.scadute === 1 ? "scadenza scaduta" : "scadenze scadute"}
               </span>
             )}
-            {scad.scadute > 0 && scad.inArrivo > 0 && <span className="text-muted-foreground"> · </span>}
+            {scad.scadute > 0 && scad.inArrivo > 0 && (
+              <span className="text-muted-foreground"> · </span>
+            )}
             {scad.inArrivo > 0 && (
               <span className="text-muted-foreground">{scad.inArrivo} in arrivo a 30 giorni</span>
             )}
           </p>
-          <ArrowRight className="size-4 text-muted-foreground" aria-hidden />
+          <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         </Link>
       )}
 
       {p.conAnalisi > 0 && (
-        <div className="mt-4">
-          <DistribuzioneSalute distribuzione={p.distribuzione} totale={p.conAnalisi} />
-        </div>
+        <section>
+          <MicroEtichetta>Distribuzione della salute</MicroEtichetta>
+          <div className="mt-3 flex h-1.5 w-full gap-0.5" aria-hidden>
+            {FASCE.filter((f) => p.distribuzione[f.chiave] > 0).map((f) => (
+              <div
+                key={f.chiave}
+                className="h-full rounded-full"
+                style={{
+                  width: `${(p.distribuzione[f.chiave] / p.conAnalisi) * 100}%`,
+                  backgroundColor: f.colore,
+                }}
+              />
+            ))}
+          </div>
+          <ul className="mt-3.5 flex flex-wrap gap-x-6 gap-y-2">
+            {FASCE.map((f) => (
+              <li key={f.chiave} className="flex items-center gap-2 text-sm">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: f.colore }}
+                  aria-hidden
+                />
+                <span className="nums font-mono font-semibold">{p.distribuzione[f.chiave]}</span>
+                <span className="text-xs text-muted-foreground">{f.label}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      <section className="mt-8">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-sm font-semibold tracking-wide uppercase text-muted-foreground">
-            Da rivedere per primi
-          </h2>
-          <p className="text-xs text-muted-foreground">dal punteggio più basso</p>
-        </div>
-
-        {p.righe.length === 0 ? (
-          <div className="mt-4">
-            <EmptyState
-              icon={TrendingUp}
-              titolo="Nessun cliente ancora analizzato"
-              descrizione="Carica i dati di bilancio di un esercizio per vedere qui i punteggi e le priorità."
-              azione={
-                <Button asChild>
-                  <Link href="/app/clienti">Vai al portafoglio</Link>
-                </Button>
-              }
-            />
+      {p.righe.length > 0 && (
+        <section>
+          <div className="flex items-baseline justify-between gap-4">
+            <MicroEtichetta>Da rivedere per primi</MicroEtichetta>
+            <Link
+              href="/app/clienti"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              Tutto il portafoglio
+            </Link>
           </div>
-        ) : (
-          <ul className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+
+          <ul className="mt-3 border-t border-hairline">
             {p.righe.slice(0, 8).map((r) => {
               const s = sinteticoDaScore(r.score ?? 0);
               const dscrBasso = r.dscr !== null && r.dscr < 1.2;
               const dscr6mBasso = r.dscrProspettico !== null && r.dscrProspettico < 1.1;
               return (
-                <li key={r.clienteId} className="relative">
+                <li key={r.clienteId} className="border-b border-hairline">
                   <Link
                     href={`/app/clienti/${r.clienteId}/analisi`}
-                    className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="flex items-center gap-4 py-3.5 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   >
-                    <span className="nums w-10 shrink-0 font-mono text-lg font-semibold">
-                      {r.score}
-                    </span>
+                    <Cifra
+                      valore={r.score}
+                      dimensione="sm"
+                      className="w-11 shrink-0 text-right"
+                      style={{ color: coloreTono[s.tone] }}
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{r.ragioneSociale}</span>
                       <span className="block text-xs text-muted-foreground">
                         Esercizio {r.anno ?? "—"}
                       </span>
                     </span>
+                    <span className="hidden h-1 w-24 shrink-0 rounded-full bg-muted md:block" aria-hidden>
+                      <span
+                        className="block h-full rounded-full"
+                        style={{
+                          width: `${Math.max(0, Math.min(100, r.score ?? 0))}%`,
+                          backgroundColor: coloreTono[s.tone],
+                        }}
+                      />
+                    </span>
                     <JudgmentBadge tone={s.tone}>{s.label}</JudgmentBadge>
-                    {dscrBasso && (
-                      <JudgmentBadge tone="critico">DSCR {formatNumero(r.dscr!, 2)}</JudgmentBadge>
-                    )}
-                    {dscr6mBasso && (
-                      <JudgmentBadge tone="attenzione">
-                        6M {formatNumero(r.dscrProspettico!, 2)}
-                      </JudgmentBadge>
-                    )}
+                    <span className="nums hidden w-36 shrink-0 text-right font-mono text-xs text-muted-foreground lg:block">
+                      {dscrBasso && `DSCR ${formatNumero(r.dscr!, 2)}`}
+                      {dscrBasso && dscr6mBasso && " · "}
+                      {dscr6mBasso && `6M ${formatNumero(r.dscrProspettico!, 2)}`}
+                    </span>
                     <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                   </Link>
                 </li>
               );
             })}
           </ul>
-        )}
-      </section>
+        </section>
+      )}
     </div>
   );
 }
