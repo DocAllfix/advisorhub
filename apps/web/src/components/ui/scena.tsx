@@ -53,7 +53,8 @@ function Anello({ percentuale, colore }: { percentuale: number; colore: string }
 }
 
 export type PuntoScena = { anno: number; media: number };
-export type DeltaScena = { valore: number; annoPrec: number; clienti: number };
+/** Variazione sull'anno precedente; `nota` precisa la base del confronto. */
+export type DeltaScena = { valore: number; annoPrec: number; nota?: string };
 
 /**
  * Andamento del punteggio medio: area tenue, linea sottile, ultimo punto in
@@ -154,8 +155,8 @@ function Scena({
                   {delta.valore > 0 ? "+" : ""}
                   {delta.valore}
                 </span>{" "}
-                sul {delta.annoPrec}, a parità di{" "}
-                {delta.clienti === 1 ? "cliente" : `${delta.clienti} clienti`}
+                sul {delta.annoPrec}
+                {delta.nota ? `, ${delta.nota}` : ""}
               </p>
             )}
             {trend.length >= 2 && <Andamento punti={trend} colore={colore} />}

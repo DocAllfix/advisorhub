@@ -76,9 +76,9 @@ function MiniGrafico({
       ? validi[validi.length - 1]!.valore! - validi[validi.length - 2]!.valore!
       : null;
   return (
-    <figure className="rounded-xl border border-border bg-card p-4">
+    <figure className="border-t border-hairline pt-3">
       <div className="flex items-center justify-between gap-2">
-        <figcaption className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+        <figcaption className="text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
           {titolo}
         </figcaption>
         {delta !== null && <Variazione delta={delta} suffisso={suffisso} />}
@@ -141,7 +141,7 @@ export function TrendEsercizi({ serie }: { serie: PuntoSerie[] }) {
   return (
     <section>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-sm font-semibold tracking-wide uppercase text-muted-foreground">
+        <h2 className="text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
           Andamento tra esercizi
         </h2>
         <Button variant="outline" size="sm" onClick={() => setTabella((v) => !v)}>
@@ -150,7 +150,7 @@ export function TrendEsercizi({ serie }: { serie: PuntoSerie[] }) {
       </div>
 
       {tabella ? (
-        <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+        <div className="mt-4 overflow-x-auto border-t border-hairline">
           <Table>
             <TableHeader>
               <TableRow>
@@ -181,7 +181,7 @@ export function TrendEsercizi({ serie }: { serie: PuntoSerie[] }) {
           </Table>
         </div>
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2">
           {GRAFICI.map((g) => (
             <MiniGrafico
               key={g.chiave}

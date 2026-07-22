@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { MicroEtichetta } from "@/components/ui/micro-etichetta";
+import { Scena } from "@/components/ui/scena";
 import {
   Select,
   SelectContent,
@@ -19,14 +21,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { INDICATORI } from "@/lib/analisi/indicatori-meta";
+import { INDICATORI, type ChiaveIndicatore } from "@/lib/analisi/indicatori-meta";
+import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
+import { cn } from "@/lib/utils";
 
-import { CardIndicatore } from "./card-indicatore";
 import { LetturaContestuale } from "./lettura-contestuale";
 import { PannelloDscr6M } from "./pannello-dscr6m";
-import { PannelloSintesi } from "./pannello-sintesi";
+import { RigaIndicatore } from "./riga-indicatore";
 import { Simulatore } from "./simulatore";
 import { TrendEsercizi, type PuntoSerie } from "./trend-esercizi";
+
+/**
+ * Gli indicatori raggruppati per quello che misurano davvero: quanto rende la
+ * gestione, quanto lavora il capitale, se il debito è sostenibile. Il gruppo
+ * porta informazione, non è un contenitore decorativo.
+ */
+const FAMIGLIE: { titolo: string; chiavi: ChiaveIndicatore[] }[] = [
+  { titolo: "Redditività", chiavi: ["ros", "roi", "roiI", "roe"] },
+  { titolo: "Efficienza del capitale", chiavi: ["turnover"] },
+  { titolo: "Sostenibilità del debito", chiavi: ["gi", "dscr"] },
+];
+
+const metaDi = (chiave: ChiaveIndicatore) => INDICATORI.find((m) => m.chiave === chiave)!;
 
 export function AnalisiDashboard({
   clienteId,
@@ -71,6 +87,18 @@ export function AnalisiDashboard({
     [inSimulazione, datiCorrenti, previsionaleCorrente, analisi],
   );
 
+  // La serie si ferma all'esercizio scelto: mostrare anni successivi a quello
+  // in lettura darebbe una variazione che non riguarda il numero a schermo.
+  const indiceAnno = serie.findIndex((s) => s.anno === anno);
+  const serieFinoAdOra = indiceAnno >= 0 ? serie.slice(0, indiceAnno + 1) : serie;
+  const delta =
+    !inSimulazione && indiceAnno > 0
+      ? {
+          valore: serie[indiceAnno]!.score - serie[indiceAnno - 1]!.score,
+          annoPrec: serie[indiceAnno - 1]!.anno,
+        }
+      : null;
+
   function avviaSimulazione() {
     setSimulazione({ ...dati });
     setSimPrevisionale({ ...previsionaleBase });
@@ -86,15 +114,19 @@ export function AnalisiDashboard({
     setSimPrevisionale((prec) => ({ ...(prec ?? previsionaleBase), [campo]: valore }));
   }
 
+  const letture = [
+    { etichetta: "Marginalità", testo: analisiCorrente.giudizi.ros.testo },
+    { etichetta: "Efficienza del capitale", testo: analisiCorrente.giudizi.turnover.testo },
+    { etichetta: "Sostenibilità del debito", testo: analisiCorrente.giudizi.gi.testo },
+    { etichetta: "DSCR", testo: analisiCorrente.giudizi.dscr.testo },
+  ];
+
   return (
-    <div>
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-            {ragioneSociale}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Analisi {anno}</h1>
-        </div>
+    <div className="flex flex-col gap-9">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <MicroEtichetta>
+          {ragioneSociale} · Esercizio {anno}
+        </MicroEtichetta>
         <div className="flex flex-wrap items-center gap-2">
           {esercizi.length > 1 && (
             <Select
@@ -134,12 +166,36 @@ export function AnalisiDashboard({
             </Button>
           )}
         </div>
-      </header>
+      </div>
+
+      <Scena
+        punteggio={analisiCorrente.score}
+        suffisso="su 100"
+        tono={sinteticoDaScore(analisiCorrente.score).tone}
+        titolo={analisiCorrente.sintesi.titolo}
+        frase={analisiCorrente.sintesi.descrizione}
+        trend={inSimulazione ? [] : serieFinoAdOra.map((s) => ({ anno: s.anno, media: s.score }))}
+        delta={delta}
+        nota={inSimulazione ? "valori simulati, non salvati" : undefined}
+      />
+
+      <section className="border-y border-hairline py-5">
+        <MicroEtichetta come="h2">Azione prioritaria</MicroEtichetta>
+        <p className="mt-2 text-base font-medium">{analisiCorrente.azionePrioritaria}</p>
+        <dl className="mt-4 grid gap-x-10 gap-y-2.5 sm:grid-cols-2">
+          {letture.map((l) => (
+            <div key={l.etichetta} className="text-sm">
+              <dt className="inline font-medium">{l.etichetta}: </dt>
+              <dd className="inline text-foreground/75">{l.testo}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       {inSimulazione && (
         <div
           role="status"
-          className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning-subtle px-4 py-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning-subtle px-4 py-3"
         >
           <p className="text-sm text-warning-foreground">
             <span className="font-semibold">Stai simulando.</span> I dati salvati non vengono
@@ -152,25 +208,35 @@ export function AnalisiDashboard({
         </div>
       )}
 
-      <div className="mt-6">
-        <PannelloSintesi analisi={analisiCorrente} />
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {INDICATORI.map((meta) => (
-            <CardIndicatore
-              key={meta.chiave}
-              meta={meta}
-              giudizio={analisiCorrente.giudizi[meta.chiave]}
-              analisi={analisiCorrente}
-              dati={datiCorrenti}
-              delta={inSimulazione ? { valorePrecedente: meta.valore(analisi, dati) } : null}
-            />
+      {/* La colonna del simulatore esiste solo mentre si simula: riservarla sempre
+          restringerebbe gli indicatori per una colonna vuota. */}
+      <div
+        className={cn("grid grid-cols-1 gap-8", inSimulazione && "lg:grid-cols-[1fr_320px]")}
+      >
+        <div className="flex flex-col gap-8">
+          {FAMIGLIE.map((famiglia) => (
+            <section key={famiglia.titolo}>
+              <MicroEtichetta come="h2">{famiglia.titolo}</MicroEtichetta>
+              <div className="mt-2 border-t border-hairline">
+                {famiglia.chiavi.map((chiave) => {
+                  const meta = metaDi(chiave);
+                  return (
+                    <RigaIndicatore
+                      key={chiave}
+                      meta={meta}
+                      giudizio={analisiCorrente.giudizi[chiave]}
+                      analisi={analisiCorrente}
+                      dati={datiCorrenti}
+                      delta={inSimulazione ? { valorePrecedente: meta.valore(analisi, dati) } : null}
+                    />
+                  );
+                })}
+              </div>
+            </section>
           ))}
         </div>
         {inSimulazione && (
-          <aside className="lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+          <aside className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
             <Simulatore
               dati={datiCorrenti}
               datiSalvati={dati}
@@ -183,46 +249,34 @@ export function AnalisiDashboard({
         )}
       </div>
 
-      <div className="mt-6">
-        <PannelloDscr6M
-          analisi={analisiCorrente}
-          clienteId={clienteId}
-          esercizioId={esercizioSelezionatoId}
-        />
-      </div>
+      {/* Il DSCR prospettico resta l'unico blocco incorniciato: è il dato di
+          continuità aziendale richiesto dall'art. 3 CCII, non un indicatore fra gli altri. */}
+      <PannelloDscr6M
+        analisi={analisiCorrente}
+        clienteId={clienteId}
+        esercizioId={esercizioSelezionatoId}
+      />
 
-      {!inSimulazione && (
-        <div className="mt-8">
-          <TrendEsercizi serie={serie} />
-        </div>
-      )}
+      {!inSimulazione && <TrendEsercizi serie={serie} />}
 
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <section className="rounded-xl border border-success/30 bg-success-subtle p-4">
-          <h2 className="text-xs font-semibold tracking-wide uppercase text-success-foreground">
-            Punti di forza
-          </h2>
-          <ul className="mt-2 space-y-1.5 text-sm">
+      <div className="grid grid-cols-1 gap-x-10 gap-y-8 md:grid-cols-2">
+        <section>
+          <MicroEtichetta come="h2">Punti di forza</MicroEtichetta>
+          <ul className="mt-2 border-t border-hairline">
             {analisiCorrente.puntiForza.map((v, i) => (
-              <li key={i} className="flex gap-2">
-                <span aria-hidden className="text-success">
-                  ✓
-                </span>
+              <li key={i} className="flex gap-2.5 border-b border-hairline py-2.5 text-sm">
+                <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-success" />
                 <span>{v.txt}</span>
               </li>
             ))}
           </ul>
         </section>
-        <section className="rounded-xl border border-warning/40 bg-warning-subtle p-4">
-          <h2 className="text-xs font-semibold tracking-wide uppercase text-warning-foreground">
-            Aree di attenzione
-          </h2>
-          <ul className="mt-2 space-y-1.5 text-sm">
+        <section>
+          <MicroEtichetta come="h2">Aree di attenzione</MicroEtichetta>
+          <ul className="mt-2 border-t border-hairline">
             {analisiCorrente.areeAttenzione.map((v, i) => (
-              <li key={i} className="flex gap-2">
-                <span aria-hidden className="text-warning">
-                  !
-                </span>
+              <li key={i} className="flex gap-2.5 border-b border-hairline py-2.5 text-sm">
+                <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-warning" />
                 <span>{v.txt}</span>
               </li>
             ))}
@@ -230,20 +284,16 @@ export function AnalisiDashboard({
         </section>
       </div>
 
-      <section className="mt-6 rounded-xl border border-border bg-card p-5">
-        <h2 className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
-          Analisi estesa
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-foreground/85">
+      <section>
+        <MicroEtichetta come="h2">Analisi estesa</MicroEtichetta>
+        <p className="mt-2 max-w-[72ch] text-sm leading-relaxed text-foreground/85">
           {analisiCorrente.analisiEstesa}
         </p>
       </section>
 
-      <div className="mt-6">
-        <LetturaContestuale />
-      </div>
+      <LetturaContestuale />
 
-      <p className="mt-6 text-center text-xs text-muted-foreground">
+      <p className="text-center text-xs text-muted-foreground">
         Analisi gestionale, non costituisce giudizio legale o fiscale. Usa dati coerenti.
       </p>
     </div>

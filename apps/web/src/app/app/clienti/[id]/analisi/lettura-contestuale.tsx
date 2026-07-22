@@ -33,26 +33,26 @@ const SOGLIE = [
 
 export function LetturaContestuale() {
   return (
-    <section className="rounded-xl border border-border bg-card">
-      <h2 className="border-b border-border px-5 py-3 text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+    <section>
+      <h2 className="text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
         Cosa significa, in relazione a settore e dimensione
       </h2>
-      <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <div className="mt-2 grid grid-cols-1 gap-x-10 gap-y-5 border-t border-hairline pt-4 sm:grid-cols-3">
         {COLONNE.map((c) => (
-          <div key={c.titolo} className="p-5">
+          <div key={c.titolo}>
             <h3 className="text-sm font-semibold">{c.titolo}</h3>
             <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{c.testo}</p>
           </div>
         ))}
       </div>
-      <ul className="flex flex-wrap gap-x-5 gap-y-1.5 border-t border-border px-5 py-3 text-xs text-muted-foreground">
+      <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 border-t border-hairline pt-3 text-xs text-muted-foreground">
         {SOGLIE.map((s) => (
           <li key={s} className="nums">
             {s}
           </li>
         ))}
       </ul>
-      <p className="border-t border-border px-5 py-3 text-xs leading-relaxed text-muted-foreground">
+      <p className="mt-3 max-w-[72ch] text-xs leading-relaxed text-muted-foreground">
         <span className="font-semibold text-foreground/80">Nota metodo: </span>
         il Turnover è calcolato sul fatturato mentre il ROS sul valore della produzione, quindi ROI
         ≈ ROS × Turnover è un&apos;approssimazione e non un&apos;identità. L&apos;IC è il capitale

@@ -90,7 +90,15 @@ export default async function PanoramicaPage() {
         titolo={sintesi.titolo}
         frase={sintesi.frase}
         trend={p.trend}
-        delta={p.deltaOmogeneo}
+        delta={
+          p.deltaOmogeneo
+            ? {
+                valore: p.deltaOmogeneo.valore,
+                annoPrec: p.deltaOmogeneo.annoPrec,
+                nota: `a parità di ${p.deltaOmogeneo.clienti === 1 ? "cliente" : `${p.deltaOmogeneo.clienti} clienti`}`,
+              }
+            : null
+        }
         nota={
           daAnalizzare > 0
             ? `${daAnalizzare} ${daAnalizzare === 1 ? "cliente" : "clienti"} ancora da analizzare`
@@ -152,7 +160,7 @@ export default async function PanoramicaPage() {
 
       {p.conAnalisi > 0 && (
         <section>
-          <MicroEtichetta>Distribuzione della salute</MicroEtichetta>
+          <MicroEtichetta come="h2">Distribuzione della salute</MicroEtichetta>
           <div className="mt-3 flex h-1.5 w-full gap-0.5" aria-hidden>
             {FASCE.filter((f) => p.distribuzione[f.chiave] > 0).map((f) => (
               <div
@@ -184,7 +192,7 @@ export default async function PanoramicaPage() {
       {p.righe.length > 0 && (
         <section>
           <div className="flex items-baseline justify-between gap-4">
-            <MicroEtichetta>Da rivedere per primi</MicroEtichetta>
+            <MicroEtichetta come="h2">Da rivedere per primi</MicroEtichetta>
             <Link
               href="/app/clienti"
               className="text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
