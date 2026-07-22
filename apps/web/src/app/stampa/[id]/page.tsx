@@ -5,7 +5,6 @@ import {
   type Analisi,
   type DatiBilancio,
   type DatiPrevisionali6M,
-  type Tono,
 } from "@advisorhub/engine";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -13,6 +12,7 @@ import { notFound } from "next/navigation";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { auth } from "@/lib/auth";
 import { INDICATORI } from "@/lib/analisi/indicatori-meta";
+import { toniGrafica } from "@/lib/analisi/toni";
 import { getCliente } from "@/lib/clienti/queries";
 import { etichettaDimensione } from "@/lib/clienti/schema";
 import { listEsercizi } from "@/lib/esercizi/queries";
@@ -43,14 +43,6 @@ const previsionaleDa = (e: Riga): DatiPrevisionali6M | null =>
         debito6m: e.debito6m,
       }
     : null;
-
-const coloreTono: Record<Tono, string> = {
-  eccellente: "var(--primary)",
-  buono: "var(--success)",
-  attenzione: "var(--warning)",
-  critico: "var(--danger)",
-  nd: "var(--muted-foreground)",
-};
 
 /** Anello di progresso, come nelle card del report del committente. */
 function Anello({
@@ -124,8 +116,8 @@ export default async function StampaPage({
       : a.score < 60
         ? "var(--warning)"
         : a.score < 85
-          ? "var(--success)"
-          : "var(--primary)";
+          ? "var(--success-buono)"
+          : "var(--success)";
 
   const chip = [
     { k: "ROS", g: a.giudizi.ros },
@@ -287,7 +279,7 @@ export default async function StampaPage({
                       </p>
                     </div>
                     <div className="relative shrink-0">
-                      <Anello percentuale={meta.percentuale(a, dati)} colore={coloreTono[g.tone]} />
+                      <Anello percentuale={meta.percentuale(a, dati)} colore={toniGrafica[g.tone]} />
                       <span className="nums absolute inset-0 grid place-items-center font-mono text-[10px] text-muted-foreground">
                         {Math.round(meta.percentuale(a, dati))}%
                       </span>
@@ -328,8 +320,13 @@ export default async function StampaPage({
                 <div className="relative shrink-0">
                   <Anello
                     percentuale={Math.min(100, (a.indicatori.dscrProspettico / 1.5) * 100)}
-                    colore={coloreTono[a.giudizi.dscrPro.tone]}
+                    colore={toniGrafica[a.giudizi.dscrPro.tone]}
                   />
+                  <span className="nums absolute inset-0 grid place-items-center font-mono text-[11px] font-semibold">
+                    {a.indicatori.dscrProspettico >= 99
+                      ? "∞"
+                      : formatNumero(a.indicatori.dscrProspettico, 2)}
+                  </span>
                 </div>
               )}
             </div>

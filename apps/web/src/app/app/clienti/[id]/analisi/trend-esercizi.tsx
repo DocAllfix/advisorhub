@@ -103,6 +103,8 @@ function MiniGrafico({
                 tickLine={false}
                 axisLine={false}
                 width={44}
+                // Senza formatter recharts stampa 1.05 mentre la pagina scrive 1,40
+                tickFormatter={(v: number) => formatNumero(v, decimali)}
               />
               <Tooltip
                 cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1 }}

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Analisi, DatiBilancio, Giudizio, Tono } from "@advisorhub/engine";
+import type { Analisi, DatiBilancio, Giudizio } from "@advisorhub/engine";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
@@ -8,15 +8,8 @@ import { Cifra } from "@/components/ui/cifra";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { NumeroAnimato } from "@/components/ui/numero-animato";
 import type { MetaIndicatore } from "@/lib/analisi/indicatori-meta";
+import { toniGrafica } from "@/lib/analisi/toni";
 import { cn } from "@/lib/utils";
-
-const coloreTono: Record<Tono, string> = {
-  eccellente: "var(--primary)",
-  buono: "var(--success)",
-  attenzione: "var(--warning)",
-  critico: "var(--danger)",
-  nd: "var(--muted-foreground)",
-};
 
 /**
  * Un indicatore come riga editoriale: valore e scala incolonnati con gli altri
@@ -41,7 +34,7 @@ export function RigaIndicatore({
   const [aperta, setAperta] = useState(false);
   const valore = meta.valore(analisi, dati);
   const percentuale = meta.percentuale(analisi, dati);
-  const colore = coloreTono[giudizio.tone];
+  const colore = toniGrafica[giudizio.tone];
   const cambiato = delta && delta.valorePrecedente !== valore;
 
   return (
@@ -77,7 +70,7 @@ export function RigaIndicatore({
         <JudgmentBadge tone={giudizio.tone}>{giudizio.label}</JudgmentBadge>
       </div>
 
-      <p className="mt-2 text-sm text-foreground/80">
+      <p className="mt-2 max-w-[72ch] text-sm text-foreground/80">
         <span className="text-muted-foreground">Cosa puoi fare: </span>
         {giudizio.azione}
       </p>
@@ -86,7 +79,7 @@ export function RigaIndicatore({
         type="button"
         onClick={() => setAperta((v) => !v)}
         aria-expanded={aperta}
-        className="mt-2 flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className="mt-2 flex min-h-11 items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-h-8"
       >
         Cosa significa
         <ChevronDown
@@ -96,7 +89,7 @@ export function RigaIndicatore({
       </button>
 
       {aperta && (
-        <div className="mt-2.5 space-y-2 border-l-0 pl-0 text-xs leading-relaxed text-foreground/80">
+        <div className="mt-2.5 max-w-[72ch] space-y-2 text-xs leading-relaxed text-foreground/80">
           <p className="nums inline-block rounded bg-muted/60 px-2 py-1 font-mono text-[11px] text-muted-foreground">
             {meta.formula}
           </p>

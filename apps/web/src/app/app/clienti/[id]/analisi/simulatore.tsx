@@ -1,86 +1,110 @@
 "use client";
 
 import { formatEuro, type DatiBilancio, type DatiPrevisionali6M } from "@advisorhub/engine";
+import { useState } from "react";
 
 import { Label } from "@/components/ui/label";
 
 type CampoStorico = keyof DatiBilancio;
 type CampoPrev = keyof DatiPrevisionali6M;
 
-type Cursore<T> = { campo: T; label: string; min: number; max: number; step: number };
+type Cursore<T> = { campo: T; label: string; /** consente valori negativi */ negativo?: boolean };
 
-/** Range dei cursori, ereditati dal prototipo (limiti di interfaccia, non di dominio). */
+/** I dieci valori di bilancio simulabili. */
 const STORICI: Cursore<CampoStorico>[] = [
-  { campo: "valProd", label: "Valore della produzione", min: 0, max: 20_000_000, step: 50_000 },
-  { campo: "fatturato", label: "Fatturato", min: 0, max: 20_000_000, step: 50_000 },
-  { campo: "ro", label: "Reddito operativo", min: -500_000, max: 3_000_000, step: 10_000 },
-  { campo: "capInvest", label: "Capitale investito", min: 0, max: 20_000_000, step: 50_000 },
-  { campo: "patrNetto", label: "Patrimonio netto", min: 0, max: 10_000_000, step: 20_000 },
-  { campo: "utileNetto", label: "Utile netto", min: -300_000, max: 2_000_000, step: 10_000 },
-  { campo: "ebitda", label: "EBITDA / MOL", min: -200_000, max: 4_000_000, step: 10_000 },
-  { campo: "pfn", label: "Debito finanziario netto (PFN)", min: 0, max: 15_000_000, step: 50_000 },
-  {
-    campo: "servizioDebito",
-    label: "Servizio del debito annuo",
-    min: 0,
-    max: 2_000_000,
-    step: 10_000,
-  },
-  {
-    campo: "flussoCassa",
-    label: "Flusso di cassa operativo",
-    min: -200_000,
-    max: 4_000_000,
-    step: 10_000,
-  },
+  { campo: "valProd", label: "Valore della produzione" },
+  { campo: "fatturato", label: "Fatturato" },
+  { campo: "ro", label: "Reddito operativo", negativo: true },
+  { campo: "capInvest", label: "Capitale investito" },
+  { campo: "patrNetto", label: "Patrimonio netto" },
+  { campo: "utileNetto", label: "Utile netto", negativo: true },
+  { campo: "ebitda", label: "EBITDA / MOL", negativo: true },
+  { campo: "pfn", label: "Debito finanziario netto (PFN)" },
+  { campo: "servizioDebito", label: "Servizio del debito annuo" },
+  { campo: "flussoCassa", label: "Flusso di cassa operativo", negativo: true },
 ];
 
 const PREVISIONALI: Cursore<CampoPrev>[] = [
-  {
-    campo: "liquiditaIniziale",
-    label: "Liquidità iniziale (cassa + c/c)",
-    min: 0,
-    max: 5_000_000,
-    step: 10_000,
-  },
-  { campo: "entrate6m", label: "Entrate previste 6 mesi", min: 0, max: 10_000_000, step: 20_000 },
-  { campo: "uscite6m", label: "Uscite previste 6 mesi", min: 0, max: 10_000_000, step: 20_000 },
-  { campo: "debito6m", label: "Debito da servire 6 mesi", min: 0, max: 2_000_000, step: 5_000 },
+  { campo: "liquiditaIniziale", label: "Liquidità iniziale (cassa + c/c)" },
+  { campo: "entrate6m", label: "Entrate previste 6 mesi" },
+  { campo: "uscite6m", label: "Uscite previste 6 mesi" },
+  { campo: "debito6m", label: "Debito da servire 6 mesi" },
 ];
+
+/** Arrotonda a due cifre significative, così lo step non produce numeri sporchi. */
+function passo(ampiezza: number): number {
+  if (ampiezza <= 0) return 1000;
+  const ordine = Math.pow(10, Math.floor(Math.log10(ampiezza)) - 2);
+  return Math.max(ordine, 1);
+}
+
+/**
+ * Estremi del cursore calcolati sul valore salvato invece che su costanti
+ * globali: con un tetto fisso a 20 milioni, su un cliente da 3 milioni la corsa
+ * utile occupava il 5% della barra e un pixel valeva mezzo milione.
+ */
+function estremi(valoreSalvato: number, ammetteNegativi: boolean) {
+  const riferimento = Math.abs(valoreSalvato) || 100_000;
+  const max = Math.ceil((riferimento * 2) / passo(riferimento)) * passo(riferimento);
+  const min = ammetteNegativi ? -Math.round(max / 2) : 0;
+  return { min, max, step: passo(max - min) };
+}
 
 function Riga<T extends string>({
   cursore,
   valore,
+  valoreSalvato,
   modificato,
   onCambio,
 }: {
   cursore: Cursore<T>;
   valore: number;
+  valoreSalvato: number;
   modificato: boolean;
   onCambio: (campo: T, valore: number) => void;
 }) {
+  const { min, max, step } = estremi(valoreSalvato, Boolean(cursore.negativo));
+  // Mentre si digita si tiene il testo grezzo, così "-" e i campi vuoti non
+  // vengono riscritti a 0 sotto le dita.
+  const [inDigitazione, setInDigitazione] = useState<string | null>(null);
+  const id = `sim-${cursore.campo}`;
+
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
-        <Label htmlFor={`sim-${cursore.campo}`} className="text-xs">
+        <Label htmlFor={id} className="text-xs">
           {cursore.label}
         </Label>
-        <span
-          className={`font-mono nums text-xs ${modificato ? "font-semibold text-primary" : "text-muted-foreground"}`}
-        >
-          {formatEuro(valore)}
-        </span>
+        <input
+          type="text"
+          inputMode="numeric"
+          aria-label={`${cursore.label}, valore in euro`}
+          value={inDigitazione ?? String(Math.round(valore))}
+          onChange={(e) => {
+            setInDigitazione(e.target.value);
+            const n = Number(e.target.value.replace(/[^\d-]/g, ""));
+            if (e.target.value.trim() !== "" && Number.isFinite(n)) onCambio(cursore.campo, n);
+          }}
+          onBlur={() => setInDigitazione(null)}
+          className={`nums w-32 rounded border border-transparent bg-transparent px-1 py-0.5 text-right font-mono text-xs transition-colors hover:border-input focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none ${
+            modificato ? "font-semibold text-primary" : "text-muted-foreground"
+          }`}
+        />
       </div>
       <input
-        id={`sim-${cursore.campo}`}
+        id={id}
         type="range"
-        min={cursore.min}
-        max={cursore.max}
-        step={cursore.step}
-        value={Math.max(cursore.min, Math.min(cursore.max, valore))}
+        min={min}
+        max={max}
+        step={step}
+        value={Math.max(min, Math.min(max, valore))}
         onChange={(e) => onCambio(cursore.campo, Number(e.target.value))}
         className="mt-1.5 w-full accent-primary"
       />
+      {/* Il valore salvato resta il riferimento di lettura del cursore */}
+      <p className="nums mt-0.5 text-right font-mono text-[10px] text-muted-foreground">
+        salvato {formatEuro(valoreSalvato)}
+      </p>
     </div>
   );
 }
@@ -90,6 +114,7 @@ export function Simulatore({
   datiSalvati,
   previsionale,
   previsionaleSalvato,
+  dscrProspettico,
   onCambio,
   onCambioPrevisionale,
 }: {
@@ -97,14 +122,18 @@ export function Simulatore({
   datiSalvati: DatiBilancio;
   previsionale: DatiPrevisionali6M;
   previsionaleSalvato: DatiPrevisionali6M | null;
+  /** Mostrato accanto ai cursori previsionali, che altrimenti comandano un dato fuori campo. */
+  dscrProspettico: { valore: number | null; label: string; colore: string };
   onCambio: (campo: CampoStorico, valore: number) => void;
   onCambioPrevisionale: (campo: CampoPrev, valore: number) => void;
 }) {
+  const basePrev = previsionaleSalvato ?? previsionale;
+
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <h2 className="text-sm font-semibold">Cursori di simulazione</h2>
       <p className="mt-0.5 text-xs text-muted-foreground">
-        Muovi un valore: indicatori, giudizi e punteggio si ricalcolano subito.
+        Muovi un valore o scrivilo: indicatori, giudizi e punteggio si ricalcolano subito.
       </p>
 
       <div className="mt-4 space-y-4">
@@ -113,6 +142,7 @@ export function Simulatore({
             key={c.campo}
             cursore={c}
             valore={dati[c.campo]}
+            valoreSalvato={datiSalvati[c.campo]}
             modificato={dati[c.campo] !== datiSalvati[c.campo]}
             onCambio={onCambio}
           />
@@ -120,9 +150,23 @@ export function Simulatore({
       </div>
 
       <div className="mt-5 border-t border-border pt-4">
-        <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
-          Previsionale 6 mesi
-        </p>
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+            Previsionale 6 mesi
+          </p>
+          {/* Il DSCR che questi cursori comandano vive a fondo pagina: qui c'è
+              la sua lettura, altrimenti si muoverebbero alla cieca. */}
+          <p className="nums font-mono text-sm font-semibold" style={{ color: dscrProspettico.colore }}>
+            {dscrProspettico.valore === null
+              ? "n.d."
+              : dscrProspettico.valore >= 99
+                ? "∞"
+                : dscrProspettico.valore.toFixed(2).replace(".", ",")}
+            <span className="ml-1.5 text-[10px] font-medium text-muted-foreground">
+              DSCR 6M · {dscrProspettico.label}
+            </span>
+          </p>
+        </div>
         <p className="mt-0.5 text-[11px] text-muted-foreground">
           {previsionaleSalvato
             ? "Muovili per simulare il DSCR prospettico."
@@ -134,6 +178,7 @@ export function Simulatore({
               key={c.campo}
               cursore={c}
               valore={previsionale[c.campo]}
+              valoreSalvato={basePrev[c.campo]}
               modificato={
                 previsionaleSalvato ? previsionale[c.campo] !== previsionaleSalvato[c.campo] : true
               }

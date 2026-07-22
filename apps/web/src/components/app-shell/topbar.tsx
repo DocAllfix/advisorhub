@@ -49,7 +49,7 @@ export function Topbar({
       <Button
         variant="ghost"
         size="icon"
-        className="lg:hidden"
+        className="size-11 lg:hidden"
         onClick={onApriDrawer}
         aria-label="Apri il menu"
       >
@@ -71,7 +71,7 @@ export function Topbar({
                   ) : b.navigabile ? (
                     <Link
                       href={b.href}
-                      className="truncate text-muted-foreground transition-colors hover:text-foreground"
+                      className="flex min-h-11 items-center truncate text-muted-foreground transition-colors hover:text-foreground sm:min-h-0"
                     >
                       {b.label}
                     </Link>
@@ -88,7 +88,7 @@ export function Topbar({
       <button
         type="button"
         onClick={onApriCerca}
-        className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className="flex min-h-11 items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground sm:min-h-9 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <Search className="size-4" aria-hidden />
         <span className="sr-only sm:not-sr-only">Cerca cliente</span>

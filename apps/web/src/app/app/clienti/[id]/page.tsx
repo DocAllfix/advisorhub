@@ -9,19 +9,12 @@ import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { MicroEtichetta } from "@/components/ui/micro-etichetta";
 import { datiDa, previsionaleDa } from "@/lib/analisi/da-esercizio";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
+import { toniTesto } from "@/lib/analisi/toni";
 import { getCliente } from "@/lib/clienti/queries";
 import { etichettaDimensione } from "@/lib/clienti/schema";
 import { listEsercizi } from "@/lib/esercizi/queries";
 
 import { EserciziPannello } from "../esercizi-pannello";
-
-const coloreTono: Record<string, string> = {
-  eccellente: "var(--primary)",
-  buono: "var(--success)",
-  attenzione: "var(--warning)",
-  critico: "var(--danger)",
-  nd: "var(--muted-foreground)",
-};
 
 export default async function SchedaClientePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -74,7 +67,7 @@ export default async function SchedaClientePage({ params }: { params: Promise<{ 
             valore={analisi.score}
             suffisso="/100"
             dimensione="md"
-            style={{ color: coloreTono[sintetico.tone] }}
+            style={{ color: toniTesto[sintetico.tone] }}
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2.5">

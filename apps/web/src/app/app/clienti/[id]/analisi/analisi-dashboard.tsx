@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { INDICATORI, type ChiaveIndicatore } from "@/lib/analisi/indicatori-meta";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
+import { toniGrafica } from "@/lib/analisi/toni";
 import { cn } from "@/lib/utils";
 
 import { LetturaContestuale } from "./lettura-contestuale";
@@ -242,6 +243,11 @@ export function AnalisiDashboard({
               datiSalvati={dati}
               previsionale={previsionaleCorrente ?? previsionaleBase}
               previsionaleSalvato={previsionale}
+              dscrProspettico={{
+                valore: analisiCorrente.indicatori.dscrProspettico,
+                label: analisiCorrente.giudizi.dscrPro.label,
+                colore: toniGrafica[analisiCorrente.giudizi.dscrPro.tone],
+              }}
               onCambio={cambiaValore}
               onCambioPrevisionale={cambiaPrevisionale}
             />
@@ -276,7 +282,14 @@ export function AnalisiDashboard({
           <ul className="mt-2 border-t border-hairline">
             {analisiCorrente.areeAttenzione.map((v, i) => (
               <li key={i} className="flex gap-2.5 border-b border-hairline py-2.5 text-sm">
-                <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-warning" />
+                {/* Un'assenza di criticita non va segnata col colore del problema */}
+                <span
+                  aria-hidden
+                  className={cn(
+                    "mt-1.5 size-1.5 shrink-0 rounded-full",
+                    v.k === "OK" ? "bg-muted-foreground" : "bg-warning",
+                  )}
+                />
                 <span>{v.txt}</span>
               </li>
             ))}
@@ -293,7 +306,7 @@ export function AnalisiDashboard({
 
       <LetturaContestuale />
 
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="mx-auto max-w-[72ch] text-center text-xs text-muted-foreground">
         Analisi gestionale, non costituisce giudizio legale o fiscale. Usa dati coerenti.
       </p>
     </div>

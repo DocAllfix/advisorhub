@@ -1,8 +1,8 @@
-import { listClienti } from "@/lib/clienti/queries";
+import { listClienti, listClientiArchiviati } from "@/lib/clienti/queries";
 
 import { Portafoglio } from "./portafoglio";
 
 export default async function ClientiPage() {
-  const clienti = await listClienti();
-  return <Portafoglio clienti={clienti} />;
+  const [clienti, archiviati] = await Promise.all([listClienti(), listClientiArchiviati()]);
+  return <Portafoglio clienti={clienti} archiviati={archiviati} />;
 }

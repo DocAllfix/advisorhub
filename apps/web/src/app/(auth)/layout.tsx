@@ -5,7 +5,7 @@
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-screen place-items-center px-5 py-14">
+    <main className="grid min-h-screen place-items-center px-5 py-14">
       <div className="w-full max-w-[26rem]">
         <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-primary">
           advisorhub
@@ -16,6 +16,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           studio: indicatori, soglie di allerta e report da consegnare.
         </p>
       </div>
-    </div>
+    </main>
   );
 }

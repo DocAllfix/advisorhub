@@ -43,6 +43,9 @@
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-success-subtle: var(--success-subtle);
+  --color-success-buono: var(--success-buono);
+  --color-success-buono-foreground: var(--success-buono-foreground);
+  --color-success-buono-subtle: var(--success-buono-subtle);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-warning-subtle: var(--warning-subtle);
@@ -107,6 +110,10 @@
   --success: oklch(0.55 0.13 155);
   --success-foreground: oklch(0.4 0.1 155);
   --success-subtle: oklch(0.96 0.025 155);
+  /* "Buono": un gradino sotto "Ottimo", stesso verde meno saturo */
+  --success-buono: oklch(0.66 0.045 168);
+  --success-buono-foreground: oklch(0.5 0.035 168);
+  --success-buono-subtle: oklch(0.968 0.012 168);
   --warning: oklch(0.7 0.13 75);
   --warning-foreground: oklch(0.47 0.1 70);
   --warning-subtle: oklch(0.97 0.03 85);
@@ -159,6 +166,10 @@
   --success: oklch(0.76 0.14 155);
   --success-foreground: oklch(0.86 0.12 155);
   --success-subtle: oklch(0.27 0.05 155);
+  /* "Buono": un gradino sotto "Ottimo", stesso verde meno saturo */
+  --success-buono: oklch(0.78 0.045 170);
+  --success-buono-foreground: oklch(0.86 0.04 170);
+  --success-buono-subtle: oklch(0.25 0.022 170);
   --warning: oklch(0.82 0.14 80);
   --warning-foreground: oklch(0.88 0.12 85);
   --warning-subtle: oklch(0.29 0.05 75);

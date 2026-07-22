@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { requireStudio } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -57,6 +57,33 @@ async function ultimiPunteggi(organizationId: string): Promise<Map<string, numbe
   const righe =
     "rows" in res ? res.rows : (res as unknown as { cliente_id: string; score: number }[]);
   return new Map(righe.map((r) => [r.cliente_id, Number(r.score)]));
+}
+
+export type ClienteArchiviato = {
+  id: string;
+  ragioneSociale: string;
+  codiceAteco: string | null;
+  archiviatoAt: Date;
+};
+
+/**
+ * Clienti archiviati, dal più recente. Senza questa vista l'archiviazione
+ * sarebbe irreversibile appena scade il toast con l'annulla: i dati restano nel
+ * database ma diventano irraggiungibili dall'interfaccia.
+ */
+export async function listClientiArchiviati(): Promise<ClienteArchiviato[]> {
+  const { organizationId } = await requireStudio();
+  const righe = await db
+    .select({
+      id: clienti.id,
+      ragioneSociale: clienti.ragioneSociale,
+      codiceAteco: clienti.codiceAteco,
+      archiviatoAt: clienti.archiviatoAt,
+    })
+    .from(clienti)
+    .where(and(eq(clienti.organizationId, organizationId), isNotNull(clienti.archiviatoAt)))
+    .orderBy(desc(clienti.archiviatoAt));
+  return righe.map((c) => ({ ...c, archiviatoAt: c.archiviatoAt! }));
 }
 
 /** Coppie id/nome dei clienti attivi, per la command palette. */

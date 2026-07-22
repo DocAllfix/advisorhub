@@ -3,15 +3,8 @@ import * as React from "react";
 
 import { Cifra } from "@/components/ui/cifra";
 import { MicroEtichetta } from "@/components/ui/micro-etichetta";
+import { toniGrafica } from "@/lib/analisi/toni";
 import { cn } from "@/lib/utils";
-
-const coloreTono: Record<Tono, string> = {
-  eccellente: "var(--primary)",
-  buono: "var(--success)",
-  attenzione: "var(--warning)",
-  critico: "var(--danger)",
-  nd: "var(--muted-foreground)",
-};
 
 /** Anello di punteggio: si disegna una volta all'ingresso, poi resta fermo. */
 function Anello({ percentuale, colore }: { percentuale: number; colore: string }) {
@@ -112,7 +105,7 @@ function Scena({
   delta?: DeltaScena | null;
   azione?: React.ReactNode;
 }) {
-  const colore = coloreTono[tono];
+  const colore = toniGrafica[tono];
 
   return (
     <section data-slot="scena" className={cn("flex flex-col gap-6", className)} {...props}>
@@ -145,9 +138,9 @@ function Scena({
                   style={{
                     color:
                       delta.valore > 0
-                        ? "var(--success)"
+                        ? "var(--success-foreground)"
                         : delta.valore < 0
-                          ? "var(--danger)"
+                          ? "var(--danger-foreground)"
                           : undefined,
                   }}
                 >

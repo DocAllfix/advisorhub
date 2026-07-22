@@ -9,7 +9,7 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal, Plus, Search } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Plus, RotateCcw, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -27,6 +27,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
+import { toniGrafica, toniTesto } from "@/lib/analisi/toni";
 import {
   Table,
   TableBody,
@@ -36,18 +37,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { archiviaCliente, ripristinaCliente } from "@/lib/clienti/actions";
-import type { ClienteLista } from "@/lib/clienti/queries";
+import type { ClienteArchiviato, ClienteLista } from "@/lib/clienti/queries";
 import { etichettaDimensione } from "@/lib/clienti/schema";
 
 import { ClienteForm, type ClienteModificabile } from "./cliente-form";
-
-const coloreTono: Record<string, string> = {
-  eccellente: "var(--primary)",
-  buono: "var(--success)",
-  attenzione: "var(--warning)",
-  critico: "var(--danger)",
-  nd: "var(--muted-foreground)",
-};
 
 function formatData(d: Date) {
   return new Intl.DateTimeFormat("it-IT", {
@@ -76,11 +69,61 @@ function Intestazione({
     <button
       type="button"
       onClick={onOrdina}
-      className="flex items-center gap-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="flex min-h-11 items-center gap-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-h-8"
     >
       {etichetta}
       <ArrowUpDown className="size-3" aria-hidden />
     </button>
+  );
+}
+
+/**
+ * Clienti archiviati con il loro ripristino. Senza questa vista l'archiviazione
+ * diventerebbe irreversibile appena scade il toast: i dati resterebbero nel
+ * database ma irraggiungibili, e con essi anagrafica, esercizi e analisi.
+ */
+function ElencoArchiviati({
+  archiviati,
+  onRipristina,
+}: {
+  archiviati: ClienteArchiviato[];
+  onRipristina: (c: ClienteArchiviato) => void;
+}) {
+  if (archiviati.length === 0) {
+    return (
+      <p className="mt-8 text-center text-sm text-muted-foreground">
+        Nessun cliente archiviato. Quelli che archivi restano qui, con i loro bilanci.
+      </p>
+    );
+  }
+  return (
+    <ul className="mt-5 border-t border-hairline">
+      {archiviati.map((c) => (
+        <li
+          key={c.id}
+          className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-hairline py-3.5"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium text-muted-foreground">
+              {c.ragioneSociale}
+            </span>
+            <span className="nums block text-xs text-muted-foreground">
+              Archiviato il {formatData(c.archiviatoAt)}
+              {c.codiceAteco ? ` · ATECO ${c.codiceAteco}` : ""}
+            </span>
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11 sm:min-h-9"
+            onClick={() => onRipristina(c)}
+          >
+            <RotateCcw className="size-4" />
+            Ripristina
+          </Button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -121,8 +164,17 @@ function MenuRiga({
   );
 }
 
-export function Portafoglio({ clienti }: { clienti: ClienteLista[] }) {
+type Vista = "attivi" | "allerta" | "archiviati";
+
+export function Portafoglio({
+  clienti,
+  archiviati,
+}: {
+  clienti: ClienteLista[];
+  archiviati: ClienteArchiviato[];
+}) {
   const router = useRouter();
+  const [vista, setVista] = useState<Vista>("attivi");
   const [filtro, setFiltro] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [formAperto, setFormAperto] = useState(false);
@@ -153,6 +205,16 @@ export function Portafoglio({ clienti }: { clienti: ClienteLista[] }) {
         },
       },
     });
+  }
+
+  async function ripristina(c: ClienteArchiviato) {
+    const res = await ripristinaCliente(c.id);
+    if (!res.ok) {
+      toast.error(res.errore);
+      return;
+    }
+    router.refresh();
+    toast.success(`${c.ragioneSociale} ripristinato`);
   }
 
   const columns: ColumnDef<ClienteLista>[] = [
@@ -220,12 +282,12 @@ export function Portafoglio({ clienti }: { clienti: ClienteLista[] }) {
               valore={score}
               dimensione="sm"
               className="w-8 text-right text-lg"
-              style={{ color: coloreTono[s.tone] }}
+              style={{ color: toniTesto[s.tone] }}
             />
             <span className="hidden h-1 w-16 shrink-0 rounded-full bg-muted lg:block" aria-hidden>
               <span
                 className="block h-full rounded-full"
-                style={{ width: `${score}%`, backgroundColor: coloreTono[s.tone] }}
+                style={{ width: `${score}%`, backgroundColor: toniGrafica[s.tone] }}
               />
             </span>
             <JudgmentBadge tone={s.tone}>{s.label}</JudgmentBadge>
@@ -256,8 +318,11 @@ export function Portafoglio({ clienti }: { clienti: ClienteLista[] }) {
     },
   ];
 
+  const inAllerta = clienti.filter((c) => c.score !== null && c.score < 55);
+  const datiVista = vista === "allerta" ? inAllerta : clienti;
+
   const table = useReactTable({
-    data: clienti,
+    data: datiVista,
     columns,
     state: { sorting, globalFilter: filtro },
     onSortingChange: setSorting,
@@ -272,14 +337,13 @@ export function Portafoglio({ clienti }: { clienti: ClienteLista[] }) {
   const nessunRisultato = !nessunCliente && table.getRowModel().rows.length === 0;
 
   const daAnalizzare = clienti.filter((c) => c.score === null).length;
-  const inAllerta = clienti.filter((c) => c.score !== null && c.score < 55).length;
 
   // Riepilogo in una riga: la Panoramica resta il posto delle metriche, qui
   // serve solo sapere su cosa si sta lavorando.
   const riepilogo = [
     `${clienti.length} ${clienti.length === 1 ? "azienda seguita" : "aziende seguite"}`,
     daAnalizzare > 0 ? `${daAnalizzare} da analizzare` : null,
-    inAllerta > 0 ? `${inAllerta} in allerta` : null,
+    inAllerta.length > 0 ? `${inAllerta.length} in allerta` : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -312,23 +376,54 @@ export function Portafoglio({ clienti }: { clienti: ClienteLista[] }) {
         </div>
       ) : (
         <>
-          {/* Ricerca a filo: un campo, non una scatola dentro una scatola */}
-          <div className="mt-7 max-w-xs">
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute top-1/2 left-0 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                value={filtro}
-                onChange={(e) => setFiltro(e.target.value)}
-                placeholder="Cerca nel portafoglio…"
-                aria-label="Cerca nel portafoglio"
-                className="h-9 rounded-none border-0 border-b border-hairline bg-transparent pr-0 pl-6 focus-visible:border-primary focus-visible:ring-0 dark:bg-transparent"
-              />
+          <div className="mt-7 flex flex-wrap items-end justify-between gap-4">
+            {/* Viste: il portafoglio non è solo un elenco, è una lista di priorità */}
+            <div className="flex gap-1.5" role="group" aria-label="Filtra il portafoglio">
+              {(
+                [
+                  ["attivi", "Attivi", clienti.length],
+                  ["allerta", "In allerta", inAllerta.length],
+                  ["archiviati", "Archiviati", archiviati.length],
+                ] as [Vista, string, number][]
+              ).map(([v, etichetta, n]) => (
+                <Button
+                  key={v}
+                  variant={vista === v ? "default" : "outline"}
+                  size="sm"
+                  className="min-h-11 sm:min-h-9"
+                  aria-pressed={vista === v}
+                  onClick={() => {
+                    setVista(v);
+                    setFiltro("");
+                  }}
+                >
+                  {etichetta}
+                  <span className="nums ml-1 font-mono opacity-70">{n}</span>
+                </Button>
+              ))}
             </div>
+
+            {/* Ricerca a filo: un campo, non una scatola dentro una scatola */}
+            {vista !== "archiviati" && (
+              <div className="relative w-full max-w-xs">
+                <Search
+                  className="pointer-events-none absolute top-1/2 left-0 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <Input
+                  value={filtro}
+                  onChange={(e) => setFiltro(e.target.value)}
+                  placeholder="Cerca nel portafoglio…"
+                  aria-label="Cerca nel portafoglio"
+                  className="h-11 rounded-none border-0 border-b border-hairline bg-transparent pr-0 pl-6 focus-visible:border-primary focus-visible:ring-0 sm:h-9 dark:bg-transparent"
+                />
+              </div>
+            )}
           </div>
 
+          {vista === "archiviati" ? (
+            <ElencoArchiviati archiviati={archiviati} onRipristina={ripristina} />
+          ) : (
           <div className="mt-5 overflow-x-auto">
             <Table>
               <TableHeader>
@@ -346,12 +441,23 @@ export function Portafoglio({ clienti }: { clienti: ClienteLista[] }) {
               </TableHeader>
               <TableBody>
                 {nessunRisultato ? (
-                  <TableRow className="border-hairline">
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      Nessun cliente per «{filtro}».
+                  <TableRow className="border-hairline hover:bg-transparent">
+                    <TableCell colSpan={columns.length} className="h-28 text-center">
+                      <p className="text-muted-foreground">
+                        {vista === "allerta" && !filtro
+                          ? "Nessun cliente sotto la soglia di attenzione."
+                          : `Nessun cliente per «${filtro}».`}
+                      </p>
+                      {filtro && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-3"
+                          onClick={() => setFiltro("")}
+                        >
+                          Azzera la ricerca
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -371,6 +477,7 @@ export function Portafoglio({ clienti }: { clienti: ClienteLista[] }) {
               </TableBody>
             </Table>
           </div>
+          )}
         </>
       )}
 
