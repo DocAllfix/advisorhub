@@ -108,7 +108,7 @@ function Scena({
   const colore = toniGrafica[tono];
 
   return (
-    <section data-slot="scena" className={cn("flex flex-col gap-6", className)} {...props}>
+    <section data-slot="scena" data-tour="scena" className={cn("flex flex-col gap-6", className)} {...props}>
       {etichetta ? <MicroEtichetta>{etichetta}</MicroEtichetta> : null}
 
       <div className="flex flex-col items-start gap-7 sm:flex-row sm:items-center sm:gap-10">

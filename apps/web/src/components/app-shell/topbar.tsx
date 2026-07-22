@@ -8,6 +8,8 @@ import { Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { etichettaIdentificativo, etichetteSegmento, isIdentificativo } from "@/lib/navigazione";
 
+import { Guida } from "./guida";
+
 type Briciola = { label: string; href: string; navigabile: boolean };
 
 /**
@@ -37,9 +39,11 @@ function briciole(pathname: string): Briciola[] {
 export function Topbar({
   onApriDrawer,
   onApriCerca,
+  demo,
 }: {
   onApriDrawer: () => void;
   onApriCerca: () => void;
+  demo: boolean;
 }) {
   const pathname = usePathname();
   const percorso = briciole(pathname);
@@ -84,6 +88,8 @@ export function Topbar({
           })}
         </ol>
       </nav>
+
+      <Guida demo={demo} />
 
       <button
         type="button"

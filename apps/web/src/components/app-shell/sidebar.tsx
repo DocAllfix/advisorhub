@@ -86,7 +86,11 @@ function ContenutoSidebar({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <nav className="mt-3 flex flex-1 flex-col gap-0.5" aria-label="Navigazione principale">
+      <nav
+        data-tour="nav"
+        className="mt-3 flex flex-1 flex-col gap-0.5"
+        aria-label="Navigazione principale"
+      >
         {navPrincipale.map((voce) => {
           const attiva = voceAttiva(pathname, voce.href);
           if (voce.presto) {

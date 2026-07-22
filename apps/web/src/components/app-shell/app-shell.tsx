@@ -17,11 +17,13 @@ export function AppShell({
   studio,
   utente,
   clienti,
+  demo,
   children,
 }: {
   studio: DatiStudio;
   utente: DatiUtente;
   clienti: ClienteRicerca[];
+  demo: boolean;
   children: React.ReactNode;
 }) {
   const [drawerAperto, setDrawerAperto] = useState(false);
@@ -48,6 +50,7 @@ export function AppShell({
         <Topbar
           onApriDrawer={() => setDrawerAperto(true)}
           onApriCerca={() => setCercaAperto(true)}
+          demo={demo}
         />
         <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-8 sm:px-8 sm:py-10">
           {children}

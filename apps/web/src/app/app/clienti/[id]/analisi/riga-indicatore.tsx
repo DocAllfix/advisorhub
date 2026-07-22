@@ -23,6 +23,7 @@ export function RigaIndicatore({
   analisi,
   dati,
   delta,
+  marcaTour,
 }: {
   meta: MetaIndicatore;
   giudizio: Giudizio;
@@ -30,6 +31,8 @@ export function RigaIndicatore({
   dati: DatiBilancio;
   /** Valore dei dati salvati, durante la simulazione. */
   delta?: { valorePrecedente: string } | null;
+  /** Bersaglio del passo di guida sulla singola riga: solo la prima. */
+  marcaTour?: boolean;
 }) {
   const [aperta, setAperta] = useState(false);
   const valore = meta.valore(analisi, dati);
@@ -38,7 +41,7 @@ export function RigaIndicatore({
   const cambiato = delta && delta.valorePrecedente !== valore;
 
   return (
-    <div className="border-b border-hairline py-4">
+    <div data-tour={marcaTour ? "riga-indicatore" : undefined} className="border-b border-hairline py-4">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
         <h3 className="min-w-0 flex-1 text-sm font-semibold">
           {meta.titolo}

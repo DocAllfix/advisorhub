@@ -127,6 +127,7 @@ export function PannelloStudio({ demo }: { demo: boolean }) {
       {demo && (
         <div
           role="status"
+          data-tour="banner-demo"
           className="rounded-lg border border-warning/40 bg-warning-subtle px-4 py-3 text-sm text-warning-foreground"
         >
           <span className="font-semibold">Versione dimostrativa.</span> Rinomina dello studio,
@@ -159,7 +160,9 @@ export function PannelloStudio({ demo }: { demo: boolean }) {
       )}
 
       <section>
-        <MicroEtichetta come="h2">Persone dello studio</MicroEtichetta>
+        <MicroEtichetta come="h2" data-tour="persone-studio">
+          Persone dello studio
+        </MicroEtichetta>
         <div className="mt-3 border-t border-hairline pt-4">
           <ul className="divide-y divide-hairline">
             {studio.members.map((m) => {
@@ -202,7 +205,11 @@ export function PannelloStudio({ demo }: { demo: boolean }) {
           </ul>
 
           {puoGestire && (
-            <form onSubmit={invita} className="mt-5 grid gap-3 border-t border-hairline pt-5">
+            <form
+              onSubmit={invita}
+              data-tour="invito"
+              className="mt-5 grid gap-3 border-t border-hairline pt-5"
+            >
               <div className="grid gap-1.5">
                 <Label htmlFor="invito-email">Invita un collaboratore</Label>
                 <div className="flex gap-2">

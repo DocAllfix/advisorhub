@@ -112,7 +112,10 @@ export default async function PanoramicaPage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-x-6 gap-y-6 border-y border-hairline py-6 sm:grid-cols-4 sm:gap-0 sm:divide-x sm:divide-hairline">
+      <div
+        data-tour="grandezze"
+        className="grid grid-cols-2 gap-x-6 gap-y-6 border-y border-hairline py-6 sm:grid-cols-4 sm:gap-0 sm:divide-x sm:divide-hairline"
+      >
         <Grandezza etichetta="Clienti seguiti" valore={String(p.totaleClienti)} />
         <Grandezza
           etichetta="In allerta"
@@ -160,7 +163,9 @@ export default async function PanoramicaPage() {
 
       {p.conAnalisi > 0 && (
         <section>
-          <MicroEtichetta come="h2">Distribuzione della salute</MicroEtichetta>
+          <MicroEtichetta come="h2" data-tour="distribuzione">
+            Distribuzione della salute
+          </MicroEtichetta>
           <div className="mt-3 flex h-1.5 w-full gap-0.5" aria-hidden>
             {FASCE.filter((f) => p.distribuzione[f.chiave] > 0).map((f) => (
               <div
@@ -199,7 +204,7 @@ export default async function PanoramicaPage() {
       {p.righe.length > 0 && (
         <section>
           <div className="flex items-baseline justify-between gap-4">
-            <MicroEtichetta come="h2">Da rivedere per primi</MicroEtichetta>
+            <MicroEtichetta come="h2" data-tour="da-rivedere">Da rivedere per primi</MicroEtichetta>
             <Link
               href="/app/clienti"
               className="flex min-h-11 items-center text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-h-0"

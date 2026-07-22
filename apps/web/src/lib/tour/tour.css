@@ -1,0 +1,156 @@
+/*
+ * Aspetto dei tour guidati. driver.js porta un CSS neutro: qui viene
+ * riportato dentro il nostro sistema di token, così il riquadro della guida
+ * sembra parte dell'app e non un componente esterno incollato sopra.
+ *
+ * Tutto è agganciato a `.tour-advisorhub` (classe passata via popoverClass),
+ * tranne il riflettore che è una classe globale di driver.js.
+ */
+
+@import "driver.js/dist/driver.css";
+
+/* ---------- Riquadro della guida ---------- */
+.driver-popover.tour-advisorhub {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 60px -24px oklch(0.1 0.02 250 / 0.55);
+  padding: 1.05rem 1.15rem 0.95rem;
+  max-width: 22rem;
+  font-family: var(--font-sans);
+}
+
+.driver-popover.tour-advisorhub .driver-popover-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+  margin: 0 1.25rem 0.3rem 0; /* spazio per la X */
+  padding: 0;
+}
+
+.driver-popover.tour-advisorhub .driver-popover-description {
+  font-size: 0.825rem;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+  margin: 0;
+  padding: 0;
+}
+
+/* La punta segue il fondo del riquadro, altrimenti resta bianca */
+.driver-popover.tour-advisorhub .driver-popover-arrow-side-top {
+  border-top-color: var(--popover);
+}
+.driver-popover.tour-advisorhub .driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--popover);
+}
+.driver-popover.tour-advisorhub .driver-popover-arrow-side-left {
+  border-left-color: var(--popover);
+}
+.driver-popover.tour-advisorhub .driver-popover-arrow-side-right {
+  border-right-color: var(--popover);
+}
+
+/* ---------- Piede: avanzamento e pulsanti ---------- */
+.driver-popover.tour-advisorhub .driver-popover-footer {
+  margin-top: 0.95rem;
+  padding: 0;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.driver-popover.tour-advisorhub .driver-popover-progress-text {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.driver-popover.tour-advisorhub .driver-popover-navigation-btns {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.driver-popover.tour-advisorhub .driver-popover-next-btn,
+.driver-popover.tour-advisorhub .driver-popover-prev-btn {
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-lg);
+  text-shadow: none;
+  cursor: pointer;
+  transition: background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.driver-popover.tour-advisorhub .driver-popover-next-btn {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: 1px solid transparent;
+}
+.driver-popover.tour-advisorhub .driver-popover-next-btn:hover {
+  background-color: color-mix(in oklch, var(--primary) 88%, var(--foreground));
+}
+
+.driver-popover.tour-advisorhub .driver-popover-prev-btn {
+  background-color: transparent;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+}
+.driver-popover.tour-advisorhub .driver-popover-prev-btn:hover {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+/* Al primo passo "Indietro" è inattivo: deve sembrarlo */
+.driver-popover.tour-advisorhub .driver-popover-prev-btn.driver-popover-btn-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.driver-popover.tour-advisorhub .driver-popover-close-btn {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.6rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1;
+  font-size: 1.05rem;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color 160ms ease-out;
+}
+.driver-popover.tour-advisorhub .driver-popover-close-btn:hover {
+  color: var(--foreground);
+  background-color: var(--muted);
+}
+
+/* La tastiera deve vedere dove si trova */
+.driver-popover.tour-advisorhub button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Riflettore sull'elemento ---------- */
+.driver-active-element {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-md);
+}
+
+/* Rispetta chi ha chiesto meno movimento */
+@media (prefers-reduced-motion: reduce) {
+  .driver-popover.tour-advisorhub,
+  .driver-popover.tour-advisorhub * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -100,12 +100,18 @@ export function EserciziPannello({
         <div className="flex gap-2">
           {/* "Apri analisi" vive nell'intestazione della scheda, accanto alla salute */}
           {esercizi.length > 0 && (
-            <Button variant="outline" size="sm" onClick={esporta} disabled={esportando}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={esporta}
+              disabled={esportando}
+              data-tour="esporta-csv"
+            >
               <Download className="size-4" />
               {esportando ? "Esporto…" : "Esporta CSV"}
             </Button>
           )}
-          <Button size="sm" asChild>
+          <Button size="sm" asChild data-tour="nuovo-esercizio">
             <Link
               href={`/app/clienti/${clienteId}/esercizi/nuovo`}
               onClick={bloccaSeDemo(() => {})}
@@ -131,7 +137,7 @@ export function EserciziPannello({
           />
         </div>
       ) : (
-        <div className="mt-4 overflow-x-auto">
+        <div data-tour="tabella-esercizi" className="mt-4 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-hairline hover:bg-transparent">

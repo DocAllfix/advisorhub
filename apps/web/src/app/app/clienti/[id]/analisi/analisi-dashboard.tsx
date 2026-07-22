@@ -23,6 +23,8 @@ import {
 import { INDICATORI, type ChiaveIndicatore } from "@/lib/analisi/indicatori-meta";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
 import { toniGrafica } from "@/lib/analisi/toni";
+import { tourCompletato } from "@/lib/tour/config";
+import { tourSimulatore } from "@/lib/tour/pagine/analisi";
 import { cn } from "@/lib/utils";
 
 import { LetturaContestuale } from "./lettura-contestuale";
@@ -102,6 +104,11 @@ export function AnalisiDashboard({
   function avviaSimulazione() {
     setSimulazione({ ...dati });
     setSimPrevisionale({ ...previsionaleBase });
+    // Il tour dei cursori ha senso solo mentre sono a schermo: parte alla
+    // prima apertura, una volta sola. Il ritardo lascia disegnare il pannello.
+    if (!tourCompletato("simulatore")) {
+      window.setTimeout(() => tourSimulatore(), 450);
+    }
   }
   function chiudiSimulazione() {
     setSimulazione(null);
@@ -149,13 +156,14 @@ export function AnalisiDashboard({
             variant={inSimulazione ? "default" : "outline"}
             onClick={() => (inSimulazione ? chiudiSimulazione() : avviaSimulazione())}
             aria-pressed={inSimulazione}
+            data-tour="simula"
           >
             <SlidersHorizontal className="size-4" />
             {inSimulazione ? "Esci dalla simulazione" : "Simula"}
           </Button>
           {/* Il PDF si scarica: nessuna pagina intermedia, nessun dialogo di stampa */}
           {!inSimulazione && (
-            <Button asChild>
+            <Button asChild data-tour="scarica-pdf">
               <a
                 href={`/api/report/${clienteId}?esercizio=${esercizioSelezionatoId}`}
                 download
@@ -179,7 +187,7 @@ export function AnalisiDashboard({
         nota={inSimulazione ? "valori simulati, non salvati" : undefined}
       />
 
-      <section className="border-y border-hairline py-5">
+      <section data-tour="azione-prioritaria" className="border-y border-hairline py-5">
         <MicroEtichetta come="h2">Azione prioritaria</MicroEtichetta>
         <p className="mt-2 text-base font-medium">{analisiCorrente.azionePrioritaria}</p>
         <dl className="mt-4 grid gap-x-10 gap-y-2.5 sm:grid-cols-2">
@@ -201,7 +209,7 @@ export function AnalisiDashboard({
             <span className="font-semibold">Stai simulando.</span> I dati salvati non vengono
             modificati.
           </p>
-          <Button variant="outline" size="sm" onClick={avviaSimulazione}>
+          <Button variant="outline" size="sm" onClick={avviaSimulazione} data-tour="ripristina">
             <RotateCcw className="size-4" />
             Ripristina
           </Button>
@@ -214,15 +222,16 @@ export function AnalisiDashboard({
         className={cn("grid grid-cols-1 gap-8", inSimulazione && "lg:grid-cols-[1fr_320px]")}
       >
         <div className="flex flex-col gap-8">
-          {FAMIGLIE.map((famiglia) => (
-            <section key={famiglia.titolo}>
+          {FAMIGLIE.map((famiglia, i) => (
+            <section key={famiglia.titolo} data-tour={i === 0 ? "famiglia-indicatori" : undefined}>
               <MicroEtichetta come="h2">{famiglia.titolo}</MicroEtichetta>
               <div className="mt-2 border-t border-hairline">
-                {famiglia.chiavi.map((chiave) => {
+                {famiglia.chiavi.map((chiave, j) => {
                   const meta = metaDi(chiave);
                   return (
                     <RigaIndicatore
                       key={chiave}
+                      marcaTour={i === 0 && j === 0}
                       meta={meta}
                       giudizio={analisiCorrente.giudizi[chiave]}
                       analisi={analisiCorrente}
@@ -256,13 +265,19 @@ export function AnalisiDashboard({
 
       {/* Il DSCR prospettico resta l'unico blocco incorniciato: è il dato di
           continuità aziendale richiesto dall'art. 3 CCII, non un indicatore fra gli altri. */}
-      <PannelloDscr6M
-        analisi={analisiCorrente}
-        clienteId={clienteId}
-        esercizioId={esercizioSelezionatoId}
-      />
+      <div data-tour="dscr-6m">
+        <PannelloDscr6M
+          analisi={analisiCorrente}
+          clienteId={clienteId}
+          esercizioId={esercizioSelezionatoId}
+        />
+      </div>
 
-      {!inSimulazione && <TrendEsercizi serie={serie} />}
+      {!inSimulazione && (
+        <div data-tour="trend">
+          <TrendEsercizi serie={serie} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-x-10 gap-y-8 md:grid-cols-2">
         <section>

@@ -114,7 +114,7 @@ function Riga<T extends string>({
   }
 
   return (
-    <div>
+    <div data-tour={cursore.campo === "valProd" ? "cursore" : undefined}>
       <div className="flex items-baseline justify-between gap-2">
         <Label htmlFor={id} className="text-xs">
           {cursore.label}
@@ -182,7 +182,7 @@ export function Simulatore({
   const basePrev = previsionaleSalvato ?? previsionale;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div data-tour="simulatore" className="rounded-xl border border-border bg-card p-4">
       <h2 className="text-sm font-semibold">Cursori di simulazione</h2>
       <p className="mt-0.5 text-xs text-muted-foreground">
         Muovi un valore o scrivilo: indicatori, giudizi e punteggio si ricalcolano subito.
@@ -220,7 +220,11 @@ export function Simulatore({
           </p>
           {/* Il DSCR che questi cursori comandano vive a fondo pagina: qui c'è
               la sua lettura, altrimenti si muoverebbero alla cieca. */}
-          <p className="nums font-mono text-sm font-semibold" style={{ color: dscrProspettico.colore }}>
+          <p
+            data-tour="dscr-sim"
+            className="nums font-mono text-sm font-semibold"
+            style={{ color: dscrProspettico.colore }}
+          >
             {dscrProspettico.valore === null
               ? "n.d."
               : dscrProspettico.valore >= 99

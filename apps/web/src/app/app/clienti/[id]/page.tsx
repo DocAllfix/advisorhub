@@ -64,7 +64,10 @@ export default async function SchedaClientePage({ params }: { params: Promise<{ 
       </header>
 
       {analisi && sintetico && recente ? (
-        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 border-y border-hairline py-5">
+        <div
+          data-tour="salute-cliente"
+          className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 border-y border-hairline py-5"
+        >
           <Cifra
             valore={analisi.score}
             suffisso="/100"

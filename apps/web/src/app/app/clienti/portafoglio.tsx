@@ -282,7 +282,7 @@ export function Portafoglio({
         }
         const s = sinteticoDaScore(score);
         return (
-          <span className="relative z-10 inline-flex items-center gap-3">
+          <span data-tour="colonna-salute" className="relative z-10 inline-flex items-center gap-3">
             <Cifra
               valore={score}
               dimensione="sm"
@@ -364,7 +364,7 @@ export function Portafoglio({
               : riepilogo}
           </p>
         </header>
-        <Button onClick={apriNuovo}>
+        <Button onClick={apriNuovo} data-tour="nuovo-cliente">
           <Plus className="size-4" />
           Nuovo cliente
         </Button>
@@ -383,7 +383,7 @@ export function Portafoglio({
         <>
           <div className="mt-7 flex flex-wrap items-end justify-between gap-4">
             {/* Viste: il portafoglio non è solo un elenco, è una lista di priorità */}
-            <div className="flex gap-1.5" role="group" aria-label="Filtra il portafoglio">
+            <div data-tour="viste" className="flex gap-1.5" role="group" aria-label="Filtra il portafoglio">
               {(
                 [
                   ["attivi", "Attivi", clienti.length],
@@ -410,7 +410,7 @@ export function Portafoglio({
 
             {/* Ricerca a filo: un campo, non una scatola dentro una scatola */}
             {vista !== "archiviati" && (
-              <div className="relative w-full max-w-xs">
+              <div data-tour="ricerca" className="relative w-full max-w-xs">
                 <Search
                   className="pointer-events-none absolute top-1/2 left-0 size-4 -translate-y-1/2 text-muted-foreground"
                   aria-hidden
@@ -466,9 +466,10 @@ export function Portafoglio({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  table.getRowModel().rows.map((row) => (
+                  table.getRowModel().rows.map((row, i) => (
                     <TableRow
                       key={row.id}
+                      data-tour={i === 0 ? "riga-cliente" : undefined}
                       className="relative cursor-pointer border-hairline hover:bg-muted/40"
                     >
                       {row.getVisibleCells().map((cell) => (

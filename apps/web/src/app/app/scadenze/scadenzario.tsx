@@ -113,7 +113,7 @@ export function Scadenzario({
             Adempimenti e promemoria dello studio, per cliente o generali.
           </p>
         </header>
-        <Button onClick={apriNuova}>
+        <Button onClick={apriNuova} data-tour="nuova-scadenza">
           <Plus className="size-4" />
           Nuova scadenza
         </Button>
@@ -130,7 +130,7 @@ export function Scadenzario({
         </div>
       ) : (
         <>
-          <div className="mt-6 flex gap-1.5">
+          <div data-tour="filtri-scadenze" className="mt-6 flex gap-1.5">
             {(["da-fare", "completate", "tutte"] as Filtro[]).map((f) => (
               <Button
                 key={f}
@@ -149,11 +149,12 @@ export function Scadenzario({
               Nessuna scadenza in questa vista.
             </p>
           ) : (
-            <ul className="mt-4 border-t border-hairline">
-              {visibili.map((s) => (
+            <ul data-tour="elenco-scadenze" className="mt-4 border-t border-hairline">
+              {visibili.map((s, i) => (
                 <li key={s.id} className="flex items-center gap-3 border-b border-hairline py-3.5 transition-colors hover:bg-muted/40">
                   <button
                     type="button"
+                    data-tour={i === 0 ? "completa-scadenza" : undefined}
                     onClick={() => completa(s)}
                     aria-label={s.completata ? "Segna da fare" : "Segna completata"}
                     className={`grid size-6 shrink-0 place-items-center rounded-full border transition-colors ${
