@@ -84,9 +84,23 @@ Attenzione alla CSP: `connect-src` in `next.config.ts` è chiuso su `'self'`, qu
 L'app è un monolite Next.js: funziona su qualsiasi hosting che supporti Node.
 
 1. Collega il repository all'hosting (per esempio Vercel) e scegli una **region EU**, coerente col database
-2. Imposta le variabili d'ambiente della tabella sopra
-3. Applica le migration verso il database di produzione: `pnpm --filter web db:migrate`
-4. Verifica il primo accesso: registrazione studio, creazione cliente, esercizio, analisi, report
+2. Su Vercel: **Root Directory** `apps/web`. È un monorepo pnpm e il pacchetto `engine` sta fuori da quella cartella, quindi l'installazione deve partire dalla radice
+3. Imposta le variabili d'ambiente della tabella sopra, e dopo il primo deploy correggi `BETTER_AUTH_URL` col dominio reale (Better Auth lo legge all'avvio: se resta sbagliato la sessione non si aggancia)
+4. Applica le migration verso il database di produzione: `pnpm --filter web db:migrate`
+5. Verifica il primo accesso: registrazione studio, creazione cliente, esercizio, analisi, report
+
+### Identità git
+
+Vercel rifiuta di costruire un commit il cui autore non corrisponde a un account
+GitHub. Il repository è configurato con l'indirizzo `noreply` dell'account, che
+funziona anche con l'email privata:
+
+```bash
+git config user.email "196784133+DocAllfix@users.noreply.github.com"
+```
+
+Se cambi macchina, ripeti il comando: una `user.email` diversa blocca il deploy
+con «commit email could not be matched to a GitHub account».
 
 La CI su GitHub (`.github/workflows/ci.yml`) esegue formattazione, lint, typecheck, test e build a ogni push e pull request.
 
