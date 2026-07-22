@@ -10,18 +10,37 @@ type CampoPrev = keyof DatiPrevisionali6M;
 
 type Cursore<T> = { campo: T; label: string; /** consente valori negativi */ negativo?: boolean };
 
-/** I dieci valori di bilancio simulabili. */
-const STORICI: Cursore<CampoStorico>[] = [
-  { campo: "valProd", label: "Valore della produzione" },
-  { campo: "fatturato", label: "Fatturato" },
-  { campo: "ro", label: "Reddito operativo", negativo: true },
-  { campo: "capInvest", label: "Capitale investito" },
-  { campo: "patrNetto", label: "Patrimonio netto" },
-  { campo: "utileNetto", label: "Utile netto", negativo: true },
-  { campo: "ebitda", label: "EBITDA / MOL", negativo: true },
-  { campo: "pfn", label: "Debito finanziario netto (PFN)" },
-  { campo: "servizioDebito", label: "Servizio del debito annuo" },
-  { campo: "flussoCassa", label: "Flusso di cassa operativo", negativo: true },
+/**
+ * I dieci valori di bilancio, raggruppati con la stessa tassonomia del form
+ * "Nuovo esercizio": chi ha caricato i dati ritrova qui le stesse categorie,
+ * invece di una lista piatta di quattordici controlli.
+ */
+const GRUPPI: { titolo: string; cursori: Cursore<CampoStorico>[] }[] = [
+  {
+    titolo: "Conto economico",
+    cursori: [
+      { campo: "valProd", label: "Valore della produzione" },
+      { campo: "fatturato", label: "Fatturato" },
+      { campo: "ro", label: "Reddito operativo", negativo: true },
+      { campo: "ebitda", label: "EBITDA / MOL", negativo: true },
+      { campo: "utileNetto", label: "Utile netto", negativo: true },
+    ],
+  },
+  {
+    titolo: "Struttura patrimoniale",
+    cursori: [
+      { campo: "capInvest", label: "Capitale investito" },
+      { campo: "patrNetto", label: "Patrimonio netto" },
+    ],
+  },
+  {
+    titolo: "Struttura finanziaria",
+    cursori: [
+      { campo: "pfn", label: "Debito finanziario netto (PFN)" },
+      { campo: "servizioDebito", label: "Servizio del debito annuo" },
+      { campo: "flussoCassa", label: "Flusso di cassa operativo", negativo: true },
+    ],
+  },
 ];
 
 const PREVISIONALI: Cursore<CampoPrev>[] = [
@@ -168,23 +187,35 @@ export function Simulatore({
       <p className="mt-0.5 text-xs text-muted-foreground">
         Muovi un valore o scrivilo: indicatori, giudizi e punteggio si ricalcolano subito.
       </p>
+      {/* Il pannello scorre: dire quanti sono e come sono divisi evita che i
+          quattro previsionali in fondo restino invisibili. */}
+      <p className="mt-1.5 text-[11px] text-muted-foreground">
+        14 valori in 4 gruppi, previsionale compreso.
+      </p>
 
-      <div className="mt-4 space-y-4">
-        {STORICI.map((c) => (
-          <Riga
-            key={c.campo}
-            cursore={c}
-            valore={dati[c.campo]}
-            valoreSalvato={datiSalvati[c.campo]}
-            modificato={dati[c.campo] !== datiSalvati[c.campo]}
-            onCambio={onCambio}
-          />
-        ))}
-      </div>
+      {GRUPPI.map((g, i) => (
+        <section key={g.titolo} className={i === 0 ? "mt-4" : "mt-5 border-t border-border pt-4"}>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
+            {g.titolo}
+          </p>
+          <div className="mt-3 space-y-4">
+            {g.cursori.map((c) => (
+              <Riga
+                key={c.campo}
+                cursore={c}
+                valore={dati[c.campo]}
+                valoreSalvato={datiSalvati[c.campo]}
+                modificato={dati[c.campo] !== datiSalvati[c.campo]}
+                onCambio={onCambio}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
 
-      <div className="mt-5 border-t border-border pt-4">
+      <section className="mt-5 border-t border-border pt-4">
         <div className="flex items-baseline justify-between gap-2">
-          <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
             Previsionale 6 mesi
           </p>
           {/* Il DSCR che questi cursori comandano vive a fondo pagina: qui c'è
@@ -219,7 +250,7 @@ export function Simulatore({
             />
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

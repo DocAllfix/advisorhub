@@ -74,17 +74,14 @@ function ContenutoSidebar({
             </>
           )}
         </DropdownMenuTrigger>
+        {/* Qui vive solo ciò che riguarda lo studio: le azioni di account
+            stanno sotto l'avatar, dove le cerca chiunque. */}
         <DropdownMenuContent align="start" className="w-56">
           <DropdownMenuItem asChild>
             <Link href="/app/impostazioni">
               <Settings className="size-4" />
               Impostazioni studio
             </Link>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={esci}>
-            <LogOut className="size-4" />
-            Esci
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -159,23 +156,50 @@ function ContenutoSidebar({
           </button>
         )}
 
-        <div
-          className={cn(
-            "flex items-center gap-2.5 rounded-lg py-2",
-            ridotta ? "justify-center px-1" : "px-2.5",
-          )}
-          title={ridotta ? `${utente.nome} · ${utente.email}` : undefined}
-        >
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
-            {utente.nome.slice(0, 2).toUpperCase()}
-          </span>
-          {!ridotta && (
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium">{utente.nome}</span>
-              <span className="block truncate text-xs text-muted-foreground">{utente.email}</span>
+        {/* Il blocco utente era inerte: si cliccava il proprio nome e non
+            accadeva nulla, mentre "Esci" viveva nel menu dello studio. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={cn(
+              "flex w-full items-center gap-2.5 rounded-lg py-2 text-left transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+              ridotta ? "justify-center px-1" : "px-2.5",
+            )}
+            title={ridotta ? `${utente.nome} · ${utente.email}` : undefined}
+            aria-label={`Account di ${utente.nome}`}
+          >
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+              {utente.nome.slice(0, 2).toUpperCase()}
             </span>
-          )}
-        </div>
+            {!ridotta && (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{utente.nome}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {utente.email}
+                  </span>
+                </span>
+                <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+              </>
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="top" className="w-56">
+            {/* A sidebar estesa nome ed email sono già sul pulsante: ripeterli
+                qui sarebbe solo rumore. */}
+            {ridotta && (
+              <>
+                <div className="px-2 py-1.5">
+                  <p className="truncate text-sm font-medium">{utente.nome}</p>
+                  <p className="truncate text-xs text-muted-foreground">{utente.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem onSelect={esci}>
+              <LogOut className="size-4" />
+              Esci
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
