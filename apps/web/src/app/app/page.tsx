@@ -5,8 +5,59 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
-import { panoramicaStudio } from "@/lib/analisi/panoramica";
+import { panoramicaStudio, type FasciaSalute } from "@/lib/analisi/panoramica";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
+
+const FASCE: { chiave: FasciaSalute; label: string; colore: string }[] = [
+  { chiave: "eccellente", label: "Eccellenti", colore: "var(--primary)" },
+  { chiave: "sana", label: "Sane", colore: "var(--success)" },
+  { chiave: "migliorabile", label: "Migliorabili", colore: "var(--chart-3)" },
+  { chiave: "fragile", label: "Fragili", colore: "var(--warning)" },
+  { chiave: "ristrutturare", label: "Da ristrutturare", colore: "var(--danger)" },
+];
+
+function DistribuzioneSalute({
+  distribuzione,
+  totale,
+}: {
+  distribuzione: Record<FasciaSalute, number>;
+  totale: number;
+}) {
+  const presenti = FASCE.filter((f) => distribuzione[f.chiave] > 0);
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+        Distribuzione della salute
+      </p>
+      {/* Barra segmentata: un colpo d'occhio su come sta il portafoglio */}
+      <div className="mt-3 flex h-3 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
+        {presenti.map((f) => (
+          <div
+            key={f.chiave}
+            style={{
+              width: `${(distribuzione[f.chiave] / totale) * 100}%`,
+              backgroundColor: f.colore,
+            }}
+            className="h-full first:rounded-l-full last:rounded-r-full"
+          />
+        ))}
+      </div>
+      <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-5">
+        {FASCE.map((f) => (
+          <li key={f.chiave} className="flex items-center gap-2 text-sm">
+            <span
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: f.colore }}
+              aria-hidden
+            />
+            <span className="nums font-mono font-semibold">{distribuzione[f.chiave]}</span>
+            <span className="truncate text-xs text-muted-foreground">{f.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function Tessera({
   etichetta,
@@ -123,6 +174,12 @@ export default async function PanoramicaPage() {
           allerta={p.dscrSottoSoglia > 0}
         />
       </div>
+
+      {p.conAnalisi > 0 && (
+        <div className="mt-4">
+          <DistribuzioneSalute distribuzione={p.distribuzione} totale={p.conAnalisi} />
+        </div>
+      )}
 
       <section className="mt-8">
         <div className="flex items-center justify-between gap-4">

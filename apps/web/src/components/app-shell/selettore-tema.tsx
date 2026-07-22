@@ -2,42 +2,36 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 
-/** Il tema reale si conosce solo nel browser: finché non siamo idratati
- *  mostriamo l'icona neutra, senza far lampeggiare quella sbagliata. */
-const sottoscriviNulla = () => () => {};
-function useIdratato() {
-  return useSyncExternalStore(
-    sottoscriviNulla,
-    () => true,
-    () => false,
-  );
-}
-
+/**
+ * Passa tra scuro e chiaro. Per non provocare disallineamenti di idratazione
+ * (il tema reale si conosce solo nel browser) renderizziamo entrambe le icone
+ * e le etichette, alternandole via CSS con la classe `dark` sull'html: l'HTML
+ * del server e del client è identico, cambia solo cosa è visibile.
+ */
 export function SelettoreTema({ compatto = false }: { compatto?: boolean }) {
   const { resolvedTheme, setTheme } = useTheme();
-  const montato = useIdratato();
-
-  const scuro = resolvedTheme === "dark";
 
   return (
     <Button
       variant="ghost"
       size={compatto ? "icon" : "sm"}
-      onClick={() => setTheme(scuro ? "light" : "dark")}
-      aria-label={scuro ? "Passa al tema chiaro" : "Passa al tema scuro"}
-      title={scuro ? "Tema chiaro" : "Tema scuro"}
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      aria-label="Cambia tema chiaro/scuro"
+      title="Cambia tema"
       className={compatto ? "size-9" : "w-full justify-start gap-3 px-2.5"}
     >
-      {montato && scuro ? (
-        <Sun className="size-4.5 shrink-0" aria-hidden />
-      ) : (
-        <Moon className="size-4.5 shrink-0" aria-hidden />
+      {/* In scuro mostra il sole (per andare al chiaro); in chiaro la luna */}
+      <Sun className="hidden size-4.5 shrink-0 dark:block" aria-hidden />
+      <Moon className="size-4.5 shrink-0 dark:hidden" aria-hidden />
+      {!compatto && (
+        <>
+          <span className="hidden dark:inline">Tema chiaro</span>
+          <span className="dark:hidden">Tema scuro</span>
+        </>
       )}
-      {!compatto && <span>{montato && scuro ? "Tema chiaro" : "Tema scuro"}</span>}
     </Button>
   );
 }

@@ -42,6 +42,22 @@ const GRAFICI = [
   { chiave: "dscr" as const, titolo: "DSCR", suffisso: "", decimali: 2 },
 ];
 
+function Variazione({ delta, suffisso }: { delta: number; suffisso: string }) {
+  if (Math.abs(delta) < 0.005) {
+    return <span className="text-xs text-muted-foreground">invariato</span>;
+  }
+  const positivo = delta > 0;
+  return (
+    <span
+      className={`nums font-mono text-xs ${positivo ? "text-success-foreground" : "text-danger-foreground"}`}
+      title="Variazione rispetto all'esercizio precedente"
+    >
+      {positivo ? "▲" : "▼"} {formatNumero(Math.abs(delta), 2)}
+      {suffisso}
+    </span>
+  );
+}
+
 function MiniGrafico({
   titolo,
   suffisso,
@@ -54,11 +70,19 @@ function MiniGrafico({
   dati: { anno: number; valore: number | null }[];
 }) {
   const validi = dati.filter((d) => d.valore !== null);
+  // Variazione tra gli ultimi due esercizi con valore
+  const delta =
+    validi.length >= 2
+      ? validi[validi.length - 1]!.valore! - validi[validi.length - 2]!.valore!
+      : null;
   return (
     <figure className="rounded-xl border border-border bg-card p-4">
-      <figcaption className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-        {titolo}
-      </figcaption>
+      <div className="flex items-center justify-between gap-2">
+        <figcaption className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+          {titolo}
+        </figcaption>
+        {delta !== null && <Variazione delta={delta} suffisso={suffisso} />}
+      </div>
       {validi.length < 2 ? (
         <p className="mt-6 mb-6 text-center text-xs text-muted-foreground">
           Servono almeno due esercizi

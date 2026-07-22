@@ -5,11 +5,17 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { authClient } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 
 const etichettaRuolo: Record<string, string> = {
   owner: "Titolare",
@@ -18,9 +24,14 @@ const etichettaRuolo: Record<string, string> = {
 };
 
 export function PannelloStudio() {
+  const { data: sessione } = useSession();
   const { data: studio, isPending, refetch } = authClient.useActiveOrganization();
   const [emailInvito, setEmailInvito] = useState("");
   const [inCorso, setInCorso] = useState(false);
+  // null = non ancora toccato dall'utente: mostra il nome corrente dello studio
+  const [nomeModificato, setNomeModificato] = useState<string | null>(null);
+  const [salvandoNome, setSalvandoNome] = useState(false);
+  const nomeStudio = nomeModificato ?? studio?.name ?? "";
 
   // Fallback: sessione senza studio attivo (es. login precedente alla membership)
   useEffect(() => {
@@ -52,6 +63,47 @@ export function PannelloStudio() {
     toast.success("Invito creato: copia il link e invialo al collaboratore.");
   }
 
+  async function rinomina(e: React.FormEvent) {
+    e.preventDefault();
+    if (!studio || !nomeStudio.trim()) return;
+    setSalvandoNome(true);
+    const { error } = await authClient.organization.update({
+      organizationId: studio.id,
+      data: { name: nomeStudio.trim() },
+    });
+    setSalvandoNome(false);
+    if (error) {
+      toast.error(error.message ?? "Rinomina non riuscita.");
+      return;
+    }
+    setNomeModificato(null);
+    refetch();
+    toast.success("Nome dello studio aggiornato.");
+  }
+
+  async function revocaInvito(invitationId: string) {
+    const { error } = await authClient.organization.cancelInvitation({ invitationId });
+    if (error) {
+      toast.error(error.message ?? "Revoca non riuscita.");
+      return;
+    }
+    refetch();
+    toast.success("Invito revocato.");
+  }
+
+  async function rimuoviMembro(memberId: string, nome: string) {
+    const { error } = await authClient.organization.removeMember({
+      memberIdOrEmail: memberId,
+      organizationId: studio!.id,
+    });
+    if (error) {
+      toast.error(error.message ?? "Rimozione non riuscita.");
+      return;
+    }
+    refetch();
+    toast.success(`${nome} rimosso dallo studio.`);
+  }
+
   if (isPending || !studio) {
     return (
       <div className="space-y-3" aria-busy="true">
@@ -63,71 +115,138 @@ export function PannelloStudio() {
   }
 
   const invitiPendenti = (studio.invitations ?? []).filter((i) => i.status === "pending");
+  const ruoloMio = studio.members.find((m) => m.userId === sessione?.user.id)?.role;
+  const puoGestire = ruoloMio === "owner" || ruoloMio === "admin";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Persone dello studio</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ul className="divide-y divide-border">
-          {studio.members.map((m) => (
-            <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{m.user.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{m.user.email}</p>
-              </div>
-              <JudgmentBadge tone={m.role === "owner" ? "eccellente" : "nd"}>
-                {etichettaRuolo[m.role] ?? m.role}
-              </JudgmentBadge>
-            </li>
-          ))}
-        </ul>
-
-        <form onSubmit={invita} className="mt-5 grid gap-3 border-t border-border pt-5">
-          <div className="grid gap-1.5">
-            <Label htmlFor="invito-email">Invita un collaboratore</Label>
-            <div className="flex gap-2">
+    <div className="space-y-6">
+      {puoGestire && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Nome dello studio</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={rinomina} className="flex gap-2">
               <Input
-                id="invito-email"
-                type="email"
-                placeholder="collaboratore@studio.it"
-                value={emailInvito}
-                onChange={(e) => setEmailInvito(e.target.value)}
+                aria-label="Nome dello studio"
+                value={nomeStudio}
+                onChange={(e) => setNomeModificato(e.target.value)}
               />
-              <Button type="submit" disabled={inCorso || !emailInvito}>
-                {inCorso ? "Invio…" : "Invita"}
+              <Button
+                type="submit"
+                disabled={salvandoNome || !nomeStudio.trim() || nomeStudio.trim() === studio.name}
+              >
+                {salvandoNome ? "Salvataggio…" : "Salva"}
               </Button>
-            </div>
-          </div>
-        </form>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
-        {invitiPendenti.length > 0 && (
-          <div className="mt-5">
-            <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-              Inviti in attesa
-            </p>
-            <ul className="mt-2 space-y-2">
-              {invitiPendenti.map((i) => (
-                <li key={i.id} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="truncate">{i.email}</span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/invito/${i.id}`);
-                      toast.success("Link di invito copiato.");
-                    }}
-                  >
-                    Copia link
-                  </Button>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Persone dello studio</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="divide-y divide-border">
+            {studio.members.map((m) => {
+              const sonoIo = m.userId === sessione?.user.id;
+              const rimovibile = puoGestire && !sonoIo && m.role !== "owner";
+              return (
+                <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {m.user.name}
+                      {sonoIo && <span className="ml-2 text-xs text-muted-foreground">(tu)</span>}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{m.user.email}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <JudgmentBadge tone={m.role === "owner" ? "eccellente" : "nd"}>
+                      {etichettaRuolo[m.role] ?? m.role}
+                    </JudgmentBadge>
+                    {rimovibile && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" aria-label={`Gestisci ${m.user.name}`}>
+                            Gestisci
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => rimuoviMembro(m.id, m.user.name)}
+                          >
+                            Rimuovi dallo studio
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              );
+            })}
+          </ul>
+
+          {puoGestire && (
+            <form onSubmit={invita} className="mt-5 grid gap-3 border-t border-border pt-5">
+              <div className="grid gap-1.5">
+                <Label htmlFor="invito-email">Invita un collaboratore</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="invito-email"
+                    type="email"
+                    placeholder="collaboratore@studio.it"
+                    value={emailInvito}
+                    onChange={(e) => setEmailInvito(e.target.value)}
+                  />
+                  <Button type="submit" disabled={inCorso || !emailInvito}>
+                    {inCorso ? "Invio…" : "Invita"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {invitiPendenti.length > 0 && (
+            <div className="mt-5">
+              <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+                Inviti in attesa
+              </p>
+              <ul className="mt-2 space-y-2">
+                {invitiPendenti.map((i) => (
+                  <li key={i.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="truncate">{i.email}</span>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/invito/${i.id}`);
+                          toast.success("Link di invito copiato.");
+                        }}
+                      >
+                        Copia link
+                      </Button>
+                      {puoGestire && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => revocaInvito(i.id)}
+                        >
+                          Revoca
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

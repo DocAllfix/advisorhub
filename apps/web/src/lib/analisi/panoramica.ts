@@ -15,6 +15,8 @@ export type RigaPanoramica = {
   dscrProspettico: number | null;
 };
 
+export type FasciaSalute = "eccellente" | "sana" | "migliorabile" | "fragile" | "ristrutturare";
+
 export type Panoramica = {
   nomeStudio: string;
   totaleClienti: number;
@@ -23,8 +25,17 @@ export type Panoramica = {
   inAllerta: number;
   dscrSottoSoglia: number;
   dscr6mSottoSoglia: number;
+  distribuzione: Record<FasciaSalute, number>;
   righe: RigaPanoramica[];
 };
+
+function fasciaDi(score: number): FasciaSalute {
+  if (score < 30) return "ristrutturare";
+  if (score < 55) return "fragile";
+  if (score < 75) return "migliorabile";
+  if (score < 90) return "sana";
+  return "eccellente";
+}
 
 /**
  * Fotografia del portafoglio: per ogni cliente l'analisi dell'esercizio più
@@ -72,7 +83,17 @@ export async function panoramicaStudio(): Promise<Panoramica> {
       ? Math.round(analizzati.reduce((s, r) => s + (r.score ?? 0), 0) / analizzati.length)
       : null;
 
+  const distribuzione: Record<FasciaSalute, number> = {
+    eccellente: 0,
+    sana: 0,
+    migliorabile: 0,
+    fragile: 0,
+    ristrutturare: 0,
+  };
+  for (const r of analizzati) distribuzione[fasciaDi(r.score!)]++;
+
   return {
+    distribuzione,
     nomeStudio,
     totaleClienti: righe.length,
     conAnalisi: analizzati.length,

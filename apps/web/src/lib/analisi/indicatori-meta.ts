@@ -17,9 +17,16 @@ export interface MetaIndicatore {
   valore: (a: Analisi, d: DatiBilancio) => string;
   /** Riga contestuale sotto il valore (numeri di riferimento). */
   extra: (a: Analisi, d: DatiBilancio) => string;
+  /**
+   * Posizione 0-100 dell'indicatore sulla sua scala, per l'anello di stato.
+   * Mappature ereditate dal prototipo (bounded), così l'anello varia in modo
+   * leggibile invece di saturare a 100 per ogni "Ottimo".
+   */
+  percentuale: (a: Analisi, d: DatiBilancio) => number;
 }
 
 const pct = (v: number | null) => (v === null ? "n.d." : `${formatNumero(v, 2)}%`);
+const limita = (n: number) => Math.max(0, Math.min(100, n));
 
 export const INDICATORI: MetaIndicatore[] = [
   {
@@ -31,6 +38,7 @@ export const INDICATORI: MetaIndicatore[] = [
       "Misura quanto rende ogni euro di produzione in termini di reddito operativo. Indica potere di pricing e controllo dei costi caratteristici.",
     valore: (a) => pct(a.indicatori.ros),
     extra: (_, d) => `Valore produzione: ${formatEuro(d.valProd)}`,
+    percentuale: (a) => (a.indicatori.ros === null ? 0 : limita((a.indicatori.ros / 15) * 100)),
   },
   {
     chiave: "turnover",
@@ -45,6 +53,8 @@ export const INDICATORI: MetaIndicatore[] = [
       a.indicatori.ic === null
         ? "Capitale investito a 0"
         : `IC ${formatNumero(a.indicatori.ic, 2)} € di capitale per 1 € di fatturato`,
+    percentuale: (a) =>
+      a.indicatori.turnover === null ? 0 : limita((a.indicatori.turnover / 3) * 100),
   },
   {
     chiave: "roi",
@@ -58,6 +68,7 @@ export const INDICATORI: MetaIndicatore[] = [
       a.indicatori.ros !== null && a.indicatori.turnover !== null
         ? `Approssimazione ROS × Turnover: ${formatNumero((a.indicatori.ros / 100) * a.indicatori.turnover * 100, 2)}%`
         : "Approssimazione non calcolabile",
+    percentuale: (a) => (a.indicatori.roi === null ? 0 : limita((a.indicatori.roi / 15) * 100)),
   },
   {
     chiave: "roiI",
@@ -71,6 +82,7 @@ export const INDICATORI: MetaIndicatore[] = [
       a.indicatori.roi === null
         ? "Soglia sviluppo 5%: non calcolabile"
         : `Soglia sviluppo 5%: ${a.indicatori.roi >= 5 ? "superata" : "non raggiunta"}`,
+    percentuale: (a) => (a.indicatori.roi === null ? 0 : limita((a.indicatori.roi / 12) * 100)),
   },
   {
     chiave: "roe",
@@ -81,6 +93,7 @@ export const INDICATORI: MetaIndicatore[] = [
       "Quanto rende il capitale di rischio. È la sintesi finale per il socio: remunerazione al netto di tasse, interessi e componenti straordinarie.",
     valore: (a) => pct(a.indicatori.roe),
     extra: (_, d) => `Patrimonio netto: ${formatEuro(d.patrNetto)}`,
+    percentuale: (a) => (a.indicatori.roe === null ? 0 : limita((a.indicatori.roe / 20) * 100)),
   },
   {
     chiave: "gi",
@@ -96,6 +109,8 @@ export const INDICATORI: MetaIndicatore[] = [
     },
     extra: (a, d) =>
       `Inverso EBITDA/PFN ${formatNumero(a.indicatori.invGi, 1)}% — ${formatEuro(d.pfn)} / ${formatEuro(d.ebitda)}`,
+    percentuale: (a, d) =>
+      d.ebitda <= 0 ? 5 : a.indicatori.gi === null ? 0 : limita(100 - (a.indicatori.gi / 6) * 100),
   },
   {
     chiave: "dscr",
@@ -111,5 +126,11 @@ export const INDICATORI: MetaIndicatore[] = [
     },
     extra: (_, d) =>
       `${formatEuro(d.flussoCassa)} / ${formatEuro(d.servizioDebito)} — soglia bancaria 1,2`,
+    percentuale: (a) =>
+      a.indicatori.dscr === null
+        ? 0
+        : a.indicatori.dscr >= 99
+          ? 100
+          : limita((a.indicatori.dscr / 2.2) * 100),
   },
 ];

@@ -87,7 +87,10 @@ export function CardIndicatore({
           )}
         </div>
         {/* L'anello è ridondante col badge: il colore non è mai l'unico canale */}
-        <AnelloIndicatore percentuale={giudizio.score} colore={coloreTono[giudizio.tone]} />
+        <AnelloIndicatore
+          percentuale={meta.percentuale(analisi, dati)}
+          colore={coloreTono[giudizio.tone]}
+        />
       </div>
 
       <p className="mt-2 text-xs text-muted-foreground">{meta.extra(analisi, dati)}</p>
