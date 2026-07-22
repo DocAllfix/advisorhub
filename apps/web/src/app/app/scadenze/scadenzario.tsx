@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
+import { MESSAGGIO_DEMO } from "@/lib/demo";
 import { completaScadenza, eliminaScadenza } from "@/lib/scadenze/actions";
 import type { ScadenzaLista } from "@/lib/scadenze/queries";
 import { etichettaCategoria } from "@/lib/scadenze/schema";
@@ -49,9 +50,11 @@ function StatoScadenza({ s }: { s: ScadenzaLista }) {
 export function Scadenzario({
   scadenze,
   clienti,
+  demo,
 }: {
   scadenze: ScadenzaLista[];
   clienti: { id: string; ragioneSociale: string }[];
+  demo: boolean;
 }) {
   const router = useRouter();
   const [filtro, setFiltro] = useState<Filtro>("da-fare");
@@ -65,10 +68,12 @@ export function Scadenzario({
   }, [scadenze, filtro]);
 
   function apriNuova() {
+    if (demo) return toast.error(MESSAGGIO_DEMO);
     setInModifica(null);
     setFormAperto(true);
   }
   function apriModifica(s: ScadenzaLista) {
+    if (demo) return toast.error(MESSAGGIO_DEMO);
     setInModifica({
       id: s.id,
       titolo: s.titolo,

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 
-import { requireStudio } from "@/lib/auth-helpers";
+import { requireStudio, vietatoInDemo } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { auditLog, clienti } from "@/lib/schema-dominio";
 
@@ -25,7 +25,10 @@ function erroreValidazione(parsed: {
 
 /** Crea un cliente nello studio corrente. */
 export async function creaCliente(input: ClienteInput): Promise<RisultatoAction> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const parsed = clienteSchema.safeParse(input);
   if (!parsed.success) return erroreValidazione(parsed);
 
@@ -49,7 +52,10 @@ export async function creaCliente(input: ClienteInput): Promise<RisultatoAction>
 
 /** Modifica un cliente, solo se appartiene allo studio corrente. */
 export async function modificaCliente(id: string, input: ClienteInput): Promise<RisultatoAction> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const parsed = clienteSchema.safeParse(input);
   if (!parsed.success) return erroreValidazione(parsed);
 
@@ -76,7 +82,10 @@ export async function modificaCliente(id: string, input: ClienteInput): Promise<
 
 /** Soft-delete (archivia) un cliente dello studio corrente. */
 export async function archiviaCliente(id: string): Promise<RisultatoAction> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const archiviati = await db
     .update(clienti)
     .set({ archiviatoAt: new Date() })
@@ -99,7 +108,10 @@ export async function archiviaCliente(id: string): Promise<RisultatoAction> {
 
 /** Ripristina un cliente archiviato dello studio corrente. */
 export async function ripristinaCliente(id: string): Promise<RisultatoAction> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const ripristinati = await db
     .update(clienti)
     .set({ archiviatoAt: null })

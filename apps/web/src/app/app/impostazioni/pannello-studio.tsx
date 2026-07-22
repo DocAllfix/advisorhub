@@ -16,6 +16,7 @@ import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient, useSession } from "@/lib/auth-client";
+import { MESSAGGIO_DEMO } from "@/lib/demo";
 
 const etichettaRuolo: Record<string, string> = {
   owner: "Titolare",
@@ -23,7 +24,7 @@ const etichettaRuolo: Record<string, string> = {
   member: "Collaboratore",
 };
 
-export function PannelloStudio() {
+export function PannelloStudio({ demo }: { demo: boolean }) {
   const { data: sessione } = useSession();
   const { data: studio, isPending, refetch } = authClient.useActiveOrganization();
   const [emailInvito, setEmailInvito] = useState("");
@@ -48,6 +49,7 @@ export function PannelloStudio() {
 
   async function invita(e: React.FormEvent) {
     e.preventDefault();
+    if (demo) return toast.error(MESSAGGIO_DEMO);
     setInCorso(true);
     const { error } = await authClient.organization.inviteMember({
       email: emailInvito,
@@ -65,6 +67,7 @@ export function PannelloStudio() {
 
   async function rinomina(e: React.FormEvent) {
     e.preventDefault();
+    if (demo) return toast.error(MESSAGGIO_DEMO);
     if (!studio || !nomeStudio.trim()) return;
     setSalvandoNome(true);
     const { error } = await authClient.organization.update({
@@ -92,6 +95,7 @@ export function PannelloStudio() {
   }
 
   async function rimuoviMembro(memberId: string, nome: string) {
+    if (demo) return toast.error(MESSAGGIO_DEMO);
     const { error } = await authClient.organization.removeMember({
       memberIdOrEmail: memberId,
       organizationId: studio!.id,
@@ -120,6 +124,16 @@ export function PannelloStudio() {
 
   return (
     <div className="space-y-6">
+      {demo && (
+        <div
+          role="status"
+          className="rounded-lg border border-warning/40 bg-warning-subtle px-4 py-3 text-sm text-warning-foreground"
+        >
+          <span className="font-semibold">Versione dimostrativa.</span> Rinomina dello studio,
+          inviti e gestione delle persone sono disattivati: puoi consultarli, non modificarli.
+        </div>
+      )}
+
       {puoGestire && (
         <section>
           <MicroEtichetta come="h2">Nome dello studio</MicroEtichetta>
@@ -129,10 +143,13 @@ export function PannelloStudio() {
                 aria-label="Nome dello studio"
                 value={nomeStudio}
                 onChange={(e) => setNomeModificato(e.target.value)}
+                disabled={demo}
               />
               <Button
                 type="submit"
-                disabled={salvandoNome || !nomeStudio.trim() || nomeStudio.trim() === studio.name}
+                disabled={
+                  demo || salvandoNome || !nomeStudio.trim() || nomeStudio.trim() === studio.name
+                }
               >
                 {salvandoNome ? "Salvataggio…" : "Salva"}
               </Button>
@@ -195,8 +212,9 @@ export function PannelloStudio() {
                     placeholder="collaboratore@studio.it"
                     value={emailInvito}
                     onChange={(e) => setEmailInvito(e.target.value)}
+                    disabled={demo}
                   />
-                  <Button type="submit" disabled={inCorso || !emailInvito}>
+                  <Button type="submit" disabled={demo || inCorso || !emailInvito}>
                     {inCorso ? "Invio…" : "Invita"}
                   </Button>
                 </div>

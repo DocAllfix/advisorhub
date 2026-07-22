@@ -11,7 +11,7 @@ import {
 import { revalidatePath } from "next/cache";
 import { and, desc, eq, sql } from "drizzle-orm";
 
-import { requireStudio } from "@/lib/auth-helpers";
+import { requireStudio, vietatoInDemo } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { analisi, auditLog, clienti, esercizi } from "@/lib/schema-dominio";
 
@@ -75,7 +75,10 @@ export async function creaEsercizio(
   clienteId: string,
   input: EsercizioInput,
 ): Promise<RisultatoEsercizio> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const cliente = await verificaCliente(clienteId, organizationId);
   if (!cliente) return { ok: false, errore: "Cliente non trovato." };
 
@@ -119,7 +122,10 @@ export async function modificaEsercizio(
   esercizioId: string,
   input: EsercizioInput,
 ): Promise<RisultatoEsercizio> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const parsed = esercizioSchema.safeParse(input);
   if (!parsed.success) return erroreValidazione(parsed.error.issues);
   const { dati, previsionale } = separaEsercizio(parsed.data);
@@ -170,7 +176,10 @@ export async function modificaEsercizio(
 }
 
 export async function eliminaEsercizio(esercizioId: string): Promise<RisultatoEsercizio> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const [esistente] = await db
     .select({ id: esercizi.id, clienteId: esercizi.clienteId })
     .from(esercizi)

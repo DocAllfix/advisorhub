@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
 
 import { EsercizioForm } from "@/app/app/clienti/esercizio-form";
+import { AvvisoDemo } from "@/components/avviso-demo";
+import { requireStudio } from "@/lib/auth-helpers";
 import { getCliente } from "@/lib/clienti/queries";
 
 export default async function NuovoEsercizioPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const { demo } = await requireStudio();
   const cliente = await getCliente(id);
   if (!cliente) notFound();
 
@@ -20,7 +23,14 @@ export default async function NuovoEsercizioPage({ params }: { params: Promise<{
         </p>
       </header>
       <div className="mt-8">
-        <EsercizioForm clienteId={cliente.id} ragioneSociale={cliente.ragioneSociale} />
+        {demo ? (
+          <AvvisoDemo
+            titolo="Non disponibile nella versione dimostrativa"
+            testo="Nella demo i due clienti di esempio non si possono modificare. Puoi comunque esplorarne l'analisi e usare il simulatore."
+          />
+        ) : (
+          <EsercizioForm clienteId={cliente.id} ragioneSociale={cliente.ragioneSociale} />
+        )}
       </div>
     </div>
   );

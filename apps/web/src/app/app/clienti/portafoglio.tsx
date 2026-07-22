@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
 import { toniGrafica, toniTesto } from "@/lib/analisi/toni";
+import { MESSAGGIO_DEMO } from "@/lib/demo";
 import {
   Table,
   TableBody,
@@ -169,9 +170,11 @@ type Vista = "attivi" | "allerta" | "archiviati";
 export function Portafoglio({
   clienti,
   archiviati,
+  demo,
 }: {
   clienti: ClienteLista[];
   archiviati: ClienteArchiviato[];
+  demo: boolean;
 }) {
   const router = useRouter();
   const [vista, setVista] = useState<Vista>("attivi");
@@ -181,10 +184,12 @@ export function Portafoglio({
   const [inModifica, setInModifica] = useState<ClienteModificabile | null>(null);
 
   function apriNuovo() {
+    if (demo) return toast.error(MESSAGGIO_DEMO);
     setInModifica(null);
     setFormAperto(true);
   }
   function apriModifica(c: ClienteLista) {
+    if (demo) return toast.error(MESSAGGIO_DEMO);
     setInModifica(c);
     setFormAperto(true);
   }

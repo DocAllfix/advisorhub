@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { MESSAGGIO_DEMO } from "@/lib/demo";
 import { eliminaEsercizio, esportaEserciziCsv } from "@/lib/esercizi/actions";
 
 export type EsercizioRiga = {
@@ -38,12 +39,27 @@ export type EsercizioRiga = {
 export function EserciziPannello({
   clienteId,
   esercizi,
+  demo,
 }: {
   clienteId: string;
   esercizi: EsercizioRiga[];
+  demo: boolean;
 }) {
   const router = useRouter();
   const [esportando, setEsportando] = useState(false);
+
+  // "Nuovo esercizio" e "Modifica" portano a un form che in demo mostra un
+  // avviso: le intercetto qui per dare subito il messaggio, senza far navigare.
+  function bloccaSeDemo(vai: () => void) {
+    return (ev: { preventDefault: () => void }) => {
+      if (demo) {
+        ev.preventDefault();
+        toast.error(MESSAGGIO_DEMO);
+        return;
+      }
+      vai();
+    };
+  }
 
   async function esporta() {
     setEsportando(true);
@@ -90,7 +106,10 @@ export function EserciziPannello({
             </Button>
           )}
           <Button size="sm" asChild>
-            <Link href={`/app/clienti/${clienteId}/esercizi/nuovo`}>
+            <Link
+              href={`/app/clienti/${clienteId}/esercizi/nuovo`}
+              onClick={bloccaSeDemo(() => {})}
+            >
               <Plus className="size-4" />
               Nuovo esercizio
             </Link>

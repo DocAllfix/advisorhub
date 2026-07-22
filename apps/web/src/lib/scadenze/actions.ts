@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 
-import { requireStudio } from "@/lib/auth-helpers";
+import { requireStudio, vietatoInDemo } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { auditLog, clienti, scadenze } from "@/lib/schema-dominio";
 
@@ -44,7 +44,10 @@ function normalizza(input: ScadenzaInput) {
 }
 
 export async function creaScadenza(input: ScadenzaInput): Promise<RisultatoScadenza> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const parsed = scadenzaSchema.safeParse(input);
   if (!parsed.success) return erroreValidazione(parsed.error.issues);
   const dati = normalizza(parsed.data);
@@ -83,7 +86,10 @@ export async function modificaScadenza(
   id: string,
   input: ScadenzaInput,
 ): Promise<RisultatoScadenza> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const parsed = scadenzaSchema.safeParse(input);
   if (!parsed.success) return erroreValidazione(parsed.error.issues);
   const dati = normalizza(parsed.data);
@@ -124,7 +130,10 @@ export async function completaScadenza(
   id: string,
   completata: boolean,
 ): Promise<RisultatoScadenza> {
-  const { organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { organizationId } = studio;
   const aggiornate = await db
     .update(scadenze)
     .set({ completataAt: completata ? new Date() : null })
@@ -138,7 +147,10 @@ export async function completaScadenza(
 }
 
 export async function eliminaScadenza(id: string): Promise<RisultatoScadenza> {
-  const { userId, organizationId } = await requireStudio();
+  const studio = await requireStudio();
+  const bloccato = vietatoInDemo(studio);
+  if (bloccato) return bloccato;
+  const { userId, organizationId } = studio;
   const eliminate = await db
     .delete(scadenze)
     .where(and(eq(scadenze.id, id), eq(scadenze.organizationId, organizationId)))

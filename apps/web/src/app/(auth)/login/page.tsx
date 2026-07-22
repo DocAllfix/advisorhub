@@ -9,6 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 
+/** Coerente con la pagina di registrazione: se è chiusa, non si invita ad andarci. */
+const registrazioneAperta =
+  process.env.NEXT_PUBLIC_REGISTRAZIONE_APERTA === "true" ||
+  process.env.NODE_ENV === "development";
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -70,12 +75,14 @@ function LoginForm() {
           {inCorso ? "Accesso in corso…" : "Accedi"}
         </Button>
       </form>
-      <p className="mt-7 text-sm text-muted-foreground">
-        Nuovo studio?{" "}
-        <Link href="/registrazione" className="font-medium text-primary hover:underline">
-          Registralo
-        </Link>
-      </p>
+      {registrazioneAperta && (
+        <p className="mt-7 text-sm text-muted-foreground">
+          Nuovo studio?{" "}
+          <Link href="/registrazione" className="font-medium text-primary hover:underline">
+            Registralo
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

@@ -21,6 +21,17 @@ function slugDaNome(nome: string): string {
   );
 }
 
+/**
+ * Creazione di nuovi studi dalla pagina pubblica: chiusa in produzione, dove
+ * gli accessi vengono consegnati dallo studio titolare del prodotto. Resta
+ * aperta in sviluppo, così i collaudi automatici possono creare studi.
+ * L'ingresso su invito (?invito=<id>) non è mai bloccato: serve ai
+ * collaboratori degli studi reali.
+ */
+const registrazioneAperta =
+  process.env.NEXT_PUBLIC_REGISTRAZIONE_APERTA === "true" ||
+  process.env.NODE_ENV === "development";
+
 function RegistrazioneForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -76,6 +87,25 @@ function RegistrazioneForm() {
     }
     setInCorso(false);
     router.push("/app");
+  }
+
+  // Nessun invito e registrazione chiusa: si spiega come si ottiene l'accesso
+  if (!invitoId && !registrazioneAperta) {
+    return (
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">Accesso su richiesta</h1>
+        <p className="mt-2.5 text-base text-muted-foreground">
+          L&apos;apertura di un nuovo studio non avviene da qui: le credenziali vengono
+          consegnate direttamente dopo l&apos;attivazione del servizio.
+        </p>
+        <p className="mt-6 text-sm text-muted-foreground">
+          Hai già un account?{" "}
+          <Link href="/login" className="font-medium text-primary hover:underline">
+            Accedi
+          </Link>
+        </p>
+      </div>
+    );
   }
 
   return (

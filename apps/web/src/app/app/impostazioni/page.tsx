@@ -1,6 +1,9 @@
+import { requireStudio } from "@/lib/auth-helpers";
+
 import { PannelloStudio } from "./pannello-studio";
 
-export default function ImpostazioniPage() {
+export default async function ImpostazioniPage() {
+  const { demo } = await requireStudio();
   return (
     <div>
       <header>
@@ -10,7 +13,7 @@ export default function ImpostazioniPage() {
         </p>
       </header>
       <div className="mt-8">
-        <PannelloStudio />
+        <PannelloStudio demo={demo} />
       </div>
     </div>
   );

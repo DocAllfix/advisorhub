@@ -89,6 +89,25 @@ L'app è un monolite Next.js: funziona su qualsiasi hosting che supporti Node.
 4. Applica le migration verso il database di produzione: `pnpm --filter web db:migrate`
 5. Verifica il primo accesso: registrazione studio, creazione cliente, esercizio, analisi, report
 
+### Versione dimostrativa
+
+Uno studio può essere marcato come dimostrativo: resta consultabile (analisi,
+simulatore, download del report) ma ogni scrittura è rifiutata dal server con
+un messaggio esplicito, così i due clienti di esempio non sono alterabili.
+
+```bash
+node scripts/imposta-demo.mjs demo@advisorhub.it        # attiva
+node scripts/imposta-demo.mjs demo@advisorhub.it --off  # disattiva
+```
+
+La creazione di nuovi studi dalla pagina pubblica è chiusa in produzione: gli
+accessi si consegnano a mano. Resta aperta in sviluppo (i collaudi ne creano),
+e l'ingresso su invito non è mai bloccato.
+
+| Variabile | Effetto |
+| --- | --- |
+| `NEXT_PUBLIC_REGISTRAZIONE_APERTA=true` | Riapre la registrazione pubblica anche in produzione |
+
 ### Identità git
 
 Vercel rifiuta di costruire un commit il cui autore non corrisponde a un account

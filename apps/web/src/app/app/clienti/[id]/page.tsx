@@ -10,6 +10,7 @@ import { MicroEtichetta } from "@/components/ui/micro-etichetta";
 import { datiDa, previsionaleDa } from "@/lib/analisi/da-esercizio";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
 import { toniTesto } from "@/lib/analisi/toni";
+import { requireStudio } from "@/lib/auth-helpers";
 import { getCliente } from "@/lib/clienti/queries";
 import { etichettaDimensione } from "@/lib/clienti/schema";
 import { listEsercizi } from "@/lib/esercizi/queries";
@@ -18,6 +19,7 @@ import { EserciziPannello } from "../esercizi-pannello";
 
 export default async function SchedaClientePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const { demo } = await requireStudio();
   const cliente = await getCliente(id);
   if (!cliente) notFound();
 
@@ -102,7 +104,7 @@ export default async function SchedaClientePage({ params }: { params: Promise<{ 
       )}
 
       <div className="mt-8">
-        <EserciziPannello clienteId={cliente.id} esercizi={righe} />
+        <EserciziPannello clienteId={cliente.id} esercizi={righe} demo={demo} />
       </div>
     </div>
   );

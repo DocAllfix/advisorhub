@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { EsercizioForm } from "@/app/app/clienti/esercizio-form";
+import { AvvisoDemo } from "@/components/avviso-demo";
+import { requireStudio } from "@/lib/auth-helpers";
 import { getEsercizio } from "@/lib/esercizi/queries";
 import type { EsercizioInput } from "@/lib/esercizi/schema";
 
@@ -10,6 +12,7 @@ export default async function ModificaEsercizioPage({
   params: Promise<{ id: string; esercizioId: string }>;
 }) {
   const { esercizioId } = await params;
+  const { demo } = await requireStudio();
   const row = await getEsercizio(esercizioId);
   if (!row) notFound();
   const e = row.esercizio;
@@ -41,12 +44,19 @@ export default async function ModificaEsercizioPage({
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Modifica esercizio {e.anno}</h1>
       </header>
       <div className="mt-8">
-        <EsercizioForm
-          clienteId={row.clienteId}
-          ragioneSociale={row.ragioneSociale}
-          esercizioId={e.id}
-          valoriIniziali={valori}
-        />
+        {demo ? (
+          <AvvisoDemo
+            titolo="Non disponibile nella versione dimostrativa"
+            testo="Nella demo i dati dei clienti di esempio non si possono modificare. Puoi comunque esplorarne l'analisi e usare il simulatore."
+          />
+        ) : (
+          <EsercizioForm
+            clienteId={row.clienteId}
+            ragioneSociale={row.ragioneSociale}
+            esercizioId={e.id}
+            valoriIniziali={valori}
+          />
+        )}
       </div>
     </div>
   );
