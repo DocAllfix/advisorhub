@@ -6,8 +6,7 @@ import {
   type DatiBilancio,
   type DatiPrevisionali6M,
 } from "@advisorhub/engine";
-import { Printer, RotateCcw, SlidersHorizontal } from "lucide-react";
-import Link from "next/link";
+import { Download, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -154,16 +153,16 @@ export function AnalisiDashboard({
             <SlidersHorizontal className="size-4" />
             {inSimulazione ? "Esci dalla simulazione" : "Simula"}
           </Button>
+          {/* Il PDF si scarica: nessuna pagina intermedia, nessun dialogo di stampa */}
           {!inSimulazione && (
             <Button asChild>
-              <Link
-                href={`/stampa/${clienteId}?esercizio=${esercizioSelezionatoId}`}
-                target="_blank"
-                rel="noopener"
+              <a
+                href={`/api/report/${clienteId}?esercizio=${esercizioSelezionatoId}`}
+                download
               >
-                <Printer className="size-4" />
-                Stampa / Scarica PDF
-              </Link>
+                <Download className="size-4" />
+                Scarica PDF
+              </a>
             </Button>
           )}
         </div>

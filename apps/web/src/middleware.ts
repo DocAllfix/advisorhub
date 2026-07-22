@@ -17,5 +17,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/stampa/:path*"],
+  // Il report è ora una route API che scarica il PDF: protetta dal tenant
+  // scoping di getCliente/listEsercizi, non serve la guardia sul cookie qui.
+  matcher: ["/app/:path*"],
 };
