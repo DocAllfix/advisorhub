@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MicroEtichetta } from "@/components/ui/micro-etichetta";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -121,11 +121,9 @@ export function PannelloStudio() {
   return (
     <div className="space-y-6">
       {puoGestire && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Nome dello studio</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <section>
+          <MicroEtichetta come="h2">Nome dello studio</MicroEtichetta>
+          <div className="mt-3 border-t border-hairline pt-4">
             <form onSubmit={rinomina} className="flex gap-2">
               <Input
                 aria-label="Nome dello studio"
@@ -139,16 +137,14 @@ export function PannelloStudio() {
                 {salvandoNome ? "Salvataggio…" : "Salva"}
               </Button>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Persone dello studio</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="divide-y divide-border">
+      <section>
+        <MicroEtichetta come="h2">Persone dello studio</MicroEtichetta>
+        <div className="mt-3 border-t border-hairline pt-4">
+          <ul className="divide-y divide-hairline">
             {studio.members.map((m) => {
               const sonoIo = m.userId === sessione?.user.id;
               const rimovibile = puoGestire && !sonoIo && m.role !== "owner";
@@ -189,7 +185,7 @@ export function PannelloStudio() {
           </ul>
 
           {puoGestire && (
-            <form onSubmit={invita} className="mt-5 grid gap-3 border-t border-border pt-5">
+            <form onSubmit={invita} className="mt-5 grid gap-3 border-t border-hairline pt-5">
               <div className="grid gap-1.5">
                 <Label htmlFor="invito-email">Invita un collaboratore</Label>
                 <div className="flex gap-2">
@@ -245,8 +241,8 @@ export function PannelloStudio() {
               </ul>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   );
 }

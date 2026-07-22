@@ -1,45 +1,15 @@
-import { analizza, type DatiBilancio, type DatiPrevisionali6M } from "@advisorhub/engine";
+import { analizza } from "@advisorhub/engine";
 import { FileBarChart } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { datiDa, previsionaleDa } from "@/lib/analisi/da-esercizio";
 import { getCliente } from "@/lib/clienti/queries";
 import { listEsercizi } from "@/lib/esercizi/queries";
 
 import { AnalisiDashboard } from "./analisi-dashboard";
-
-type RigaEsercizio = Awaited<ReturnType<typeof listEsercizi>>[number];
-
-function datiDa(e: RigaEsercizio): DatiBilancio {
-  return {
-    valProd: e.valProd,
-    fatturato: e.fatturato,
-    ro: e.ro,
-    capInvest: e.capInvest,
-    patrNetto: e.patrNetto,
-    utileNetto: e.utileNetto,
-    ebitda: e.ebitda,
-    pfn: e.pfn,
-    servizioDebito: e.servizioDebito,
-    flussoCassa: e.flussoCassa,
-  };
-}
-
-function previsionaleDa(e: RigaEsercizio): DatiPrevisionali6M | null {
-  return e.liquiditaIniziale !== null &&
-    e.entrate6m !== null &&
-    e.uscite6m !== null &&
-    e.debito6m !== null
-    ? {
-        liquiditaIniziale: e.liquiditaIniziale,
-        entrate6m: e.entrate6m,
-        uscite6m: e.uscite6m,
-        debito6m: e.debito6m,
-      }
-    : null;
-}
 
 export default async function AnalisiPage({
   params,

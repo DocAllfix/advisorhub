@@ -1,7 +1,7 @@
 "use client";
 
 import { formatEuro } from "@advisorhub/engine";
-import { BarChart3, Download, FileBarChart, MoreHorizontal, Plus } from "lucide-react";
+import { Download, FileBarChart, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -78,23 +78,16 @@ export function EserciziPannello({
   return (
     <section>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-sm font-semibold tracking-wide uppercase text-muted-foreground">
+        <h2 className="text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
           Esercizi
         </h2>
         <div className="flex gap-2">
+          {/* "Apri analisi" vive nell'intestazione della scheda, accanto alla salute */}
           {esercizi.length > 0 && (
-            <>
-              <Button variant="outline" size="sm" onClick={esporta} disabled={esportando}>
-                <Download className="size-4" />
-                {esportando ? "Esporto…" : "Esporta CSV"}
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/app/clienti/${clienteId}/analisi`}>
-                  <BarChart3 className="size-4" />
-                  Apri analisi
-                </Link>
-              </Button>
-            </>
+            <Button variant="outline" size="sm" onClick={esporta} disabled={esportando}>
+              <Download className="size-4" />
+              {esportando ? "Esporto…" : "Esporta CSV"}
+            </Button>
           )}
           <Button size="sm" asChild>
             <Link href={`/app/clienti/${clienteId}/esercizi/nuovo`}>
@@ -119,24 +112,33 @@ export function EserciziPannello({
           />
         </div>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+        <div className="mt-4 overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Anno</TableHead>
-                <TableHead className="text-right">Valore produzione</TableHead>
-                <TableHead className="text-right">Fatturato</TableHead>
-                <TableHead className="text-right">EBITDA</TableHead>
-                <TableHead className="text-right">PFN</TableHead>
-                <TableHead>DSCR 6M</TableHead>
-                <TableHead>
+              <TableRow className="border-hairline hover:bg-transparent">
+                {[
+                  "Anno",
+                  "Valore produzione",
+                  "Fatturato",
+                  "EBITDA",
+                  "PFN",
+                  "DSCR 6M",
+                ].map((t, i) => (
+                  <TableHead
+                    key={t}
+                    className={`h-auto pb-2.5 text-[11px] font-medium tracking-[0.14em] uppercase ${i > 0 && i < 5 ? "text-right" : ""}`}
+                  >
+                    {t}
+                  </TableHead>
+                ))}
+                <TableHead className="h-auto pb-2.5">
                   <span className="sr-only">Azioni</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {esercizi.map((e) => (
-                <TableRow key={e.id} className="relative">
+                <TableRow key={e.id} className="relative border-hairline hover:bg-muted/40">
                   <TableCell>
                     <Link
                       href={`/app/clienti/${clienteId}/esercizi/${e.id}/modifica`}

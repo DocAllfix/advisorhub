@@ -144,9 +144,9 @@ export function Scadenzario({
               Nessuna scadenza in questa vista.
             </p>
           ) : (
-            <ul className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+            <ul className="mt-4 border-t border-hairline">
               {visibili.map((s) => (
-                <li key={s.id} className="flex items-center gap-3 px-4 py-3">
+                <li key={s.id} className="flex items-center gap-3 border-b border-hairline py-3.5 transition-colors hover:bg-muted/40">
                   <button
                     type="button"
                     onClick={() => completa(s)}
