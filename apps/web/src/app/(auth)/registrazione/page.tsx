@@ -80,15 +80,15 @@ function RegistrazioneForm() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold tracking-tight">
+      <h1 className="text-3xl font-semibold tracking-tight">
         {invitoId ? "Crea il tuo account" : "Registra il tuo studio"}
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-2.5 text-base text-muted-foreground">
         {invitoId
           ? "Usa l'email a cui è stato inviato l'invito: al termine tornerai ad accettarlo."
           : "Crei lo studio e l'account del titolare in un passaggio."}
       </p>
-      <form onSubmit={registra} className="mt-6 grid gap-4" noValidate>
+      <form onSubmit={registra} className="mt-8 grid gap-5" noValidate>
         {!invitoId && (
           <div className="grid gap-1.5">
             <Label htmlFor="studio">Nome dello studio</Label>
@@ -150,7 +150,7 @@ function RegistrazioneForm() {
           {inCorso ? "Creazione in corso…" : invitoId ? "Crea account" : "Crea studio e account"}
         </Button>
       </form>
-      <p className="mt-6 text-sm text-muted-foreground">
+      <p className="mt-7 text-sm text-muted-foreground">
         Hai già un account?{" "}
         <Link href="/login" className="font-medium text-primary hover:underline">
           Accedi

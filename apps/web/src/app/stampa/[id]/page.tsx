@@ -197,14 +197,14 @@ export default async function StampaPage({
                       <div className="nums font-mono text-3xl font-bold leading-none">
                         {a.score}
                       </div>
-                      <div className="text-[10px] tracking-widest uppercase text-muted-foreground">
+                      <div className="text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
                         /100
                       </div>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
+                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
                     Valutazione di sintesi
                   </p>
                   <h2 className="mt-0.5 text-lg font-semibold">{a.sintesi.titolo}</h2>
@@ -213,7 +213,7 @@ export default async function StampaPage({
               </div>
 
               <div className="sm:w-1/2 sm:border-l sm:border-border sm:pl-5">
-                <p className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
                   Cosa guardare adesso
                 </p>
                 <ul className="mt-1.5 space-y-1 text-xs">
@@ -247,7 +247,7 @@ export default async function StampaPage({
           </div>
 
           <div className="blocco mt-5">
-            <h2 className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
+            <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
               Dati di bilancio
             </h2>
             <table className="mt-2 w-full text-sm">
@@ -265,7 +265,7 @@ export default async function StampaPage({
 
         {/* ---------- Pagina 2+: card indicatori come la dashboard ---------- */}
         <section className="pagina">
-          <h2 className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
+          <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
             Indicatori
           </h2>
           <div className="mt-2 grid grid-cols-2 gap-3">
@@ -282,7 +282,7 @@ export default async function StampaPage({
                         <h3 className="text-sm font-bold">{meta.titolo}</h3>
                         <JudgmentBadge tone={g.tone}>{g.label}</JudgmentBadge>
                       </div>
-                      <p className="text-[10px] font-medium tracking-wide uppercase text-muted-foreground">
+                      <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
                         {meta.sottotitolo}
                       </p>
                     </div>
@@ -320,7 +320,7 @@ export default async function StampaPage({
                     {a.giudizi.dscrPro.label}
                   </JudgmentBadge>
                 </div>
-                <p className="text-[10px] font-medium tracking-wide uppercase text-muted-foreground">
+                <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
                   Continuità aziendale · CNDCEC, art. 3 CCII
                 </p>
               </div>
@@ -363,7 +363,7 @@ export default async function StampaPage({
         <section className="pagina-ultima">
           <div className="grid grid-cols-2 gap-3">
             <div className="blocco rounded-xl border border-success/30 bg-success-subtle p-4">
-              <h2 className="text-[11px] font-semibold tracking-wide uppercase text-success-foreground">
+              <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-success-foreground">
                 Punti di forza
               </h2>
               <ul className="mt-1.5 space-y-1 text-sm">
@@ -373,7 +373,7 @@ export default async function StampaPage({
               </ul>
             </div>
             <div className="blocco rounded-xl border border-warning/40 bg-warning-subtle p-4">
-              <h2 className="text-[11px] font-semibold tracking-wide uppercase text-warning-foreground">
+              <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-warning-foreground">
                 Aree di attenzione
               </h2>
               <ul className="mt-1.5 space-y-1 text-sm">
@@ -385,14 +385,14 @@ export default async function StampaPage({
           </div>
 
           <div className="blocco mt-4 rounded-xl border border-border bg-card p-4">
-            <h2 className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
+            <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
               Analisi estesa
             </h2>
             <p className="mt-1.5 text-sm leading-relaxed">{a.analisiEstesa}</p>
           </div>
 
           <div className="blocco mt-4 rounded-xl border border-border bg-card p-4">
-            <h2 className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
+            <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
               Soglie di riferimento
             </h2>
             <p className="nums mt-1.5 text-[11px] text-muted-foreground">

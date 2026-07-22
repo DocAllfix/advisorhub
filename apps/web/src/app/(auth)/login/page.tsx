@@ -36,9 +36,9 @@ function LoginForm() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold tracking-tight">Accedi</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Lo spazio di lavoro del tuo studio.</p>
-      <form onSubmit={accedi} className="mt-6 grid gap-4" noValidate>
+      <h1 className="text-3xl font-semibold tracking-tight">Accedi</h1>
+      <p className="mt-2.5 text-base text-muted-foreground">Lo spazio di lavoro del tuo studio.</p>
+      <form onSubmit={accedi} className="mt-8 grid gap-5" noValidate>
         <div className="grid gap-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -70,7 +70,7 @@ function LoginForm() {
           {inCorso ? "Accesso in corso…" : "Accedi"}
         </Button>
       </form>
-      <p className="mt-6 text-sm text-muted-foreground">
+      <p className="mt-7 text-sm text-muted-foreground">
         Nuovo studio?{" "}
         <Link href="/registrazione" className="font-medium text-primary hover:underline">
           Registralo
