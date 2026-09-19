@@ -1,0 +1,543 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-19T15:35:06.799Z",
+  "title": "Design System: advisorhub",
+  "extensions": {
+    "colorMeta": {
+      "fondo-notte": {
+        "role": "neutral",
+        "displayName": "Fondo Notte",
+        "canonical": "oklch(0.17 0.014 250)",
+        "tonalRamp": [
+          "oklch(0.150 0.004 250)",
+          "oklch(0.264 0.007 250)",
+          "oklch(0.379 0.010 250)",
+          "oklch(0.493 0.013 250)",
+          "oklch(0.607 0.013 250)",
+          "oklch(0.721 0.010 250)",
+          "oklch(0.836 0.007 250)",
+          "oklch(0.950 0.004 250)"
+        ]
+      },
+      "superficie-notte": {
+        "role": "neutral",
+        "displayName": "Superficie Notte",
+        "canonical": "oklch(0.215 0.014 250)",
+        "tonalRamp": [
+          "oklch(0.150 0.004 250)",
+          "oklch(0.264 0.007 250)",
+          "oklch(0.379 0.010 250)",
+          "oklch(0.493 0.013 250)",
+          "oklch(0.607 0.013 250)",
+          "oklch(0.721 0.010 250)",
+          "oklch(0.836 0.007 250)",
+          "oklch(0.950 0.004 250)"
+        ]
+      },
+      "sidebar-notte": {
+        "role": "neutral",
+        "displayName": "Sidebar Notte",
+        "canonical": "oklch(0.14 0.014 250)",
+        "tonalRamp": [
+          "oklch(0.150 0.004 250)",
+          "oklch(0.264 0.007 250)",
+          "oklch(0.379 0.010 250)",
+          "oklch(0.493 0.013 250)",
+          "oklch(0.607 0.013 250)",
+          "oklch(0.721 0.010 250)",
+          "oklch(0.836 0.007 250)",
+          "oklch(0.950 0.004 250)"
+        ]
+      },
+      "inchiostro-chiaro": {
+        "role": "neutral",
+        "displayName": "Inchiostro Chiaro",
+        "canonical": "oklch(0.95 0.006 240)",
+        "tonalRamp": [
+          "oklch(0.150 0.002 240)",
+          "oklch(0.264 0.003 240)",
+          "oklch(0.379 0.004 240)",
+          "oklch(0.493 0.005 240)",
+          "oklch(0.607 0.005 240)",
+          "oklch(0.721 0.004 240)",
+          "oklch(0.836 0.003 240)",
+          "oklch(0.950 0.002 240)"
+        ]
+      },
+      "inchiostro-attenuato-notte": {
+        "role": "neutral",
+        "displayName": "Inchiostro Attenuato Notte",
+        "canonical": "oklch(0.74 0.012 245)",
+        "tonalRamp": [
+          "oklch(0.150 0.004 245)",
+          "oklch(0.264 0.006 245)",
+          "oklch(0.379 0.008 245)",
+          "oklch(0.493 0.011 245)",
+          "oklch(0.607 0.011 245)",
+          "oklch(0.721 0.008 245)",
+          "oklch(0.836 0.006 245)",
+          "oklch(0.950 0.004 245)"
+        ]
+      },
+      "bordo-notte": {
+        "role": "neutral",
+        "displayName": "Bordo Notte",
+        "canonical": "oklch(0.32 0.016 250)",
+        "tonalRamp": [
+          "oklch(0.150 0.005 250)",
+          "oklch(0.264 0.008 250)",
+          "oklch(0.379 0.011 250)",
+          "oklch(0.493 0.014 250)",
+          "oklch(0.607 0.014 250)",
+          "oklch(0.721 0.011 250)",
+          "oklch(0.836 0.008 250)",
+          "oklch(0.950 0.005 250)"
+        ]
+      },
+      "filetto-notte": {
+        "role": "neutral",
+        "displayName": "Filetto Notte",
+        "canonical": "oklch(0.27 0.016 250)",
+        "tonalRamp": [
+          "oklch(0.150 0.005 250)",
+          "oklch(0.264 0.008 250)",
+          "oklch(0.379 0.011 250)",
+          "oklch(0.493 0.014 250)",
+          "oklch(0.607 0.014 250)",
+          "oklch(0.721 0.011 250)",
+          "oklch(0.836 0.008 250)",
+          "oklch(0.950 0.005 250)"
+        ]
+      },
+      "ottanio-luce": {
+        "role": "primary",
+        "displayName": "Ottanio Luce",
+        "canonical": "oklch(0.76 0.11 205)",
+        "tonalRamp": [
+          "oklch(0.150 0.033 205)",
+          "oklch(0.264 0.055 205)",
+          "oklch(0.379 0.077 205)",
+          "oklch(0.493 0.099 205)",
+          "oklch(0.607 0.099 205)",
+          "oklch(0.721 0.077 205)",
+          "oklch(0.836 0.055 205)",
+          "oklch(0.950 0.033 205)"
+        ]
+      },
+      "verde-ottimo-notte": {
+        "role": "tertiary",
+        "displayName": "Verde Ottimo Notte",
+        "canonical": "oklch(0.76 0.14 155)",
+        "tonalRamp": [
+          "oklch(0.150 0.042 155)",
+          "oklch(0.264 0.070 155)",
+          "oklch(0.379 0.098 155)",
+          "oklch(0.493 0.126 155)",
+          "oklch(0.607 0.126 155)",
+          "oklch(0.721 0.098 155)",
+          "oklch(0.836 0.070 155)",
+          "oklch(0.950 0.042 155)"
+        ]
+      },
+      "verde-buono-notte": {
+        "role": "tertiary",
+        "displayName": "Verde Buono Notte",
+        "canonical": "oklch(0.77 0.075 170)",
+        "tonalRamp": [
+          "oklch(0.150 0.023 170)",
+          "oklch(0.264 0.037 170)",
+          "oklch(0.379 0.052 170)",
+          "oklch(0.493 0.068 170)",
+          "oklch(0.607 0.068 170)",
+          "oklch(0.721 0.052 170)",
+          "oklch(0.836 0.037 170)",
+          "oklch(0.950 0.023 170)"
+        ]
+      },
+      "ambra-attenzione-notte": {
+        "role": "tertiary",
+        "displayName": "Ambra Attenzione Notte",
+        "canonical": "oklch(0.82 0.14 80)",
+        "tonalRamp": [
+          "oklch(0.150 0.042 80)",
+          "oklch(0.264 0.070 80)",
+          "oklch(0.379 0.098 80)",
+          "oklch(0.493 0.126 80)",
+          "oklch(0.607 0.126 80)",
+          "oklch(0.721 0.098 80)",
+          "oklch(0.836 0.070 80)",
+          "oklch(0.950 0.042 80)"
+        ]
+      },
+      "rosso-critico-notte": {
+        "role": "tertiary",
+        "displayName": "Rosso Critico Notte",
+        "canonical": "oklch(0.7 0.18 25)",
+        "tonalRamp": [
+          "oklch(0.150 0.054 25)",
+          "oklch(0.264 0.090 25)",
+          "oklch(0.379 0.126 25)",
+          "oklch(0.493 0.162 25)",
+          "oklch(0.607 0.162 25)",
+          "oklch(0.721 0.126 25)",
+          "oklch(0.836 0.090 25)",
+          "oklch(0.950 0.054 25)"
+        ]
+      },
+      "fondo-carta": {
+        "role": "neutral",
+        "displayName": "Fondo Carta",
+        "canonical": "oklch(0.985 0.004 240)",
+        "tonalRamp": [
+          "oklch(0.150 0.001 240)",
+          "oklch(0.264 0.002 240)",
+          "oklch(0.379 0.003 240)",
+          "oklch(0.493 0.004 240)",
+          "oklch(0.607 0.004 240)",
+          "oklch(0.721 0.003 240)",
+          "oklch(0.836 0.002 240)",
+          "oklch(0.950 0.001 240)"
+        ]
+      },
+      "superficie-carta": {
+        "role": "neutral",
+        "displayName": "Superficie Carta",
+        "canonical": "oklch(0.997 0.002 240)",
+        "tonalRamp": [
+          "oklch(0.150 0.001 240)",
+          "oklch(0.264 0.001 240)",
+          "oklch(0.379 0.001 240)",
+          "oklch(0.493 0.002 240)",
+          "oklch(0.607 0.002 240)",
+          "oklch(0.721 0.001 240)",
+          "oklch(0.836 0.001 240)",
+          "oklch(0.950 0.001 240)"
+        ]
+      },
+      "sidebar-carta": {
+        "role": "neutral",
+        "displayName": "Sidebar Carta",
+        "canonical": "oklch(0.965 0.006 245)",
+        "tonalRamp": [
+          "oklch(0.150 0.002 245)",
+          "oklch(0.264 0.003 245)",
+          "oklch(0.379 0.004 245)",
+          "oklch(0.493 0.005 245)",
+          "oklch(0.607 0.005 245)",
+          "oklch(0.721 0.004 245)",
+          "oklch(0.836 0.003 245)",
+          "oklch(0.950 0.002 245)"
+        ]
+      },
+      "inchiostro-scuro": {
+        "role": "neutral",
+        "displayName": "Inchiostro Scuro",
+        "canonical": "oklch(0.22 0.012 250)",
+        "tonalRamp": [
+          "oklch(0.150 0.004 250)",
+          "oklch(0.264 0.006 250)",
+          "oklch(0.379 0.008 250)",
+          "oklch(0.493 0.011 250)",
+          "oklch(0.607 0.011 250)",
+          "oklch(0.721 0.008 250)",
+          "oklch(0.836 0.006 250)",
+          "oklch(0.950 0.004 250)"
+        ]
+      },
+      "inchiostro-attenuato-carta": {
+        "role": "neutral",
+        "displayName": "Inchiostro Attenuato Carta",
+        "canonical": "oklch(0.45 0.012 245)",
+        "tonalRamp": [
+          "oklch(0.150 0.004 245)",
+          "oklch(0.264 0.006 245)",
+          "oklch(0.379 0.008 245)",
+          "oklch(0.493 0.011 245)",
+          "oklch(0.607 0.011 245)",
+          "oklch(0.721 0.008 245)",
+          "oklch(0.836 0.006 245)",
+          "oklch(0.950 0.004 245)"
+        ]
+      },
+      "bordo-carta": {
+        "role": "neutral",
+        "displayName": "Bordo Carta",
+        "canonical": "oklch(0.9 0.008 240)",
+        "tonalRamp": [
+          "oklch(0.150 0.002 240)",
+          "oklch(0.264 0.004 240)",
+          "oklch(0.379 0.006 240)",
+          "oklch(0.493 0.007 240)",
+          "oklch(0.607 0.007 240)",
+          "oklch(0.721 0.006 240)",
+          "oklch(0.836 0.004 240)",
+          "oklch(0.950 0.002 240)"
+        ]
+      },
+      "filetto-carta": {
+        "role": "neutral",
+        "displayName": "Filetto Carta",
+        "canonical": "oklch(0.93 0.008 240)",
+        "tonalRamp": [
+          "oklch(0.150 0.002 240)",
+          "oklch(0.264 0.004 240)",
+          "oklch(0.379 0.006 240)",
+          "oklch(0.493 0.007 240)",
+          "oklch(0.607 0.007 240)",
+          "oklch(0.721 0.006 240)",
+          "oklch(0.836 0.004 240)",
+          "oklch(0.950 0.002 240)"
+        ]
+      },
+      "ottanio-profondo": {
+        "role": "primary",
+        "displayName": "Ottanio Profondo",
+        "canonical": "oklch(0.5 0.09 210)",
+        "tonalRamp": [
+          "oklch(0.150 0.027 210)",
+          "oklch(0.264 0.045 210)",
+          "oklch(0.379 0.063 210)",
+          "oklch(0.493 0.081 210)",
+          "oklch(0.607 0.081 210)",
+          "oklch(0.721 0.063 210)",
+          "oklch(0.836 0.045 210)",
+          "oklch(0.950 0.027 210)"
+        ]
+      },
+      "verde-ottimo-carta": {
+        "role": "tertiary",
+        "displayName": "Verde Ottimo Carta",
+        "canonical": "oklch(0.55 0.13 155)",
+        "tonalRamp": [
+          "oklch(0.150 0.039 155)",
+          "oklch(0.264 0.065 155)",
+          "oklch(0.379 0.091 155)",
+          "oklch(0.493 0.117 155)",
+          "oklch(0.607 0.117 155)",
+          "oklch(0.721 0.091 155)",
+          "oklch(0.836 0.065 155)",
+          "oklch(0.950 0.039 155)"
+        ]
+      },
+      "verde-buono-carta": {
+        "role": "tertiary",
+        "displayName": "Verde Buono Carta",
+        "canonical": "oklch(0.64 0.075 168)",
+        "tonalRamp": [
+          "oklch(0.150 0.023 168)",
+          "oklch(0.264 0.037 168)",
+          "oklch(0.379 0.052 168)",
+          "oklch(0.493 0.068 168)",
+          "oklch(0.607 0.068 168)",
+          "oklch(0.721 0.052 168)",
+          "oklch(0.836 0.037 168)",
+          "oklch(0.950 0.023 168)"
+        ]
+      },
+      "ambra-attenzione-carta": {
+        "role": "tertiary",
+        "displayName": "Ambra Attenzione Carta",
+        "canonical": "oklch(0.7 0.13 75)",
+        "tonalRamp": [
+          "oklch(0.150 0.039 75)",
+          "oklch(0.264 0.065 75)",
+          "oklch(0.379 0.091 75)",
+          "oklch(0.493 0.117 75)",
+          "oklch(0.607 0.117 75)",
+          "oklch(0.721 0.091 75)",
+          "oklch(0.836 0.065 75)",
+          "oklch(0.950 0.039 75)"
+        ]
+      },
+      "rosso-critico-carta": {
+        "role": "tertiary",
+        "displayName": "Rosso Critico Carta",
+        "canonical": "oklch(0.55 0.19 25)",
+        "tonalRamp": [
+          "oklch(0.150 0.057 25)",
+          "oklch(0.264 0.095 25)",
+          "oklch(0.379 0.133 25)",
+          "oklch(0.493 0.171 25)",
+          "oklch(0.607 0.171 25)",
+          "oklch(0.721 0.133 25)",
+          "oklch(0.836 0.095 25)",
+          "oklch(0.950 0.057 25)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Il punteggio di sintesi dentro l'anello, un solo numero per schermata."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Titolo della pagina e giudizio di sintesi."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Nome di un indicatore o di un cliente in elenco."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Consigli, descrizioni, celle di tabella; prosa entro 72ch."
+      },
+      "cifra": {
+        "displayName": "Cifra",
+        "purpose": "Valori e punteggi in elenco; 1rem in tabella."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Intestazioni di colonna e micro-etichette, maiuscolo."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sospensione",
+        "value": "0 8px 30px oklch(0.2 0.02 230 / 0.18)",
+        "purpose": "Solo per cio' che si apre sopra il contenuto: menu, popover, guida. Mai su card a riposo."
+      }
+    ],
+    "motion": [
+      {
+        "name": "uscita-esponenziale",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Transizioni di stato, 150-250 ms."
+      },
+      {
+        "name": "anello-disegna",
+        "value": "900ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "L'anello del punteggio si disegna una volta all'ingresso."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Pulsante primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "L'azione principale della schermata, una per pagina.",
+      "html": "<button class=\"ds-btn-primario\">Nuovo cliente</button>",
+      "css": ".ds-btn-primario{background:var(--primary);color:var(--primary-foreground);font:500 0.875rem/1 var(--font-sans);height:36px;padding:0 16px;border:0;border-radius:0.4rem;cursor:pointer;transition:filter .15s cubic-bezier(.22,1,.36,1)}.ds-btn-primario:hover{filter:brightness(1.08)}.ds-btn-primario:focus-visible{outline:2px solid var(--ring);outline-offset:2px}"
+    },
+    {
+      "name": "Pulsante outline",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Azioni secondarie e viste del portafoglio.",
+      "html": "<button class=\"ds-btn-outline\">In allerta <span class=\"ds-n\">1</span></button>",
+      "css": ".ds-btn-outline{background:var(--card);color:var(--foreground);font:500 0.875rem/1 var(--font-sans);height:36px;padding:0 14px;border:1px solid var(--border);border-radius:0.4rem;cursor:pointer;transition:background .15s}.ds-btn-outline:hover{background:var(--muted)}.ds-btn-outline:focus-visible{outline:2px solid var(--ring);outline-offset:2px}.ds-n{font-family:var(--font-mono);opacity:.7;margin-left:4px}"
+    },
+    {
+      "name": "Badge di giudizio",
+      "kind": "chip",
+      "refersTo": "badge-giudizio-ottimo",
+      "description": "Pallino e etichetta testuale: il colore non e' mai l'unico canale.",
+      "html": "<span class=\"ds-badge ds-ottimo\"><i></i>Ottimo</span> <span class=\"ds-badge ds-attenzione\"><i></i>Fragile</span> <span class=\"ds-badge ds-critico\"><i></i>Critico</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:9999px;border:1px solid;font:500 12px/1.4 var(--font-sans);white-space:nowrap}.ds-badge i{width:6px;height:6px;border-radius:50%;background:currentColor}.ds-ottimo{background:var(--success-subtle);color:var(--success-foreground);border-color:color-mix(in oklch,var(--success) 30%,transparent)}.ds-attenzione{background:var(--warning-subtle);color:var(--warning-foreground);border-color:color-mix(in oklch,var(--warning) 40%,transparent)}.ds-critico{background:var(--danger-subtle);color:var(--danger-foreground);border-color:color-mix(in oklch,var(--danger) 30%,transparent)}"
+    },
+    {
+      "name": "Riga indicatore",
+      "kind": "custom",
+      "refersTo": "riga-indicatore",
+      "description": "Il componente firma: tracce fisse, giudizi in colonna.",
+      "html": "<div class=\"ds-riga\"><h3>ROS <small>Return on Sales</small></h3><span class=\"ds-val\">10,67%</span><span class=\"ds-barra\"><b style=\"width:53%\"></b></span><span class=\"ds-badge ds-ottimo\"><i></i>Ottimo</span></div><div class=\"ds-riga\"><h3>ROI-I <small>Lettura industriale</small></h3><span class=\"ds-val\">16,00%</span><span class=\"ds-barra\"><b style=\"width:80%\"></b></span><span class=\"ds-badge ds-ottimo\"><i></i>Sostiene sviluppo</span></div>",
+      "css": ".ds-riga{display:grid;grid-template-columns:minmax(0,1fr) 7rem 5rem 11rem;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid var(--hairline);color:var(--foreground)}.ds-riga h3{font:600 .875rem/1.4 var(--font-sans);margin:0}.ds-riga small{font-weight:400;font-size:.75rem;color:var(--muted-foreground);margin-left:8px}.ds-val{text-align:right;font:600 1.5rem/1 var(--font-mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums}.ds-barra{align-self:center;height:4px;border-radius:9999px;background:var(--muted)}.ds-barra b{display:block;height:100%;border-radius:inherit;background:var(--success)}.ds-riga .ds-badge{justify-self:start}.ds-badge{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:9999px;border:1px solid;font:500 12px/1.4 var(--font-sans);white-space:nowrap}.ds-badge i{width:6px;height:6px;border-radius:50%;background:currentColor}.ds-ottimo{background:var(--success-subtle);color:var(--success-foreground);border-color:color-mix(in oklch,var(--success) 30%,transparent)}.ds-attenzione{background:var(--warning-subtle);color:var(--warning-foreground);border-color:color-mix(in oklch,var(--warning) 40%,transparent)}.ds-critico{background:var(--danger-subtle);color:var(--danger-foreground);border-color:color-mix(in oklch,var(--danger) 30%,transparent)}"
+    },
+    {
+      "name": "Ricerca a filo",
+      "kind": "input",
+      "refersTo": "ricerca-a-filo",
+      "description": "Un campo, non una scatola dentro una scatola.",
+      "html": "<label class=\"ds-ricerca\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input placeholder=\"Cerca nel portafoglio…\"></label>",
+      "css": ".ds-ricerca{display:flex;align-items:center;gap:8px;max-width:20rem;border-bottom:1px solid var(--hairline);color:var(--muted-foreground);transition:border-color .15s}.ds-ricerca:focus-within{border-color:var(--primary)}.ds-ricerca input{flex:1;height:36px;border:0;background:transparent;color:var(--foreground);font:400 .875rem var(--font-sans);outline:none}"
+    },
+    {
+      "name": "Voce di navigazione",
+      "kind": "nav",
+      "refersTo": "button-outline",
+      "description": "Sidebar: voce attiva su fondo accento tenue.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-voce\">Panoramica</a><a class=\"ds-voce ds-attiva\">Clienti</a><a class=\"ds-voce\">Scadenze</a></nav>",
+      "css": ".ds-nav{display:grid;gap:2px;padding:8px;background:var(--sidebar);width:14rem}.ds-voce{padding:8px 12px;border-radius:0.5rem;color:var(--sidebar-foreground);font:500 .875rem var(--font-sans);cursor:pointer;transition:background .15s}.ds-voce:hover{background:var(--sidebar-accent)}.ds-attiva{background:var(--accent);color:var(--accent-foreground)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Lo sportello privato",
+    "overview": "Un colloquio in private banking: poco sul tavolo, tutto in ordine, nessuna fretta. Il commercialista apre advisorhub accanto al gestionale e lo tiene aperto per ore; quello che trova deve avere la calma di chi non ha bisogno di convincere. PRODUCT.md lo chiama «fiducia da private banking» e «calma operativa»: il sistema visivo è la traduzione di quelle due espressioni, non una decorazione sopra di esse.\n\nLa scena che decide il tema: **un professionista fra i 30 e i 65 anni, in studio, sotto luce artificiale, con lo strumento aperto tutto il giorno accanto ad altre finestre.** Per questo il tema di base è scuro (decisione del committente, luglio 2026): un fondo profondo stanca meno e fa risaltare i numeri, che sono il contenuto. Il tema scuro è **scelto, non invertito**: ha passi propri, con la sidebar più profonda del fondo e le superfici appena sopra, e un accento rialzato in chiarezza perché regga il contrasto. Il chiaro resta dal selettore ed è **sempre** quello del report di stampa, perché il report va su carta, al cliente e alla banca.\n\nLa densità è controllata: il dato respira ma lo studio lavora. Spaziatura su scala di 4px, nessun hero sprecato, e il ritmo verticale di una sezione scende da una variabile locale (il modello è `--card-spacing` dentro la card) invece di essere riscritto a mano in ogni schermata. Il movimento esiste solo per dire che uno stato è cambiato: 150-250 ms, uscita esponenziale, mai rimbalzi, mai sequenze orchestrate al caricamento, e sempre spento sotto `prefers-reduced-motion`.\n\nIl sistema rifiuta per nome quattro famiglie: i gestionali legacy anni 2000, le dashboard SaaS cliché, l'estetica crypto e trading, e il prototipo HTML di partenza, che resta un riferimento funzionale e non estetico.",
+    "keyCharacteristics": [
+      "Il numero è il protagonista: mono tabellare, incolonnato, mai decorato.",
+      "Colore confinato all'accento e ai giudizi; tutto il resto è inchiostro tinto.",
+      "Profondità per livelli tonali, non per ombre.",
+      "Allineamento come forma di onestà: le colonne reggono anche quando le etichette cambiano lunghezza.",
+      "Ogni schermata si può mostrare a un cliente così com'è."
+    ],
+    "rules": [
+      {
+        "name": "La Regola dell'Unica Voce",
+        "body": "L'ottanio copre al massimo il 10% di una schermata. La sua rarità è ciò che lo fa leggere come azione.",
+        "section": "colors"
+      },
+      {
+        "name": "La Regola del Semaforo Parlante",
+        "body": "Il tricolore si usa solo per i giudizi, e il colore non è mai l'unico canale: ogni pallino ha accanto la sua etichetta scritta. Nei grafici di serie generiche il tricolore è vietato.",
+        "section": "colors"
+      },
+      {
+        "name": "La Regola della Colonna Tabellare",
+        "body": "Ogni numero che si confronta con un altro è in mono tabellare e allineato a destra nella sua traccia. Nessuna eccezione per i numeri «piccoli».",
+        "section": "typography"
+      },
+      {
+        "name": "La Regola della Scala Fissa",
+        "body": "Scala in rem con rapporto intorno a 1,2, senza tipografia fluida: il registro è product, non landing.",
+        "section": "typography"
+      },
+      {
+        "name": "La Regola del Piano Unico",
+        "body": "Una card a riposo non ha ombra. Se una superficie sembra aver bisogno di un'ombra per staccarsi, il problema è il passo tonale, non l'ombra.",
+        "section": "elevation"
+      },
+      {
+        "name": "La Regola dell'Attenuazione Decorativa",
+        "body": "L'opacità si applica solo a elementi decorativi e `aria-hidden`, mai al testo. L'inchiostro attenuato è già al limite dell'AA: un `opacity-45` sopra di lui lo portava a 2,08:1 in chiaro e 2,57:1 in scuro. Test: se un elemento attenuato contiene parole, è sbagliato.",
+        "section": "dos"
+      },
+      {
+        "name": "La Regola del Giudizio in Vista",
+        "body": "A qualsiasi larghezza, il giudizio di un cliente è visibile senza scorrere in orizzontale. Se una colonna deve uscire dallo schermo, esce un'accessoria.",
+        "section": "dos"
+      }
+    ],
+    "dos": [
+      "**Do** usare tracce di griglia **fisse** per ogni riga che si confronta con altre, misurate sull'etichetta più lunga che può comparirci (11rem per i giudizi degli indicatori, 9rem per le fasce di salute).",
+      "**Do** prendere soglie, fasce e fondi scala dal motore (`FASCE_SALUTE`, `SOGLIE_GIUDIZIO`, `SCALE`): la dashboard e il report disegnano lo stesso indicatore sulla stessa scala.",
+      "**Do** verificare ogni componente nuovo in **entrambi** i temi e a 375px, 768px e 1440px prima di considerarlo finito.",
+      "**Do** tenere il report di stampa sempre su fondo chiaro, anche con l'app in scuro.",
+      "**Do** usare skeleton e non spinner centrali; stati vuoti che dicono cosa fare dopo.",
+      "**Do** rispettare `prefers-reduced-motion` anche per le animazioni WAAPI, che la regola CSS globale non raggiunge."
+    ],
+    "donts": [
+      "**Don't** richiamare i gestionali legacy anni 2000: griglie grigie, form infiniti, ribbon, densità caotica.",
+      "**Don't** usare gli stilemi delle dashboard SaaS cliché: gradienti viola decorativi, glassmorphism di default, card grid tutte uguali, hero-metric gonfiati, gradient text.",
+      "**Don't** scivolare nell'estetica crypto e trading: dark mode aggressivo, neon, glow, urgenza speculativa. Nessun nero puro.",
+      "**Don't** usare bordi laterali colorati più spessi di 1px come segnale su card, righe o avvisi.",
+      "**Don't** aprire un modale come prima risposta: prima l'inline, poi il pannello laterale.",
+      "**Don't** mettere un badge a larghezza intrinseca in una riga flex accanto a elementi che devono incolonnarsi. È il difetto che faceva slittare sei indicatori su sette.",
+      "**Don't** usare trattini lunghi nei testi dell'interfaccia: virgole, due punti, parentesi."
+    ]
+  }
+}

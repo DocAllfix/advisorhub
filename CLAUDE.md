@@ -29,7 +29,7 @@
 
 ## CONTESTO DEL PROGETTO
 
-SaaS per commercialisti (nome di lavoro: **advisorhub**) che monitora la salute economico-finanziaria del portafoglio clienti dello studio. Nasce dal prototipo HTML in `archivio/` e ne conserva integralmente formule, soglie e testi, portandoli su uno stack moderno e su un'estetica premium, lontana dai layout raw.
+Saas . Nasce dal prototipo HTML in `archivio/` e , portandoli su uno stack moderno e su un'estetica premium, lontana dai layout raw.
 
 **MVP completato** (fasi 0-10). Stato e riferimenti:
 
