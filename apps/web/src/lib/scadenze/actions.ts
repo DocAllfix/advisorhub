@@ -4,14 +4,14 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 
 import { requireStudio, vietatoInDemo } from "@/lib/auth-helpers";
+import { eUuid } from "@/lib/id";
 import { db } from "@/lib/db";
 import { auditLog, clienti, scadenze } from "@/lib/schema-dominio";
 
 import { scadenzaSchema, type ScadenzaInput } from "./schema";
 
 export type RisultatoScadenza =
-  | { ok: true; id: string }
-  | { ok: false; errore: string; campi?: Record<string, string> };
+  { ok: true; id: string } | { ok: false; errore: string; campi?: Record<string, string> };
 
 function erroreValidazione(issues: { path: PropertyKey[]; message: string }[]): RisultatoScadenza {
   const campi: Record<string, string> = {};
@@ -86,6 +86,7 @@ export async function modificaScadenza(
   id: string,
   input: ScadenzaInput,
 ): Promise<RisultatoScadenza> {
+  if (!eUuid(id)) return { ok: false, errore: "Scadenza non trovata." };
   const studio = await requireStudio();
   const bloccato = vietatoInDemo(studio);
   if (bloccato) return bloccato;
@@ -130,6 +131,7 @@ export async function completaScadenza(
   id: string,
   completata: boolean,
 ): Promise<RisultatoScadenza> {
+  if (!eUuid(id)) return { ok: false, errore: "Scadenza non trovata." };
   const studio = await requireStudio();
   const bloccato = vietatoInDemo(studio);
   if (bloccato) return bloccato;
@@ -147,6 +149,7 @@ export async function completaScadenza(
 }
 
 export async function eliminaScadenza(id: string): Promise<RisultatoScadenza> {
+  if (!eUuid(id)) return { ok: false, errore: "Scadenza non trovata." };
   const studio = await requireStudio();
   const bloccato = vietatoInDemo(studio);
   if (bloccato) return bloccato;

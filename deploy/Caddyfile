@@ -1,0 +1,43 @@
+# Reverse proxy dell'istanza cliente. TLS automatico (Let's Encrypt HTTP-01).
+#
+# Un solo hostname per cliente: <slug>.<dominio-brand>. L'applicazione e' un
+# server Next, non una SPA statica, quindi tutto passa da reverse_proxy.
+#
+# CADDY_TLS serve a collaudare senza DNS pubblico e deve contenere la direttiva
+# INTERA: CADDY_TLS="tls internal". Con `internal` da solo Caddy rifiuta il file
+# e va in crash-loop (GUASTI G-15). In produzione resta vuota.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMINIO} {
+	{$CADDY_TLS}
+
+	encode gzip zstd
+
+	reverse_proxy web:3000 {
+		# Better Auth deriva da qui lo schema e l'host: senza, il cookie di
+		# sessione perde il flag Secure e le redirezioni puntano all'host interno.
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+
+	header {
+		# Nessuna istanza cliente deve comparire nei motori di ricerca.
+		X-Robots-Tag "noindex, nofollow"
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Cross-Origin-Opener-Policy "same-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# La CSP la emette Next (next.config.ts) e non Caddy: e' per-richiesta e
+	# contiene l'origine del collettore di telemetria, che qui non e' nota.
+
+	# Access-log disattivato di proposito: i log dell'istanza non devono
+	# contenere gli indirizzi IP di chi lavora nello studio.
+}

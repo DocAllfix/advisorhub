@@ -141,7 +141,9 @@ export default async function PanoramicaPage() {
           className="-my-2 flex items-center gap-3 rounded-md py-3 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <CalendarClock
-            className={scad.scadute > 0 ? "size-4 shrink-0 text-danger" : "size-4 shrink-0 text-warning"}
+            className={
+              scad.scadute > 0 ? "size-4 shrink-0 text-danger" : "size-4 shrink-0 text-warning"
+            }
             aria-hidden
           />
           <p className="flex-1 text-sm">
@@ -181,18 +183,38 @@ export default async function PanoramicaPage() {
           <ul className="mt-3.5 flex flex-wrap gap-x-6 gap-y-2">
             {FASCE.map((f) => {
               const n = p.distribuzione[f.chiave];
-              // Le classi a zero restano leggibili ma non competono con le piene
+              /*
+               * Le fasce a zero non competono con le piene, ma la differenza la
+               * fa il PALLINO, non il testo.
+               *
+               * Prima era `opacity-45` sull'intera voce, con accanto scritto che
+               * restava leggibile. Non lo era: schiacciava `text-muted-foreground`
+               * a 2,08:1 in chiaro e 2,57:1 in scuro, contro il 4,5:1 che
+               * PRODUCT.md richiede. L'etichetta di una fascia vuota e'
+               * esattamente quella che va letta per sapere che e' vuota.
+               *
+               * Il pallino e' decorativo e aria-hidden: li' l'opacita' non toglie
+               * informazione a nessuno.
+               */
+              const vuota = n === 0;
               return (
-                <li
-                  key={f.chiave}
-                  className={cn("flex items-center gap-2 text-sm", n === 0 && "opacity-45")}
-                >
+                <li key={f.chiave} className="flex items-center gap-2 text-sm">
                   <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: toniGrafica[f.tono] }}
+                    className={cn("size-2 shrink-0 rounded-full", vuota && "opacity-35")}
+                    style={{
+                      backgroundColor: vuota ? "transparent" : toniGrafica[f.tono],
+                      boxShadow: vuota ? `inset 0 0 0 1.5px ${toniGrafica[f.tono]}` : undefined,
+                    }}
                     aria-hidden
                   />
-                  <span className="nums font-mono font-semibold">{n}</span>
+                  <span
+                    className={cn(
+                      "nums font-mono font-semibold",
+                      vuota && "font-normal text-muted-foreground",
+                    )}
+                  >
+                    {n}
+                  </span>
                   <span className="text-xs text-muted-foreground">{f.label}</span>
                 </li>
               );
@@ -204,7 +226,9 @@ export default async function PanoramicaPage() {
       {p.righe.length > 0 && (
         <section>
           <div className="flex items-baseline justify-between gap-4">
-            <MicroEtichetta come="h2" data-tour="da-rivedere">Da rivedere per primi</MicroEtichetta>
+            <MicroEtichetta come="h2" data-tour="da-rivedere">
+              Da rivedere per primi
+            </MicroEtichetta>
             <Link
               href="/app/clienti"
               className="flex min-h-11 items-center text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-h-0"
@@ -220,9 +244,18 @@ export default async function PanoramicaPage() {
               const dscr6mBasso = r.dscrProspettico !== null && r.dscrProspettico < 1.1;
               return (
                 <li key={r.clienteId} className="border-b border-hairline">
+                  {/*
+                   * Da md in su tracce FISSE, come le righe indicatore: il
+                   * badge ha larghezza intrinseca («Sana» contro «Da
+                   * ristrutturare») e in un flex la differenza veniva assorbita
+                   * dal nome, spostando barra e giudizio di riga in riga.
+                   * 9rem e' misurato sull'etichetta piu' lunga.
+                   * Sotto md resta flex: li' lo spazio non basta per tracce
+                   * rigide senza schiacciare la ragione sociale.
+                   */}
                   <Link
                     href={`/app/clienti/${r.clienteId}/analisi`}
-                    className="flex items-center gap-4 py-3.5 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="flex items-center gap-4 py-3.5 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:grid md:grid-cols-[2.75rem_minmax(0,1fr)_6rem_9rem_1rem] lg:grid-cols-[2.75rem_minmax(0,1fr)_6rem_9rem_9rem_1rem]"
                   >
                     <Cifra
                       valore={r.score}
@@ -236,7 +269,10 @@ export default async function PanoramicaPage() {
                         Esercizio {r.anno ?? "—"}
                       </span>
                     </span>
-                    <span className="hidden h-1 w-24 shrink-0 rounded-full bg-muted md:block" aria-hidden>
+                    <span
+                      className="hidden h-1 w-24 shrink-0 rounded-full bg-muted md:block"
+                      aria-hidden
+                    >
                       <span
                         className="block h-full rounded-full"
                         style={{

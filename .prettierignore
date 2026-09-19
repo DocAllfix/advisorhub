@@ -4,3 +4,10 @@ dist
 coverage
 pnpm-lock.yaml
 archivio
+
+# bundle generati da esbuild e artefatti dei test
+apps/web/worker.js
+apps/web/migra.js
+apps/web/crea-titolare.js
+apps/web/test-results
+apps/web/playwright-report

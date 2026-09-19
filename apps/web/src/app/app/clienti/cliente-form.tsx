@@ -84,7 +84,7 @@ function FormInterno({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col" noValidate>
-      <div className="grid flex-1 gap-5 overflow-y-auto px-4 py-2">
+      <div className="scorri-sobrio grid flex-1 gap-5 overflow-y-auto px-4 py-2">
         <div className="grid gap-1.5">
           <Label htmlFor="ragioneSociale">Ragione sociale</Label>
           <Input

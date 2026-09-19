@@ -62,7 +62,7 @@ export function PannelloStudio({ demo }: { demo: boolean }) {
     }
     setEmailInvito("");
     refetch();
-    toast.success("Invito creato: copia il link e invialo al collaboratore.");
+    toast.success("Invito inviato per email. Il link resta copiabile qui sotto come riserva.");
   }
 
   async function rinomina(e: React.FormEvent) {
@@ -85,6 +85,7 @@ export function PannelloStudio({ demo }: { demo: boolean }) {
   }
 
   async function revocaInvito(invitationId: string) {
+    if (demo) return toast.error(MESSAGGIO_DEMO);
     const { error } = await authClient.organization.cancelInvitation({ invitationId });
     if (error) {
       toast.error(error.message ?? "Revoca non riuscita.");

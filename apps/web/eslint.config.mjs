@@ -12,6 +12,14 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Bundle autosufficienti per i container (build:worker / build:migratore):
+    // codice generato da esbuild, non sorgente da analizzare.
+    "worker.js",
+    "migra.js",
+    "crea-titolare.js",
+    // Artefatti dei test end-to-end.
+    "test-results/**",
+    "playwright-report/**",
   ]),
 ]);
 

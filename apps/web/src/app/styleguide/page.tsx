@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { ToastDemo } from "@/components/styleguide/toast-demo";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Styleguide — advisorhub",
+  robots: { index: false, follow: false },
 };
 
 const tokens = [
@@ -90,6 +92,10 @@ const rows = [
 ] as const;
 
 export default function StyleguidePage() {
+  // Vetrina dei componenti: utile in sviluppo, ma su un'istanza cliente sarebbe
+  // una pagina pubblica non protetta dal middleware (che copre solo /app).
+  if (process.env.NODE_ENV === "production") notFound();
+
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-12">
       <header>

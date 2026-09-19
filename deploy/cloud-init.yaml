@@ -1,0 +1,84 @@
+#cloud-config
+# Primo avvio di un server cliente (Ubuntu 24.04 su Hetzner).
+#
+# Fa al primo boot quello che in WhistleVault era `setup-vps.sh` eseguito a
+# mano: la macchina nasce gia' blindata, senza una finestra in cui e' esposta
+# con le impostazioni predefinite.
+#
+# Differenza voluta: qui NON serve swap ne' toolchain. L'immagine la costruisce
+# la CI e il server fa solo `docker compose pull` — niente compilazione a bordo,
+# niente rischio di OOM durante un aggiornamento.
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - docker.io
+  - docker-compose-v2
+  - git
+  - ufw
+  - fail2ban
+  - restic
+  - curl
+  - ca-certificates
+  - unattended-upgrades
+
+write_files:
+  # SSH: solo chiave. La chiave e' gia' installata da hcloud al provisioning,
+  # quindi disabilitare la password non chiude fuori nessuno.
+  - path: /etc/ssh/sshd_config.d/99-advisorhub.conf
+    permissions: "0644"
+    content: |
+      PasswordAuthentication no
+      PermitRootLogin prohibit-password
+      KbdInteractiveAuthentication no
+      X11Forwarding no
+
+  - path: /etc/fail2ban/jail.local
+    permissions: "0644"
+    content: |
+      [sshd]
+      enabled  = true
+      maxretry = 5
+      findtime = 600
+      bantime  = 3600
+
+  # Aggiornamenti di sicurezza automatici. La sentinella segnala comunque quelli
+  # in attesa: qui si tratta di non accumularli.
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    permissions: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+  # I log dei container non devono riempire il disco: un disco pieno mette
+  # Postgres in sola lettura e ferma l'istanza.
+  - path: /etc/docker/daemon.json
+    permissions: "0644"
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "10m", "max-file": "3" },
+        "live-restore": true
+      }
+
+runcmd:
+  - systemctl enable --now docker
+  - systemctl restart docker
+  - systemctl enable --now fail2ban
+  - systemctl restart ssh
+
+  # UFW come difesa in profondita'. La difesa primaria e' il firewall Hetzner:
+  # i container con porte pubblicate scavalcano UFW, perche' Docker gestisce
+  # iptables per conto proprio. Vale comunque per eventuali servizi sull'host.
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable
+
+  - mkdir -p /opt/advisorhub/deploy /var/backups/advisorhub
+  - chmod 700 /opt/advisorhub /var/backups/advisorhub
+
+final_message: "advisorhub: server pronto dopo $UPTIME secondi"

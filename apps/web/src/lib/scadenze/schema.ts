@@ -1,15 +1,8 @@
 import { z } from "zod";
 
-export const CATEGORIE = ["bilancio", "iva", "imposte", "contributi", "adempimenti", "altro"] as const;
+import { CATEGORIE } from "./etichette";
 
-export const etichettaCategoria: Record<(typeof CATEGORIE)[number], string> = {
-  bilancio: "Bilancio",
-  iva: "IVA",
-  imposte: "Imposte",
-  contributi: "Contributi",
-  adempimenti: "Adempimenti",
-  altro: "Altro",
-};
+export { CATEGORIE, etichettaCategoria } from "./etichette";
 
 export const scadenzaSchema = z.object({
   titolo: z.string().trim().min(1, "Il titolo è obbligatorio").max(200, "Massimo 200 caratteri"),

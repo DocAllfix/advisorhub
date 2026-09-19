@@ -10,6 +10,8 @@ export {
   giudicaRoiIndustriale,
   giudicaRos,
   giudicaTurnover,
+  SOGLIE_GIUDIZIO,
+  type ChiaveSoglia,
 } from "./giudizi";
 export {
   calcolaAnalisiEstesa,
@@ -18,6 +20,9 @@ export {
   calcolaPuntiForza,
   calcolaScore,
   calcolaSintesi,
+  FASCE_SALUTE,
+  fasciaSalute,
+  type FasciaSalute,
 } from "./sintesi";
 export {
   sintetizzaPortafoglio,

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-export const DIMENSIONI = ["micro", "piccola", "media", "grande"] as const;
+import { DIMENSIONI } from "./etichette";
+
+export { DIMENSIONI, etichettaDimensione } from "./etichette";
 
 export const clienteSchema = z.object({
   ragioneSociale: z
@@ -29,10 +31,3 @@ export function normalizzaCliente(input: ClienteInput) {
     note: input.note?.trim() ? input.note.trim() : null,
   };
 }
-
-export const etichettaDimensione: Record<(typeof DIMENSIONI)[number], string> = {
-  micro: "Micro",
-  piccola: "Piccola",
-  media: "Media",
-  grande: "Grande",
-};

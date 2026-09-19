@@ -1,5 +1,18 @@
 import { formatEuro, formatNumero, type Analisi, type DatiBilancio } from "@advisorhub/engine";
 
+import { SCALE } from "@/lib/report/soglie";
+
+/**
+ * Il fondo scala delle barre viene da `SCALE`, che è lo stesso usato dal report.
+ *
+ * Prima erano due serie di numeri diversi: la dashboard normalizzava il ROS su
+ * 15 e il report su 20, il turnover su 3 e su 2,5, il ROE su 20 e su 30. Sei
+ * indicatori su sette disegnavano lo stesso valore con barre diverse — così un
+ * commercialista che mostrava la dashboard e poi consegnava il PDF vedeva due
+ * rappresentazioni discordi dello stesso cliente. Nessun numero era sbagliato:
+ * era sbagliato che fossero due.
+ */
+
 /**
  * Metadati di presentazione degli indicatori: titoli, formule e descrizioni
  * didattiche del prototipo. I giudizi e le azioni restano di competenza del
@@ -38,7 +51,8 @@ export const INDICATORI: MetaIndicatore[] = [
       "Misura quanto rende ogni euro di produzione in termini di reddito operativo. Indica potere di pricing e controllo dei costi caratteristici.",
     valore: (a) => pct(a.indicatori.ros),
     extra: (_, d) => `Valore produzione: ${formatEuro(d.valProd)}`,
-    percentuale: (a) => (a.indicatori.ros === null ? 0 : limita((a.indicatori.ros / 15) * 100)),
+    percentuale: (a) =>
+      a.indicatori.ros === null ? 0 : limita((a.indicatori.ros / SCALE.ros.max) * 100),
   },
   {
     chiave: "turnover",
@@ -54,7 +68,9 @@ export const INDICATORI: MetaIndicatore[] = [
         ? "Capitale investito a 0"
         : `IC ${formatNumero(a.indicatori.ic, 2)} € di capitale per 1 € di fatturato`,
     percentuale: (a) =>
-      a.indicatori.turnover === null ? 0 : limita((a.indicatori.turnover / 3) * 100),
+      a.indicatori.turnover === null
+        ? 0
+        : limita((a.indicatori.turnover / SCALE.turnover.max) * 100),
   },
   {
     chiave: "roi",
@@ -68,7 +84,8 @@ export const INDICATORI: MetaIndicatore[] = [
       a.indicatori.ros !== null && a.indicatori.turnover !== null
         ? `Approssimazione ROS × Turnover: ${formatNumero((a.indicatori.ros / 100) * a.indicatori.turnover * 100, 2)}%`
         : "Approssimazione non calcolabile",
-    percentuale: (a) => (a.indicatori.roi === null ? 0 : limita((a.indicatori.roi / 15) * 100)),
+    percentuale: (a) =>
+      a.indicatori.roi === null ? 0 : limita((a.indicatori.roi / SCALE.roi.max) * 100),
   },
   {
     chiave: "roiI",
@@ -82,7 +99,8 @@ export const INDICATORI: MetaIndicatore[] = [
       a.indicatori.roi === null
         ? "Soglia sviluppo 5%: non calcolabile"
         : `Soglia sviluppo 5%: ${a.indicatori.roi >= 5 ? "superata" : "non raggiunta"}`,
-    percentuale: (a) => (a.indicatori.roi === null ? 0 : limita((a.indicatori.roi / 12) * 100)),
+    percentuale: (a) =>
+      a.indicatori.roi === null ? 0 : limita((a.indicatori.roi / SCALE.roiI.max) * 100),
   },
   {
     chiave: "roe",
@@ -93,7 +111,8 @@ export const INDICATORI: MetaIndicatore[] = [
       "Quanto rende il capitale di rischio. È la sintesi finale per il socio: remunerazione al netto di tasse, interessi e componenti straordinarie.",
     valore: (a) => pct(a.indicatori.roe),
     extra: (_, d) => `Patrimonio netto: ${formatEuro(d.patrNetto)}`,
-    percentuale: (a) => (a.indicatori.roe === null ? 0 : limita((a.indicatori.roe / 20) * 100)),
+    percentuale: (a) =>
+      a.indicatori.roe === null ? 0 : limita((a.indicatori.roe / SCALE.roe.max) * 100),
   },
   {
     chiave: "gi",
@@ -110,7 +129,11 @@ export const INDICATORI: MetaIndicatore[] = [
     extra: (a, d) =>
       `Inverso EBITDA/PFN ${formatNumero(a.indicatori.invGi, 1)}% — ${formatEuro(d.pfn)} / ${formatEuro(d.ebitda)}`,
     percentuale: (a, d) =>
-      d.ebitda <= 0 ? 5 : a.indicatori.gi === null ? 0 : limita(100 - (a.indicatori.gi / 6) * 100),
+      d.ebitda <= 0
+        ? 5
+        : a.indicatori.gi === null
+          ? 0
+          : limita(100 - (a.indicatori.gi / SCALE.gi.max) * 100),
   },
   {
     chiave: "dscr",
@@ -131,6 +154,6 @@ export const INDICATORI: MetaIndicatore[] = [
         ? 0
         : a.indicatori.dscr >= 99
           ? 100
-          : limita((a.indicatori.dscr / 2.2) * 100),
+          : limita((a.indicatori.dscr / SCALE.dscr.max) * 100),
   },
 ];

@@ -14,12 +14,13 @@ import * as React from "react";
 import { INDICATORI, type ChiaveIndicatore } from "@/lib/analisi/indicatori-meta";
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
 
+import { cartellaFont } from "./percorso-font";
 import { quota, SCALA_DSCR_6M, SCALE, valoreGrezzo, type ScalaIndicatore } from "./soglie";
 import { C, graficaTono, testoTono, type Tono } from "./tema";
 
 // I font sono incorporati nel PDF: senza, il documento userebbe Helvetica e
 // perderebbe sia l'identità sia l'incolonnamento dei numeri.
-const dir = path.join(process.cwd(), "src/lib/report/fonts");
+const dir = cartellaFont();
 Font.register({
   family: "Plex",
   fonts: [
@@ -124,7 +125,15 @@ const s = StyleSheet.create({
   valore: { width: 66, fontFamily: "PlexMono", fontWeight: 600, fontSize: 13, textAlign: "right" },
   unita: { fontSize: 7.5, fontWeight: 400, color: C.fg2 },
   bulletBox: { flex: 1, height: 20, position: "relative" },
-  track: { position: "absolute", top: 4, left: 0, right: 0, height: 6, backgroundColor: C.muted, borderRadius: 1.5 },
+  track: {
+    position: "absolute",
+    top: 4,
+    left: 0,
+    right: 0,
+    height: 6,
+    backgroundColor: C.muted,
+    borderRadius: 1.5,
+  },
   banda: { position: "absolute", top: 0, height: 6, backgroundColor: C.bandaSottoSoglia },
   barra: { position: "absolute", top: 5.5, left: 0, height: 3, borderRadius: 1.5 },
   tacca: { position: "absolute", top: 1, width: 1.2, height: 12, backgroundColor: C.fg },
@@ -204,7 +213,9 @@ function Bullet({
   return (
     <View style={[s.bulletBox, etichettaSopra ? { height: 24, paddingTop: 8 } : {}]}>
       <View style={[s.track, etichettaSopra ? { top: 12 } : {}]} />
-      <View style={[s.banda, { left: 0, width: `${pSoglia}%` }, etichettaSopra ? { top: 12 } : {}]} />
+      <View
+        style={[s.banda, { left: 0, width: `${pSoglia}%` }, etichettaSopra ? { top: 12 } : {}]}
+      />
       {valore !== null && (
         <View
           style={[
@@ -215,13 +226,7 @@ function Bullet({
         />
       )}
       <View style={[s.tacca, { left: `${pSoglia}%` }, etichettaSopra ? { top: 9 } : {}]} />
-      <Text
-        style={[
-          s.etichettaSoglia,
-          { left: `${sinistra}%` },
-          etichettaSopra ? { top: 0 } : {},
-        ]}
-      >
+      <Text style={[s.etichettaSoglia, { left: `${sinistra}%` }, etichettaSopra ? { top: 0 } : {}]}>
         {scala.etichetta}
       </Text>
     </View>
@@ -362,7 +367,10 @@ export function DocumentoReport({ d }: { d: DatiReport }): React.ReactElement<Do
             <Text style={s.su100}>SU 100</Text>
             <View style={s.scalaBase}>
               <View
-                style={[s.scalaQuota, { width: `${a.score}%`, backgroundColor: graficaTono[sint.tone] }]}
+                style={[
+                  s.scalaQuota,
+                  { width: `${a.score}%`, backgroundColor: graficaTono[sint.tone] },
+                ]}
               />
             </View>
           </View>
@@ -440,9 +448,7 @@ export function DocumentoReport({ d }: { d: DatiReport }): React.ReactElement<Do
             <View style={s.col}>
               {a.areeAttenzione.map((v, i) => (
                 <View key={i} style={s.voce}>
-                  <View
-                    style={[s.seg, { backgroundColor: v.k === "OK" ? C.muted : C.warnG }]}
-                  />
+                  <View style={[s.seg, { backgroundColor: v.k === "OK" ? C.muted : C.warnG }]} />
                   <Text style={s.voceTesto}>{v.txt}</Text>
                 </View>
               ))}

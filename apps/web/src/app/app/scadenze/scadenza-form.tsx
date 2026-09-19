@@ -24,7 +24,12 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { creaScadenza, modificaScadenza } from "@/lib/scadenze/actions";
-import { CATEGORIE, etichettaCategoria, scadenzaSchema, type ScadenzaInput } from "@/lib/scadenze/schema";
+import {
+  CATEGORIE,
+  etichettaCategoria,
+  scadenzaSchema,
+  type ScadenzaInput,
+} from "@/lib/scadenze/schema";
 
 export type ScadenzaModificabile = {
   id: string;
@@ -65,9 +70,7 @@ function FormInterno({
   });
 
   async function onSubmit(valori: ScadenzaInput) {
-    const res = scadenza
-      ? await modificaScadenza(scadenza.id, valori)
-      : await creaScadenza(valori);
+    const res = scadenza ? await modificaScadenza(scadenza.id, valori) : await creaScadenza(valori);
     if (!res.ok) {
       if (res.campi) {
         for (const [campo, msg] of Object.entries(res.campi)) {
@@ -94,13 +97,20 @@ function FormInterno({
             placeholder="Es. Deposito bilancio 2025"
             {...register("titolo")}
           />
-          {errors.titolo && <p className="text-xs text-danger-foreground">{errors.titolo.message}</p>}
+          {errors.titolo && (
+            <p className="text-xs text-danger-foreground">{errors.titolo.message}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
             <Label htmlFor="data">Scadenza</Label>
-            <Input id="data" type="date" aria-invalid={Boolean(errors.data)} {...register("data")} />
+            <Input
+              id="data"
+              type="date"
+              aria-invalid={Boolean(errors.data)}
+              {...register("data")}
+            />
             {errors.data && <p className="text-xs text-danger-foreground">{errors.data.message}</p>}
           </div>
           <div className="grid gap-1.5">
@@ -154,7 +164,12 @@ function FormInterno({
 
         <div className="grid gap-1.5">
           <Label htmlFor="note">Note (facoltative)</Label>
-          <Textarea id="note" rows={3} placeholder="Dettagli, importi, riferimenti" {...register("note")} />
+          <Textarea
+            id="note"
+            rows={3}
+            placeholder="Dettagli, importi, riferimenti"
+            {...register("note")}
+          />
         </div>
       </div>
 

@@ -80,6 +80,16 @@ export function azzeraTuttiITour(): void {
   }
 }
 
+/** Toglie al div fittizio di driver.js gli attributi ARIA che non puo' avere. */
+function nascondiFittizio() {
+  const fittizio = document.getElementById("driver-dummy-element");
+  if (!fittizio) return;
+  fittizio.removeAttribute("aria-haspopup");
+  fittizio.removeAttribute("aria-expanded");
+  fittizio.removeAttribute("aria-controls");
+  fittizio.setAttribute("aria-hidden", "true");
+}
+
 export const CONFIG_BASE: Partial<Config> = {
   showProgress: true,
   allowClose: true,
@@ -108,11 +118,7 @@ export const CONFIG_BASE: Partial<Config> = {
  * inciampa più spesso, e qui è gestito: ogni callback fa avanzare il tour, e
  * sull'ultimo passo "Avanti" diventa la chiusura.
  */
-export function creaTour(
-  idPagina: string,
-  passi: DriveStep[],
-  extra?: Partial<Config>,
-): Driver {
+export function creaTour(idPagina: string, passi: DriveStep[], extra?: Partial<Config>): Driver {
   /*
    * Chiusura in un punto solo. Serve perché `destroy()` scavalca di proposito
    * `onDestroyStarted` (evita il ciclo infinito), quindi affidare a
@@ -140,6 +146,39 @@ export function creaTour(
     onPrevClick: () => tour.movePrevious(),
     onCloseClick: chiudi,
     onDestroyStarted: chiudi,
+    /*
+     * Toppa di accessibilita' su driver.js.
+     *
+     * Per i passi senza bersaglio la libreria crea `#driver-dummy-element`, un
+     * div 0x0 con `aria-haspopup`, `aria-expanded` e `aria-controls` ma senza
+     * `role`. `aria-expanded` non e' ammesso su un elemento generico: e' una
+     * violazione WCAG 2.1 A (`aria-allowed-attr`), e la incontra OGNI utente al
+     * primo accesso, perche' il benvenuto e' un passo centrato.
+     *
+     * L'elemento e' invisibile e non raggiungibile da tastiera: non ha niente
+     * da dire a una tecnologia assistiva. Lo si nasconde e gli si tolgono gli
+     * attributi, invece di inventargli un ruolo che non ha. Il popover resta
+     * annunciato per conto suo.
+     *
+     * La trovava Lighthouse e non l'axe delle nostre verifiche, perche' queste
+     * silenziano il tour via localStorage: un controllo che salta il primo
+     * accesso non vede cio' che vede un utente nuovo.
+     *
+     * DUE agganci, non uno. La libreria scrive gli attributi alla fine della
+     * funzione di evidenziazione; `onHighlighted` arriva a transizione finita,
+     * ma il popover compare A META' (via `onPopoverRender`): da solo,
+     * `onHighlighted` lasciava una finestra con il benvenuto gia' visibile e
+     * gli attributi ancora li'. Senza animazione l'ordine si inverte, e il
+     * popover si disegna prima degli attributi: allora serve l'altro.
+     */
+    onPopoverRender: (popover, opzioni) => {
+      nascondiFittizio();
+      extra?.onPopoverRender?.(popover, opzioni);
+    },
+    onHighlighted: (elemento, passo, opzioni) => {
+      nascondiFittizio();
+      extra?.onHighlighted?.(elemento, passo, opzioni);
+    },
   });
   return tour;
 }

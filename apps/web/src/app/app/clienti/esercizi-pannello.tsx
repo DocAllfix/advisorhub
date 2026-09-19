@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { formatEuro } from "@advisorhub/engine";
 import { Download, FileBarChart, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
@@ -47,6 +48,9 @@ export function EserciziPannello({
 }) {
   const router = useRouter();
   const [esportando, setEsportando] = useState(false);
+  // Caricare o eliminare un bilancio riscrive la tabella: la riga nuova entra
+  // invece di apparire, e si vede dove si e' inserita nello storico.
+  const [rifEsercizi] = useAutoAnimate<HTMLTableSectionElement>();
 
   // "Nuovo esercizio" e "Modifica" portano a un form che in demo mostra un
   // avviso: le intercetto qui per dare subito il messaggio, senza far navigare.
@@ -141,27 +145,22 @@ export function EserciziPannello({
           <Table>
             <TableHeader>
               <TableRow className="border-hairline hover:bg-transparent">
-                {[
-                  "Anno",
-                  "Valore produzione",
-                  "Fatturato",
-                  "EBITDA",
-                  "PFN",
-                  "DSCR 6M",
-                ].map((t, i) => (
-                  <TableHead
-                    key={t}
-                    className={`h-auto pb-2.5 text-[11px] font-medium tracking-[0.14em] uppercase ${i > 0 && i < 5 ? "text-right" : ""}`}
-                  >
-                    {t}
-                  </TableHead>
-                ))}
+                {["Anno", "Valore produzione", "Fatturato", "EBITDA", "PFN", "DSCR 6M"].map(
+                  (t, i) => (
+                    <TableHead
+                      key={t}
+                      className={`h-auto pb-2.5 text-[11px] font-medium tracking-[0.14em] uppercase ${i > 0 && i < 5 ? "text-right" : ""}`}
+                    >
+                      {t}
+                    </TableHead>
+                  ),
+                )}
                 <TableHead className="h-auto pb-2.5">
                   <span className="sr-only">Azioni</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody ref={rifEsercizi}>
               {esercizi.map((e) => (
                 <TableRow key={e.id} className="relative border-hairline hover:bg-muted/40">
                   <TableCell>
