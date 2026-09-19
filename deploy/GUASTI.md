@@ -172,8 +172,16 @@ node .next/standalone/apps/web/server.js
 Conseguenza: i test end-to-end vanno eseguiti contro **quello**, non contro `next start`.
 È anche più corretto — è l'artefatto che va davvero in produzione.
 
-**Verificato su Next 16.2.11.** `public/` viene copiato dentro `.next/standalone/apps/web/`.
-`.next/static` invece **va copiato a mano** (lo fa il Dockerfile).
+**Verificato su Next 16.2.11 e 16.3.5.** `public/` viene copiato dentro
+`.next/standalone/apps/web/`. `.next/static` invece **va copiato a mano** (lo fa il
+Dockerfile). Il comportamento non è cambiato con l'aggiornamento: i sei font del report
+erano al loro posto nella build standalone e `report-pdf.spec.ts` è rimasto verde.
+
+**Sulla 16.3.5 la convenzione `middleware` è ancora solo deprecata**, non rimossa: la build
+stampa l'avviso e suggerisce il codemod `middleware-to-proxy`, ma compila e l'elenco delle
+rotte mostra `ƒ Proxy (Middleware)`. La CSP con nonce per richiesta continua a funzionare
+(`salute.spec.ts` verifica nonce, `strict-dynamic` e nonce diverso a ogni richiesta). Il
+rename andrà fatto, ma è una scelta, non un'urgenza.
 
 ---
 
