@@ -20,9 +20,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Nessun `version:` qui: pnpm/action-setup si rifiuta di partire se la
+      # versione e' dichiarata sia nel workflow sia in package.json
+      # ("Multiple versions of pnpm specified"), e la CI muore prima di
+      # eseguire qualsiasi test. Decide `packageManager` in package.json, che
+      # e' anche piu' preciso: 11.2.2 esatta invece di "11".
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: actions/setup-node@v4
         with:
@@ -66,9 +69,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      # Nessun `version:` qui: pnpm/action-setup si rifiuta di partire se la
+      # versione e' dichiarata sia nel workflow sia in package.json
+      # ("Multiple versions of pnpm specified"), e la CI muore prima di
+      # eseguire qualsiasi test. Decide `packageManager` in package.json, che
+      # e' anche piu' preciso: 11.2.2 esatta invece di "11".
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -114,9 +120,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      # Nessun `version:` qui: pnpm/action-setup si rifiuta di partire se la
+      # versione e' dichiarata sia nel workflow sia in package.json
+      # ("Multiple versions of pnpm specified"), e la CI muore prima di
+      # eseguire qualsiasi test. Decide `packageManager` in package.json, che
+      # e' anche piu' preciso: 11.2.2 esatta invece di "11".
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -152,9 +161,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # Nessun `version:` qui: pnpm/action-setup si rifiuta di partire se la
+      # versione e' dichiarata sia nel workflow sia in package.json
+      # ("Multiple versions of pnpm specified"), e la CI muore prima di
+      # eseguire qualsiasi test. Decide `packageManager` in package.json, che
+      # e' anche piu' preciso: 11.2.2 esatta invece di "11".
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 22
