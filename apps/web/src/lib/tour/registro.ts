@@ -1,12 +1,6 @@
 import type { Driver } from "driver.js";
 
 import { azzeraTour } from "./config";
-import { tourAnalisi } from "./pagine/analisi";
-import { tourClienti } from "./pagine/clienti";
-import { tourImpostazioni } from "./pagine/impostazioni";
-import { tourPanoramica } from "./pagine/panoramica";
-import { tourScadenze } from "./pagine/scadenze";
-import { tourSchedaCliente } from "./pagine/scheda-cliente";
 
 export interface VoceRegistro {
   /** Identificativo usato per ricordare che è già stato visto. */
@@ -15,8 +9,15 @@ export interface VoceRegistro {
   percorso: RegExp;
   /** Nome leggibile, usato nel suggerimento del pulsante "?". */
   etichetta: string;
-  /** Avvia il tour; riceve se lo studio è dimostrativo. */
-  avvia: (demo: boolean) => Driver;
+  /**
+   * Avvia il tour; riceve se lo studio è dimostrativo.
+   *
+   * Asincrono: il modulo del tour, e con lui driver.js, si scarica solo qui.
+   * Il registro sta nella barra in alto di ogni pagina, e prima lo importava
+   * staticamente, portando la libreria su ogni pagina anche quando nessun
+   * tour partiva.
+   */
+  avvia: (demo: boolean) => Promise<Driver>;
 }
 
 /**
@@ -29,37 +30,37 @@ export const REGISTRO: VoceRegistro[] = [
     id: "analisi",
     percorso: /^\/app\/clienti\/[^/]+\/analisi/,
     etichetta: "Analisi",
-    avvia: tourAnalisi,
+    avvia: (demo) => import("./pagine/analisi").then((t) => t.tourAnalisi(demo)),
   },
   {
     id: "scheda-cliente",
     percorso: /^\/app\/clienti\/[^/]+$/,
     etichetta: "Scheda cliente",
-    avvia: tourSchedaCliente,
+    avvia: (demo) => import("./pagine/scheda-cliente").then((t) => t.tourSchedaCliente(demo)),
   },
   {
     id: "clienti",
     percorso: /^\/app\/clienti\/?$/,
     etichetta: "Portafoglio clienti",
-    avvia: tourClienti,
+    avvia: (demo) => import("./pagine/clienti").then((t) => t.tourClienti(demo)),
   },
   {
     id: "scadenze",
     percorso: /^\/app\/scadenze/,
     etichetta: "Scadenze",
-    avvia: tourScadenze,
+    avvia: (demo) => import("./pagine/scadenze").then((t) => t.tourScadenze(demo)),
   },
   {
     id: "impostazioni",
     percorso: /^\/app\/impostazioni/,
     etichetta: "Impostazioni",
-    avvia: tourImpostazioni,
+    avvia: (demo) => import("./pagine/impostazioni").then((t) => t.tourImpostazioni(demo)),
   },
   {
     id: "panoramica",
     percorso: /^\/app\/?$/,
     etichetta: "Panoramica",
-    avvia: tourPanoramica,
+    avvia: (demo) => import("./pagine/panoramica").then((t) => t.tourPanoramica(demo)),
   },
 ];
 
@@ -72,6 +73,6 @@ export function rilanciaTour(percorso: string, demo: boolean): boolean {
   const voce = tourPerPercorso(percorso);
   if (!voce) return false;
   azzeraTour(voce.id);
-  voce.avvia(demo);
+  void voce.avvia(demo);
   return true;
 }

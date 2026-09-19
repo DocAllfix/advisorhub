@@ -1,6 +1,6 @@
 import type { DriveStep } from "driver.js";
 
-import { creaTour } from "../config";
+import { creaTour } from "../crea-tour";
 
 /** Tour della scheda cliente: la salute corrente e lo storico dei bilanci. */
 export function tourSchedaCliente(demo: boolean) {

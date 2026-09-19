@@ -1,6 +1,6 @@
 import type { DriveStep } from "driver.js";
 
-import { creaTour } from "../config";
+import { creaTour } from "../crea-tour";
 
 /**
  * Tour della Panoramica: è anche il benvenuto, quindi il primo passo non

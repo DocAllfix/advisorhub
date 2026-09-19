@@ -24,7 +24,6 @@ import { INDICATORI, type ChiaveIndicatore } from "@/lib/analisi/indicatori-meta
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
 import { toniGrafica } from "@/lib/analisi/toni";
 import { tourCompletato } from "@/lib/tour/config";
-import { tourSimulatore } from "@/lib/tour/pagine/analisi";
 import { cn } from "@/lib/utils";
 
 import { LetturaContestuale } from "./lettura-contestuale";
@@ -107,7 +106,10 @@ export function AnalisiDashboard({
     // Il tour dei cursori ha senso solo mentre sono a schermo: parte alla
     // prima apertura, una volta sola. Il ritardo lascia disegnare il pannello.
     if (!tourCompletato("simulatore")) {
-      window.setTimeout(() => tourSimulatore(), 450);
+      window.setTimeout(
+        () => void import("@/lib/tour/pagine/analisi").then((t) => t.tourSimulatore()),
+        450,
+      );
     }
   }
   function chiudiSimulazione() {

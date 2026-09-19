@@ -1,6 +1,6 @@
 import type { DriveStep } from "driver.js";
 
-import { creaTour } from "../config";
+import { creaTour } from "../crea-tour";
 
 /**
  * Il primo elemento che corrisponde E si vede.
