@@ -114,9 +114,16 @@ pnpm --filter web test:e2e
 
 **Tre di questi test sono la tua rete, non un fastidio:**
 
-- `e2e/interfaccia.spec.ts` raccoglie le **violazioni CSP dalla console del browser** e
-  fallisce se ce n'è anche una. È l'unico posto dove il problema di §1.1 e §1.2 si dichiara:
-  una CSP sbagliata non dà 500, dà una pagina ferma a metà.
+- `e2e/interfaccia.spec.ts` guarda la **console del browser** tramite `osservaConsole()`
+  (`e2e/aiuto.ts`) e fallisce su **qualunque** errore o avviso, con `RUMORE_AMMESSO` vuota —
+  misurata, non sperata. In particolare sulle due famiglie che non danno **mai** un errore HTTP:
+  le **violazioni CSP** (il problema di §1.1 e §1.2: una CSP sbagliata non dà 500, dà una pagina
+  ferma a metà) e le **mancate corrispondenze di idratazione** di React.
+  Sulla seconda, sappi due cose prima di toccarla: in produzione React **non scrive «hydration»**,
+  scrive `Minified React error #418`, e il messaggio arriva come eccezione, non come riga di
+  console — per questo il filtro prende **qualunque** errore React minificato e non una lista di
+  codici (**G-33**). Un asserto sul contenuto non sostituisce questo controllo: il server rende
+  comunque l'HTML giusto, quindi `toContainText` passa anche su una pagina che non si è idratata.
 - `e2e/report-pdf.spec.ts` **scarica il PDF per davvero** e controlla che inizi con `%PDF` e
   pesi più di 20 KB. Un file più piccolo significa font mancanti.
 - `e2e/salute.spec.ts` verifica che la CSP contenga un nonce, che ci sia `strict-dynamic`, e
@@ -212,7 +219,7 @@ container di un altro progetto azzerandone il volume, senza errori** (**G-01**).
 
 ## 6. Se trovi un guasto nuovo
 
-`deploy/GUASTI.md` è un registro vivo, a 32 voci, condiviso in spirito con altri due prodotti
+`deploy/GUASTI.md` è un registro vivo, a 39 voci, condiviso in spirito con altri due prodotti
 sulla stessa macchina. Ogni voce ha: sintomo, **perché inganna**, diagnosi incollabile, rimedio.
 
 La sezione «perché inganna» è quella che fa risparmiare tempo a chi viene dopo — una voce
