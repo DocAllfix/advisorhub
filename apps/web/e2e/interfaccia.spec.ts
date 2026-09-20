@@ -118,9 +118,37 @@ test("ogni superficie autenticata si idrata sotto la CSP, larga e stretta", asyn
     await page.setViewportSize({ width: larghezza, height: 900 });
     for (const [nome, rotta, atteso] of superfici) {
       await page.goto(rotta);
-      // Il contenuto atteso e' la prova che l'idratazione e' arrivata in fondo:
-      // con la CSP rotta la pagina risponde 200 e resta il guscio vuoto (G-28).
       await expect(page.locator("body"), `${nome} @${larghezza}`).toContainText(atteso);
+
+      /*
+       * Il testo NON basta come prova di vita: e' reso dal server e resta
+       * leggibile anche se React non si aggancia mai. Un controllo che guarda
+       * solo il contenuto passa su una pagina morta, e i clic cadono su HTML
+       * senza gestori senza produrre errori.
+       *
+       * React marca i nodi che ha idratato con una chiave `__reactFiber$...`.
+       * Va cercata su <body> o <html>, non su un elemento qualsiasi: in
+       * sviluppo Next monta una propria radice React dentro <body>, e su un
+       * elemento interno il controllo passerebbe comunque.
+       *
+       * Segnalazione arrivata dalla sessione gdprhub, che ci si e' bruciata:
+       * il loro cancello visivo cliccava ogni elemento di diciassette pagine
+       * ed era verde da settimane su pagine mai idratate. L'unico clic di cui
+       * verificavano l'EFFETTO falliva, su tutte le pagine.
+       */
+      await page
+        .waitForFunction(
+          () => Object.keys(document.body).some((k) => k.startsWith("__reactFiber")),
+          undefined,
+          {
+            timeout: 15_000,
+          },
+        )
+        .catch(() => {
+          throw new Error(
+            `${nome} @${larghezza}: React non si e' agganciato al documento. La pagina e' arrivata e il testo si legge, ma e' inerte.`,
+          );
+        });
     }
   }
 

@@ -1063,10 +1063,35 @@ netstat -ano | grep ":3100 .*LISTENING"
 wmic process where "ProcessId=<pid>" get CommandLine       # la riga di comando, non il nome
 ```
 
+**Due metodi, in quest'ordine** _(il primo da flowcrm)_. Si completano, e messi nell'ordine
+sbagliato lasciano un buco.
+
+1. **Per PERCORSO del progetto nella riga di comando.** È il più forte, perché funziona
+   anche su un processo bloccato o moribondo, che a una sonda non risponderebbe:
+
+   ```powershell
+   Get-CimInstance Win32_Process |
+     Where-Object { $_.CommandLine -like '*\sistemacommercialisti\*' }
+   ```
+
+   **Il limite, che va conosciuto**: su Windows `CommandLine` torna **vuota** per i processi
+   di un altro utente o elevati rispetto alla sessione che interroga, senza errore e senza
+   avviso. Quindi il filtro può non vedere qualcosa che invece c'è. Ma sbaglia **verso il
+   non toccare**: un processo che non si riesce ad attribuire semplicemente non compare, e
+   quindi non si chiude. È il verso giusto in cui fallire.
+
+2. **Per SONDA di salute**, su ciò che resta. Copre il caso opposto: processo vivo la cui
+   riga di comando non è leggibile.
+
+**La regola che ne segue, ed è la più utile.** Se dopo il filtro per percorso la porta
+risulta ancora occupata, **non è un processo proprio che il filtro ha mancato: è quasi
+certamente di qualcun altro.** È il momento di chiedere, non di allargare il filtro.
+
 **Rimedio.** Due regole, nell'ordine:
 
-1. **Mai terminare un processo che non si è dimostrato proprio.** La prova è la risposta
-   della sonda, non il numero della porta né il fatto che sia `node.exe` (lo sono tutti).
+1. **Mai terminare un processo che non si è dimostrato proprio.** La prova è il percorso o
+   la risposta della sonda, non il numero della porta né il fatto che sia `node.exe` (lo
+   sono tutti).
 2. **Spostarsi invece di sgomberare.** La configurazione Playwright legge `E2E_PORT` e ne
    deriva la seconda porta (`E2E_PORT + 1`), quindi basta:
 
