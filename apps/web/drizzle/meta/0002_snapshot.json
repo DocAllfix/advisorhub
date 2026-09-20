@@ -110,12 +110,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -218,12 +214,8 @@
           "name": "invitation_organization_id_organization_id_fk",
           "tableFrom": "invitation",
           "tableTo": "organization",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -231,12 +223,8 @@
           "name": "invitation_inviter_id_user_id_fk",
           "tableFrom": "invitation",
           "tableTo": "user",
-          "columnsFrom": [
-            "inviter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["inviter_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -320,12 +308,8 @@
           "name": "member_organization_id_organization_id_fk",
           "tableFrom": "member",
           "tableTo": "organization",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -333,12 +317,8 @@
           "name": "member_user_id_user_id_fk",
           "tableFrom": "member",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -413,9 +393,7 @@
         "organization_slug_unique": {
           "name": "organization_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -504,12 +482,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -519,9 +493,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -585,9 +557,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -754,12 +724,8 @@
           "name": "analisi_cliente_id_clienti_id_fk",
           "tableFrom": "analisi",
           "tableTo": "clienti",
-          "columnsFrom": [
-            "cliente_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cliente_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -767,12 +733,8 @@
           "name": "analisi_esercizio_id_esercizi_id_fk",
           "tableFrom": "analisi",
           "tableTo": "esercizi",
-          "columnsFrom": [
-            "esercizio_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["esercizio_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -875,12 +837,8 @@
           "name": "audit_log_organization_id_organization_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "organization",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -888,12 +846,8 @@
           "name": "audit_log_user_id_user_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -988,12 +942,8 @@
           "name": "clienti_organization_id_organization_id_fk",
           "tableFrom": "clienti",
           "tableTo": "organization",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1174,12 +1124,8 @@
           "name": "esercizi_cliente_id_clienti_id_fk",
           "tableFrom": "esercizi",
           "tableTo": "clienti",
-          "columnsFrom": [
-            "cliente_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cliente_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1274,12 +1220,8 @@
           "name": "report_cliente_id_clienti_id_fk",
           "tableFrom": "report",
           "tableTo": "clienti",
-          "columnsFrom": [
-            "cliente_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cliente_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1287,12 +1229,8 @@
           "name": "report_analisi_id_analisi_id_fk",
           "tableFrom": "report",
           "tableTo": "analisi",
-          "columnsFrom": [
-            "analisi_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["analisi_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1300,12 +1238,8 @@
           "name": "report_creato_da_user_id_user_id_fk",
           "tableFrom": "report",
           "tableTo": "user",
-          "columnsFrom": [
-            "creato_da_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["creato_da_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1428,12 +1362,8 @@
           "name": "scadenze_organization_id_organization_id_fk",
           "tableFrom": "scadenze",
           "tableTo": "organization",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1441,12 +1371,8 @@
           "name": "scadenze_cliente_id_clienti_id_fk",
           "tableFrom": "scadenze",
           "tableTo": "clienti",
-          "columnsFrom": [
-            "cliente_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cliente_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

@@ -1,0 +1,1173 @@
+# GUASTI — catalogo dei problemi incontrati e dei rimedi
+
+Registro vivo. Ogni voce nasce da un guasto **realmente accaduto**, non da un'ipotesi.
+Chi incontra un problema nuovo aggiunge una voce in fondo, con lo stesso schema.
+
+Convenzione condivisa con i progetti `gdprhub` e `flowcrm`: stesso nome di file, stessa
+numerazione `G-nn` per prodotto. Le voci marcate _(da gdprhub)_ / _(da flowcrm)_ arrivano
+dalle sessioni parallele: le teniamo perché quei prodotti hanno percorso prima di noi la
+parte di deploy, e i loro guasti sono i nostri di domani.
+
+Due regole attraversano metà di questo elenco:
+
+> **1. Il nome di un file non è una prova di dove stai scrivendo.**
+> Prima di ogni comando che scrive su un database, stampa il bersaglio.
+>
+> **2. Un successo dichiarato non è un successo verificato.**
+> Dopo ogni passo, misura l'effetto: conta le tabelle, scarica il file, leggi l'header.
+
+---
+
+## G-01 — Due progetti si sovrascrivono i container a vicenda
+
+**Sintomo.** Il database di sviluppo si svuota da solo. Postgres risponde
+`FATAL: role "advisorhub" does not exist` su un container che un minuto prima funzionava.
+Nessun errore, nessun avviso.
+
+**Perché inganna.** Docker Compose deriva il nome del progetto dalla **cartella** che
+contiene il file. Tutti e tre i prodotti tengono i compose in `deploy/`, quindi per Docker
+sono tutti il progetto `deploy` e condividono lo spazio dei nomi dei container. Un
+`docker compose up` altrui non fallisce: **ricrea** il servizio omonimo con la propria
+configurazione, e il volume riparte da zero.
+
+**Diagnosi.**
+
+```bash
+docker inspect <container> --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'
+```
+
+Se stampa il percorso di un altro progetto, quel container non è più tuo.
+
+**Rimedio.** Nome di progetto esplicito, prima riga del compose:
+
+```yaml
+name: advisorhub-dev # convenzione condivisa: <prodotto>-<ambiente>
+
+services:
+  db:
+    image: postgres:17-alpine
+```
+
+**Trappola collegata** _(da flowcrm)_. Con più file `-f`, vince il `name:` dell'**ultimo**.
+Un compose di base che dichiara già un `name:` proprio (quello upstream di Supabase dichiara
+`name: supabase`) annulla la correzione in silenzio se l'ordine dei `-f` è invertito.
+L'ordine dei `-f` scritto nel runbook non è estetico.
+
+**Conseguenza da non sottovalutare** _(da gdprhub)_. Uno script di backup che ricava il nome
+del volume da `COMPOSE_PROJECT_NAME` non fallisce con un nome dedotto male: **salva una
+cartella vuota**. Il backup "riesce" ogni notte e non contiene nulla.
+
+---
+
+## G-02 — `Bind for 0.0.0.0:5432 failed: port is already allocated`
+
+**Sintomo.** `docker compose up` si ferma sul primo servizio che pubblica una porta già presa.
+
+**Perché inganna.** Su una macchina condivisa fra più prodotti, le porte standard
+(5432 Postgres, 1025/8025 posta, 6379 Redis) sono le prime a collidere. Qui la 5432 era di un
+terzo progetto e la 1025 di un Mailpit rimasto orfano.
+
+**Diagnosi.**
+
+```bash
+docker ps --format '{{.Names}}\t{{.Ports}}'
+netstat -ano | grep ":5432"
+```
+
+**Rimedio.** Pubblicare su una porta non standard, lasciando invariata quella interna:
+
+```yaml
+ports:
+  - "5433:5432"
+```
+
+Meglio: in sviluppo non pubblicare le porte che non servono dall'host. In produzione
+**solo il reverse proxy** pubblica porte.
+
+---
+
+## G-03 — `node --env-file`: vince l'ULTIMO file
+
+**Sintomo.** Uno script che dovrebbe lavorare in locale si collega al database di **produzione**.
+
+**Perché inganna.** L'ordine sembra dire "prima il più specifico". È il contrario:
+
+```
+tsx --env-file-if-exists=.env.local --env-file-if-exists=.env   # vince .env        SBAGLIATO
+tsx --env-file-if-exists=.env --env-file-if-exists=.env.local   # vince .env.local  GIUSTO
+```
+
+Qui è costato un worker collegato al Postgres di produzione. Ha solo letto e fallito su una
+tabella inesistente, ma con un comando di migrazione sarebbe finita diversamente.
+
+**Rimedio.** `.env` per primo, `.env.local` per ultimo: la precedenza di Next.
+
+---
+
+## G-04 — `dotenv`: vince il PRIMO file (l'opposto di G-03)
+
+**Sintomo.** Come G-03, ma in uno script che usa `dotenv` invece dei flag di Node.
+
+**Perché inganna.** `dotenv` **non sovrascrive** una chiave già presente in `process.env`:
+la precedenza è rovesciata rispetto a `node --env-file`. Due caricatori nello stesso repo
+con regole opposte.
+
+```ts
+config({ path: ".env.local" }); // PRIMA il più specifico
+config({ path: ".env" }); // -> .env.local vince
+```
+
+**Aggravante trovata qui.** `import "dotenv/config"` carica **solo `.env`**. Gli script di
+seed lo usavano: su questa macchina `.env` punta al database di produzione, quindi
+`pnpm db:seed-demo` vi avrebbe scritto i dati dimostrativi.
+
+**Rimedio.** Caricamento esplicito di entrambi i file, nell'ordine giusto per il caricatore
+in uso. Vedi `apps/web/drizzle.config.ts`.
+
+---
+
+## G-05 — `drizzle-kit migrate` dichiara successo senza applicare nulla
+
+**Sintomo.** Il comando stampa `migrations applied successfully!` ed esce con 0. Il database
+resta **completamente vuoto**: nessuna tabella, nemmeno lo schema `drizzle`.
+
+**Perché inganna.** È il caso peggiore: un successo dichiarato. Il codice va in produzione
+contro uno schema che non esiste, e il guasto si manifesta alla prima query di un utente.
+
+**Diagnosi.** Non fidarsi del messaggio: contare le tabelle subito dopo.
+
+```bash
+docker exec <db> psql -U <utente> -d <db> -tA -c \
+  "select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public';"
+```
+
+**Rimedio adottato.** Non si usa la CLI per migrare. `apps/web/src/lib/migra.ts` usa il
+migratore di **`drizzle-orm`**, che è una dipendenza di runtime, **stampa host e database
+prima di scrivere**, e conta le tabelle dopo:
+
+```
+[migra] bersaglio:  localhost:5433/advisorhub
+[migra] migrazioni: .../apps/web/drizzle
+[migra] fatto: 14 tabelle nello schema public.
+```
+
+`drizzle-kit` resta disponibile come `db:migrate:kit`, e per `generate`/`check`, che
+funzionano correttamente.
+
+---
+
+## G-06 — `next start` non funziona con `output: "standalone"`
+
+**Sintomo.** Il server parte, stampa `Ready`, e ogni richiesta risponde 500.
+
+**Perché inganna.** L'avviso di Next compare **dopo** la riga `Ready`, quindi scorre via:
+`"next start" does not work with "output: standalone" configuration`.
+
+**Rimedio.** Lo script `start` esegue il server standalone:
+
+```bash
+node .next/standalone/apps/web/server.js
+```
+
+Conseguenza: i test end-to-end vanno eseguiti contro **quello**, non contro `next start`.
+È anche più corretto — è l'artefatto che va davvero in produzione.
+
+**Verificato su Next 16.2.11 e 16.3.5.** `public/` viene copiato dentro
+`.next/standalone/apps/web/`. `.next/static` invece **va copiato a mano** (lo fa il
+Dockerfile). Il comportamento non è cambiato con l'aggiornamento: i sei font del report
+erano al loro posto nella build standalone e `report-pdf.spec.ts` è rimasto verde.
+
+**Sulla 16.3.5 la convenzione `middleware` è ancora solo deprecata**, non rimossa: la build
+stampa l'avviso e suggerisce il codemod `middleware-to-proxy`, ma compila e l'elenco delle
+rotte mostra `ƒ Proxy (Middleware)`. La CSP con nonce per richiesta continua a funzionare
+(`salute.spec.ts` verifica nonce, `strict-dynamic` e nonce diverso a ogni richiesta). Il
+rename andrà fatto, ma è una scelta, non un'urgenza.
+
+---
+
+## G-07 — La validazione dell'ambiente blocca il collaudo in locale
+
+**Sintomo.** Il server di produzione non parte:
+`BETTER_AUTH_URL deve usare https … il cookie di sessione non avrebbe il flag Secure`.
+
+**Perché inganna.** La regola è giusta — su un dominio pubblico in http il cookie di sessione
+perde il flag `Secure` — ma il server standalone imposta `NODE_ENV=production` anche quando
+si collauda la build su `localhost`.
+
+**Rimedio.** La guardia esenta `localhost`, `127.0.0.1` e `[::1]`, dove il cookie non
+attraversa alcuna rete. Vedi `apps/web/src/lib/env.ts`.
+
+---
+
+## G-08 — `MISSING_OR_NULL_ORIGIN` con curl
+
+**Sintomo.** `POST /api/auth/organization/create` risponde 403
+`{"code":"MISSING_OR_NULL_ORIGIN"}`, mentre dal browser funziona.
+
+**Perché inganna.** Sembra un problema di permessi o di sessione. È la protezione CSRF di
+Better Auth: con `trustedOrigins` configurato, le richieste che modificano stato devono avere
+l'header `Origin`. Un browser lo manda sempre, curl no.
+
+**Rimedio.** Negli script di collaudo: `curl -H 'Origin: https://<dominio>' …`
+Non è un difetto dell'applicazione: **non** allargare `trustedOrigins` per farlo sparire.
+
+---
+
+## G-09 — Il PDF del report si rompe solo in produzione
+
+**Sintomo.** `GET /api/report/<id>` fallisce nell'immagine, funziona in sviluppo.
+
+**Perché inganna.** Il percorso dei font era composto a runtime
+(`path.join(process.cwd(), "src/lib/report/fonts")`), quindi **sfuggiva al file tracing di
+Next**, e `src/` non viene copiato in `.next/standalone`. Nessun avviso a build time. È il
+deliverable di valore del prodotto: si sarebbe rotto dal primo cliente.
+
+**Rimedio.** I font vivono in `apps/web/public/fonts/report/` (che viene copiato), e
+`apps/web/src/lib/report/percorso-font.ts` prova una lista di percorsi candidati, usando il
+primo che esiste davvero invece di indovinare la directory di lavoro.
+
+**Verifica obbligatoria di ogni immagine — un download reale:**
+
+```bash
+curl -b cookie.txt -o report.pdf "https://<dominio>/api/report/<id>"
+head -c 8 report.pdf     # deve iniziare con %PDF
+```
+
+Un build verde non dice nulla su questo percorso.
+
+---
+
+## G-10 — `server-only` funziona in Next e si rompe in esbuild
+
+> **Questa voce era scritta male e l'ho corretta il 18 settembre 2026.** Diceva
+> «non è installato, quindi non usarlo»: chi l'avesse seguita avrebbe tolto
+> import perfettamente funzionanti. La ragione vera è un'altra, ed è più utile.
+
+**Sintomo.** `import "server-only"` **funziona** in quattro file dell'applicazione e la build è
+verde, ma il pacchetto **non è nel lockfile** e `require.resolve("server-only")` fallisce. Messo
+in un modulo che finisce in un bundle esbuild, non risolve più.
+
+**Perché inganna.** Sembra una dipendenza mancante, e la tentazione è togliere l'import o
+installare il pacchetto. In realtà **Next lo risolve internamente** con un proprio alias: dentro
+il suo bundler esiste, fuori no.
+
+Quindi la stessa riga si comporta in due modi opposti a seconda di chi compila:
+
+```
+apps/web/src/lib/clienti/queries.ts     compilato da Next      -> funziona
+apps/web/src/lib/email/mailer.ts        impacchettato da esbuild -> non risolve
+```
+
+**Diagnosi.**
+
+```bash
+grep -c "server-only" pnpm-lock.yaml                                   # 0: non è una dipendenza
+node -e "require.resolve('server-only', {paths:['apps/web']})"         # fallisce
+grep -rln '"server-only"' apps/web/src                                # eppure lo importano in 4
+```
+
+**Rimedio.** Tenerlo nei moduli compilati da Next — dove fa il suo mestiere, cioè far fallire la
+build se un modulo server finisce in un componente client. **Non** metterlo nei moduli destinati
+ai bundle esbuild (`migra.ts`, `worker.ts`, `crea-titolare.ts` e ciò che importano): lì va
+tolto, e la protezione non serve perché quei file non finiscono mai nel browser.
+
+Se lo si vuole anche lì, va installato come dipendenza vera.
+
+**La lezione più generale**, e vale oltre questo pacchetto: **lo stesso import può risolvere o
+no a seconda di chi compila.** Con due compilatori nello stesso repository — Next per
+l'applicazione, esbuild per i bundle dei container — l'insieme dei moduli disponibili non è lo
+stesso, e la build verde di uno non dice nulla sull'altro.
+
+---
+
+## G-11 — `tsx: command not found`
+
+**Rimedio.** `pnpm exec tsx …`, oppure uno script in `package.json`.
+
+---
+
+## G-12 — Il processo Node muore quando il database si riavvia
+
+**Sintomo** (prevenuto, non subìto). Un errore su una connessione **inattiva** del pool viene
+emesso sull'oggetto `Pool`. Senza un ascoltatore, Node lo tratta come evento `error` non
+gestito e **termina il processo**: un riavvio del database porterebbe giù l'intera applicazione.
+
+**Rimedio.** `pool.on("error", …)` in `apps/web/src/lib/db.ts`.
+
+**Verificato.** Con `docker stop` del database, `/api/health` passa a **503 `{"db":"down"}`**;
+riavviato il database torna **200**, senza riavviare il server.
+
+---
+
+## G-13 — Nell'immagine standalone NON c'è `drizzle-orm` _(da gdprhub)_
+
+**Sintomo.** Il container che applica le migrazioni muore con `ERR_MODULE_NOT_FOUND`. Con
+`set -e` nello script di avvio, Docker lo riavvia: **crash-loop muto**. L'applicazione non
+serve mai una richiesta. Build verde, compose validato, Dockerfile corretto.
+
+**Perché inganna.** Sembra ovvio che il pacchetto ci sia, "visto che l'applicazione lo
+importa". Falso: **Next lo impacchetta dentro `.next/server`, non lo copia in `node_modules`**.
+
+**Verificato anche qui:**
+
+```bash
+ls apps/web/.next/standalone/node_modules/                  # vuoto
+ls -d apps/web/.next/standalone/node_modules/drizzle-orm    # ASSENTE
+ls -d apps/web/.next/standalone/node_modules/pg             # ASSENTE
+```
+
+**Rimedio adottato qui — diverso dal loro, e più semplice.** Migratore e worker non sono
+script che importano pacchetti a runtime: sono **bundle autosufficienti** prodotti da esbuild.
+
+```bash
+pnpm --filter web build:migratore   # -> migra.js   (365 KB)
+pnpm --filter web build:worker      # -> worker.js  (794 KB)
+```
+
+**Verificato**: entrambi eseguiti con `node` da una cartella **priva di `node_modules`**.
+Il migratore ha applicato le 14 tabelle; il worker ha letto la coda e gestito correttamente
+il relay irraggiungibile.
+
+Nota utile _(da gdprhub)_: la risoluzione ESM **non guarda `NODE_PATH`** — un modulo si cerca
+a partire dalla cartella del file che lo importa. Spostare la variabile d'ambiente non
+risolve; impacchettare sì.
+
+---
+
+## G-14 — `.next/standalone` può contenere i tuoi file personali _(da gdprhub)_
+
+**Sintomo.** L'immagine consegnata al cliente contiene `src/`, gli script di collaudo (con
+dentro le sequenze di accesso), `playwright.config.ts`, e perfino le evidenze caricate in
+sviluppo.
+
+**Perché inganna.** `outputFileTracingExcludes` **non funziona** per questo: la copia della
+cartella dell'applicazione non passa dalla tracciatura. Una regola lì dentro è configurazione
+decorativa.
+
+**Diagnosi.** Guardare _dentro l'immagine costruita_, non nella cartella locale:
+
+```bash
+docker run --rm --entrypoint sh <immagine> -c 'ls -la /app/apps/web'
+```
+
+**Rimedio.** `RUN rm -rf` esplicita nello stadio finale del Dockerfile. In più un
+`.dockerignore` corretto: i pattern confrontano il **percorso intero**, quindi una regola
+`archivio` non esclude `apps/web/.archivio`. E il `.gitignore` non c'entra: il contesto di
+build è il filesystem.
+
+**Stato qui.** Verificato su questo repo: `.next/standalone/apps/web/` contiene solo
+`node_modules`, `package.json`, `public`, `server.js`. **Da ricontrollare dentro l'immagine**
+quando il Dockerfile sarà scritto: la cartella locale non è l'immagine.
+
+---
+
+## G-15 — `CADDY_TLS=internal` non ha mai funzionato _(da gdprhub)_
+
+**Sintomo.** Il reverse proxy va in crash-loop: `unrecognized directive: internal`.
+
+**Perché inganna.** Nel Caddyfile `{$CADDY_TLS}` viene sostituito alla lettera, e `internal`
+da solo non è una direttiva. La variabile deve contenere la direttiva **intera**:
+
+```
+CADDY_TLS="tls internal"
+```
+
+È il ripiego documentato per collaudare senza DNS pubblico — cioè esattamente la situazione
+in cui si prova un ripristino.
+
+---
+
+## G-16 — Git Bash su Windows riscrive i percorsi assoluti _(da gdprhub)_
+
+**Sintomo.** `docker run --entrypoint /usr/bin/chromium …` fallisce con un errore che sembra
+dire che il file non esiste nell'immagine.
+
+**Perché inganna.** Git Bash converte `/usr/bin/chromium` in
+`C:/Program Files/Git/usr/bin/chromium` **prima** che Docker lo veda.
+
+**Rimedio.** `MSYS_NO_PATHCONV=1 docker run …`
+
+---
+
+## G-17 — Test con limiti di tempo stretti arrossiscono sotto carico _(da gdprhub)_
+
+**Sintomo.** Un test che misura il tempo di un'importazione a freddo supera il limite e passa
+al secondo giro.
+
+**Perché inganna.** Sembra un difetto intermittente del codice. È contesa di risorse: con più
+sessioni che compilano sulla stessa macchina, i tempi raddoppiano.
+
+**Rimedio.** Limiti generosi, o test di tempo fuori dalla suite che fa da cancello.
+
+---
+
+## G-18 — `EBUSY: resource busy or locked, rmdir .next/standalone/apps/web`
+
+**Sintomo.** `pnpm build` fallisce su Windows con `EBUSY` mentre cancella la cartella
+standalone. Il codice non c'entra: la build precedente era verde.
+
+**Perche' inganna.** Sembra un errore di permessi o un antivirus. E' un **server standalone
+ancora in esecuzione**: la sua directory di lavoro e' proprio `.next/standalone/apps/web`, e
+Windows non permette di rimuovere una cartella aperta da un processo (a differenza di Linux,
+dove la stessa build passerebbe).
+
+**Rimedio.** Chiudere il server prima di ricostruire.
+
+```bash
+taskkill //F //IM node.exe //T     # Git Bash: le barre doppie sono necessarie
+```
+
+> **Attenzione, su questa macchina no.** `//IM node.exe` colpisce **ogni** processo Node
+> presente, compresi quelli di gdprhub e FlowCRM. Attribuire il processo prima di
+> terminarlo, e usare `//PID`: **G-31**.
+
+Ricordarsi che ogni collaudo della build di produzione lascia un processo acceso: va spento
+prima della build successiva, non dopo averla vista fallire.
+
+---
+
+## G-19 — Attribuire una risorsa Docker al progetto giusto
+
+**Sintomo.** Un'immagine o un volume che nessuno rivendica, con un nome che somiglia a piu'
+di un progetto sulla stessa macchina.
+
+**Perche' inganna.** Il nome lo sceglie chi costruisce e **non ha alcun legame con l'origine**.
+La data restringe il campo ma non decide: una build di sei settimane fa sfugge a chiunque
+ragioni su "le mie sono tutte di oggi".
+
+Successo davvero, due volte nello stesso giorno:
+
+- `compliance-prova:locale` attribuita a _compliance-os_ per somiglianza di nome. Era di
+  **gdprhub**: stesso timestamp di `deploy-app:latest` **al nanosecondo** — stessa immagine,
+  due tag.
+- `compliance-istanza:prova` dichiarata orfana da **tre** sessioni ("non e' mia") e a un passo
+  dalla cancellazione. Era di gdprhub, una loro build dimenticata del 3 agosto.
+
+**Diagnosi — guardare DENTRO, non il nome.**
+
+```bash
+docker image inspect <img> --format '{{.Config.Env}}'   # la configurazione tradisce il progetto
+docker image inspect <img> --format '{{.Config.Cmd}} {{.Config.Entrypoint}}'
+docker history <img> --no-trunc                          # le COPY nominano i file sorgente
+docker inspect <container> --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'
+docker volume inspect <vol> --format '{{index .Labels "com.docker.compose.project"}}'
+```
+
+Le righe che hanno chiuso i due casi: `STORAGE_PATH=/dati/archivio` e `PDF_CHROMIUM_PATH`
+nella prima (nessun altro progetto genera PDF con un browser), e `COPY deploy/migra.mjs` nella
+seconda — quel file esiste in un repository solo su questa macchina.
+
+**Regola.** Cancellare **per nome dichiarato dal proprietario**, mai per esclusione. Un
+"non e' mia" di tre sessioni non prova che sia orfana: prova che tre persone non l'hanno
+riconosciuta.
+
+---
+
+## G-20 — Le variabili d'ambiente di un'immagine sono leggibili da chiunque l'abbia
+
+**Sintomo** (prevenuto). Un segreto passato come `ARG` o scritto in `ENV` resta nell'immagine
+e si legge **senza avviarla**.
+
+**Perche' inganna.** Si pensa alla cifratura del registry o ai permessi del repository. Ma
+`docker image inspect` e `docker history` leggono la configurazione e le istruzioni di build da
+qualunque copia dell'immagine, anche da un registry privato: basta poterla scaricare.
+
+E' cosi' che questa immagine e' stata attribuita al suo proprietario in G-19: la sua
+configurazione era leggibile in chiaro. Li' era innocuo (`STORAGE_DRIVER=disk`), ma il
+meccanismo e' lo stesso per una password.
+
+**Regola per il Dockerfile e per GHCR:**
+
+- In `ENV` e negli `ARG` **mai** `BETTER_AUTH_SECRET`, `DATABASE_URL`, credenziali SMTP,
+  token restic o chiavi API. Arrivano **a runtime**, dal `.env.prod` dell'istanza.
+- Le sole `ARG` ammesse a build time sono le `NEXT_PUBLIC_*`, che Next incorpora comunque nel
+  bundle servito al browser: sono pubbliche per definizione, non per distrazione.
+- Se un segreto serve davvero durante la build, si usa `RUN --mount=type=secret`, che non
+  lascia traccia negli strati.
+
+**Verifica prima di pubblicare un'immagine:**
+
+```bash
+docker image inspect <img> --format '{{range .Config.Env}}{{println .}}{{end}}'
+docker history <img> --no-trunc | grep -iE 'secret|password|token|key'
+```
+
+---
+
+## G-21 — Il prune di Docker non libera SUBITO il disco di Windows
+
+**Sintomo.** `docker builder prune -af` dichiara di aver liberato gigabyte, `docker system df`
+conferma il calo, e `df` sull'host mostra **lo stesso spazio libero di prima**.
+
+**Perche' inganna — e qui ci siamo sbagliati in due, in direzioni opposte.** Docker Desktop su
+WSL2 tiene tutto in un disco virtuale **sparso**:
+
+    %LOCALAPPDATA%\Docker\wsl\disk\docker_data.vhdx
+
+Il prune libera **dentro** il file. Il file restituisce lo spazio all'host **solo quando WSL si
+ferma**: il recupero e' differito, non immediato. Chi misura subito dopo il prune vede zero e
+conclude che non sia servito a niente — ed e' la conclusione sbagliata, perche' il passo
+successivo naturale e' cancellare cose che servono.
+
+**La sequenza, misurata su questa macchina il 18 settembre 2026:**
+
+| Momento                                 | Disco libero          | vhdx         |
+| --------------------------------------- | --------------------- | ------------ |
+| prima del prune                         | 12 GB                 | 25,92 GB     |
+| subito dopo il prune, WSL in esecuzione | **12 GB** (invariato) | 25,92 GB     |
+| dopo l'arresto di WSL                   | **26 GB**             | **19,15 GB** |
+
+Il `.vhdx` si e' ridotto di **6,77 GB**, che corrisponde alla cache di build svuotata (6,84 GB).
+Il resto della differenza viene da altre pulizie in corso sulla macchina, non da Docker: quando
+piu' persone liberano spazio insieme, non si attribuisca tutto a un solo comando.
+
+**Diagnosi.**
+
+```bash
+df -h /c                                  # l'host: l'unica misura che conta per lo spazio
+docker system df                          # il contenuto: non dice quanto occupa su disco
+ls -l "$LOCALAPPDATA/Docker/wsl/disk/docker_data.vhdx"
+```
+
+**Rimedio — l'ordine e' tutto:**
+
+1. `docker builder prune -af` e rimozione di immagini/volumi concordati;
+2. chiudere Docker Desktop, poi `wsl --shutdown`;
+3. **rimisurare con `df`**: e' qui che compare lo spazio;
+4. solo se resta molta aria (vhdx >> contenuto reale), compattare.
+
+**Compattazione**, se serve ancora. Richiede Docker fermo e privilegi di amministratore.
+Con Hyper-V disponibile:
+
+```powershell
+wsl --shutdown
+Optimize-VHD -Path "$env:LOCALAPPDATA\Docker\wsl\disk\docker_data.vhdx" -Mode Full
+```
+
+Senza il modulo Hyper-V — il caso di questa macchina, verificato con
+`Get-Module -ListAvailable -Name Hyper-V` — si usa `diskpart` come amministratore:
+
+```
+wsl --shutdown
+
+diskpart
+  select vdisk file="C:\Users\<utente>\AppData\Local\Docker\wsl\disk\docker_data.vhdx"
+  attach vdisk readonly
+  compact vdisk
+  detach vdisk
+  exit
+```
+
+**Da non fare.** Concludere che il prune sia inutile e passare a cancellare volumi: e' il passo
+successivo naturale di chi misura una volta sola, ed e' quello che fa danni.
+
+**La lezione, che vale oltre Docker.** `docker system df` misura il contenuto, non
+l'occupazione: se l'obiettivo e' far respirare il disco, la misura e' `df` sull'host. **E va
+presa due volte** — prima e dopo l'arresto — perche' su un sistema con recupero differito una
+misura sola dice meta' della verita'. E' il corollario di "un successo dichiarato non e' un
+successo verificato", con una piega in piu': **anche una verifica fatta bene puo' essere fatta
+troppo presto.**
+
+**Verificato** il 18 settembre 2026 da due sessioni in due momenti diversi, che avevano
+entrambe ragione: 12 GB invariati subito dopo il prune, 26 GB dopo l'arresto di WSL.
+
+## G-22 — `/tmp` non e' privato: due progetti scrivono lo stesso file di log
+
+**Sintomo.** Una suite di test mostra fallimenti che non appartengono al progetto, o due
+riepiloghi diversi nello stesso file (`6 failed, 8 passed` **e** `25 failed, 2 passed`).
+
+**Perche' inganna.** In Git Bash su Windows `/tmp` e' una cartella **comune a tutti i processi**,
+non privata della sessione. `pnpm test > /tmp/e2e.log` da due progetti scrive lo stesso file, e
+l'ultimo che scrive vince.
+
+Il danno non e' il log perso: e' la conclusione. Chi legge fallimenti altrui indaga su un guasto
+che non ha; chi legge un verde altrui archivia come inesistente una regressione vera. Successo
+davvero fra questa sessione e quella di FlowCRM: in `/tmp/e2e.log` sono finite **88 righe** del
+loro progetto e il riepilogo finale era il loro.
+
+**Diagnosi — prima di interpretare un esito che sorprende:**
+
+```bash
+ls -l <file-di-log>                        # l'orario e' quello della TUA esecuzione?
+grep -c 'nome-di-un-tuo-spec' <file>       # se e' 0, non e' tuo
+grep -c 'un-nome-che-esiste-solo-altrove'  # se e' > 0, e' contaminato
+```
+
+**Rimedio.** Scrivere nella cartella riservata alla sessione, mai in `/tmp`. Se un log finisce
+comunque li', dargli un nome che contenga il progetto.
+
+**Categoria.** Appartiene alla famiglia **«ambienti condivisi scambiati per isolati»**, insieme a
+G-01 (progetti Compose omonimi), G-02 (porte dell'host gia' occupate) e G-19 (immagini attribuite
+per somiglianza di nome). Nessuno di questi da' errore quando collide: sovrascrive, mescola o
+attribuisce male, **in silenzio**.
+
+---
+
+## G-23 — `Error upgrading connection with STARTTLS` verso il sink di posta locale
+
+**Sintomo.** Le mail restano in coda. `ultimo_errore` in `mail_outbox` ripete
+`Error upgrading connection with STARTTLS`, i tentativi salgono fino al tetto, e i test
+end-to-end sulla posta scadono senza spiegazione visibile.
+
+**Perche' inganna.** Il mailer imponeva TLS quando `NODE_ENV === "production"`. Ma i test girano
+**contro la build di produzione**, quindi `NODE_ENV` e' `production` anche parlando con Mailpit,
+che STARTTLS non lo offre.
+
+Il discrimine giusto non e' l'ambiente, e' **l'interlocutore**: TLS obbligatorio verso un relay
+remoto, inutile verso un sink in ascolto sulla macchina stessa.
+
+**Rimedio** (`apps/web/src/lib/email/mailer.ts`):
+
+```ts
+const hostLocale = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(host);
+requireTLS: !hostLocale && porta !== 465,
+```
+
+**Come accorgersene subito.** La coda dice sempre la verita': se una mail non arriva, la prima
+cosa da guardare non e' il sink ma `ultimo_errore`.
+
+```sql
+select destinatario, tentativi, ultimo_errore from mail_outbox where inviata_at is null;
+```
+
+---
+
+## G-24 — I test contro la build di produzione inciampano nelle difese di produzione
+
+**Sintomo.** Una suite end-to-end fallisce su comportamenti **corretti**:
+
+- ogni chiamata autenticata risponde **401** anche dopo un accesso riuscito;
+- dopo qualche test compare **429** su `/sign-in/email`.
+
+**Perche' inganna.** Sembrano guasti dell'applicazione. Sono le difese che funzionano:
+
+1. **Cookie `Secure`.** In produzione il cookie di sessione ha prefisso `__Secure-` e attributo
+   `Secure`. Un client HTTP su `http://127.0.0.1` non lo conserva — nemmeno il client API di
+   Playwright — quindi la sessione non viaggia e tutto risponde 401.
+2. **Limitatore di frequenza.** `/sign-in/email` accetta 5 tentativi al minuto. Una suite che
+   crea decine di studi li esaurisce, e da li' in poi e' tutto rosso.
+
+**Rimedio — restringere la difesa all'origine dove serve, non disattivarla.** Entrambe usano la
+stessa condizione di `env.ts`:
+
+```ts
+const cookieSicuri = produzione && !eLocale(baseURL);   // Secure solo su origine pubblica
+rateLimit: { enabled: !eLocale(baseURL), ... }           // limitatore fuori da localhost
+```
+
+Non e' una rinuncia: `verificaAmbiente()` **rifiuta l'avvio** se un dominio pubblico non usa
+https, quindi su un'istanza cliente cookie sicuri e limitatore ci sono sempre. Su `127.0.0.1` non
+c'e' rete da proteggere ne' nessuno da limitare.
+
+**In piu', nei test**: creare lo studio e poi attivarlo con `organization/set-active` invece di
+rifare l'accesso. Un secondo `sign-in` per ogni studio consuma il limitatore per nulla.
+
+---
+
+## G-25 — `disableSignUp` rendeva impossibile invitare collaboratori
+
+**Sintomo.** Su un'istanza in produzione il titolare crea l'invito (**200**), la mail parte, il
+collaboratore clicca il link — e riceve **400 `EMAIL_PASSWORD_SIGN_UP_DISABLED`**. Non puo'
+creare il proprio accesso. Su ogni istanza consegnata, invitare qualcuno era impossibile.
+
+**Perche' inganna.** `disableSignUp: true` di Better Auth sembra spegnere «la registrazione
+pubblica». In realta' spegne **l'endpoint `/sign-up/email` per tutti** — e accettare un invito
+passa esattamente di li'. Il nome promette meno di quanto l'interruttore spenga.
+
+Peggio: **la suite end-to-end non se ne accorgeva**, perche' il server di prova aveva la
+registrazione aperta. Il test sugli inviti era verde su un flusso rotto in produzione.
+
+**Verificato** il 18 settembre 2026, server standalone con `REGISTRAZIONE_APERTA` assente:
+
+```
+sign-up estraneo          400   (atteso)
+sign-in titolare          200   (atteso)
+invite-member             200   (invito creato, mail inviata)
+sign-up dell'INVITATO     400   EMAIL_PASSWORD_SIGN_UP_DISABLED   <-- il difetto
+```
+
+**Rimedio.** Non si spegne l'endpoint: si controlla **chi lo usa**. La regola che serve e' piu'
+stretta e piu' precisa — _nessuno si registra da solo, ma chi ha un invito valido si'_. Vive in
+`databaseHooks.user.create.before` (`apps/web/src/lib/auth.ts`):
+
+```ts
+before: async (nuovo) => {
+  if (registrazioneAperta) return;
+  const inviti = await db
+    .select({ id: schema.invitation.id })
+    .from(schema.invitation)
+    .where(
+      and(
+        eq(schema.invitation.email, nuovo.email.toLowerCase()),
+        eq(schema.invitation.status, "pending"),
+        gt(schema.invitation.expiresAt, new Date()), // un invito scaduto non vale
+      ),
+    )
+    .limit(1);
+  if (inviti.length === 0) return false;
+};
+```
+
+**Dopo la correzione**, stessa prova: estraneo **400** e nessuna riga creata nel database,
+invitato **200**, titolare **200**.
+
+**Regressione coperta.** `e2e/registrazione-chiusa.spec.ts` gira contro un **secondo server**
+con la registrazione chiusa, sullo stesso database: e' l'unico modo di provare il comportamento
+di produzione. Un solo server di prova a porte aperte non avrebbe mai visto il difetto.
+
+**La domanda da portarsi dietro**, arrivata dalla sessione FlowCRM che aveva appena preso lo
+stesso colpo con `ENABLE_EMAIL_SIGNUP` (mappata su `GOTRUE_EXTERNAL_EMAIL_ENABLED`, che spegne
+**il login** e non la registrazione):
+
+> **Esiste un interruttore il cui nome promette meno di quanto spenga?**
+> Non leggerne il nome: provare il flusso che dovrebbe restare aperto.
+
+---
+
+## G-26 — `psql -tA ... RETURNING id` restituisce anche l'esito del comando
+
+**Sintomo.** Una variabile di shell che dovrebbe contenere un UUID ne contiene due righe:
+l'identificatore **e** `INSERT 0 1`. Gli inserimenti successivi che la usano falliscono in
+silenzio, e il guasto si manifesta molto piu' avanti — qui come un report che risponde 404.
+
+**Perche' inganna.** `-t` (solo tuple) e `-A` (senza allineamento) tolgono intestazioni e
+formattazione, ma **non** l'etichetta di esito del comando. Chi ha in mente `-tA` come
+"solo il valore" non se lo aspetta.
+
+```bash
+CID=$(psql -tA -c "insert into clienti (...) values (...) returning id;")
+echo "[$CID]"
+# [7f3a...-...
+#  INSERT 0 1]
+```
+
+**Rimedio.** Prendere solo la prima riga, e non fidarsi della forma del risultato:
+
+```bash
+CID=$(psql -tA -c "...returning id;" | tr -d '\r' | head -1)
+```
+
+Meglio ancora, negli script di prova: inserire senza `RETURNING` e rileggere l'id con una
+`SELECT` separata. Un passo in piu' che toglie una classe di errori.
+
+**Categoria.** Stessa famiglia di G-05 e G-22: **l'uscita di un comando non e' il valore che si
+crede.** Qui il comando riesce davvero — e' la lettura del risultato a essere sbagliata.
+
+---
+
+## G-27 — `overwrite: true` sull'API DNS cancella l'intera zona
+
+**Sintomo** (prevenuto, mai subito). Dopo aver aggiunto il record di UN cliente, **tutti gli
+altri sottodomini smettono di risolvere**. Nessun errore: la chiamata risponde 200.
+
+**Perche' inganna.** L'API DNS di Hostinger accetta un campo `overwrite`. Con `true` il corpo
+della richiesta non _aggiunge_ un record: **sostituisce l'intera zona**. Il risultato e' che
+l'attivazione di un cliente mette offline tutti gli altri dello stesso prodotto — con un solo
+comando, e con una risposta di successo.
+
+E' il passo piu' pericoloso dell'intero deploy, e riguarda i tre prodotti che condividono
+l'approccio (segnalazione nata nella sessione gdprhub).
+
+**Rimedio — tre difese, non una:**
+
+```bash
+# 1. mai overwrite: true
+curl -X PUT ... -d '{"overwrite": false, "zone": [...]}'
+```
+
+```bash
+# 2. istantanea della zona PRIMA di scrivere -> permette di RIPRISTINARE
+curl -fsS "$API" > "$ISTANTANEE/zona-$(date -u +%FT%H%M%SZ).json"
+```
+
+```bash
+# 3. conteggio dei record DOPO -> permette di ACCORGERSI
+[ "$DOPO" -lt "$PRIMA" ] && { echo "la zona e' stata sovrascritta"; exit 1; }
+```
+
+Un'istantanea fa **ripristinare**, un conteggio fa **accorgere**: senza il secondo, il primo
+serve solo quando qualcuno ha gia' chiamato per dire che il sito non c'e' piu'.
+
+**In piu'**, `dns-hostinger.sh` interroga due slug gia' attivi con `dig` dopo ogni modifica: se
+la zona fosse stata azzerata lo si scopre in dieci secondi, non dal cliente.
+
+**Alla dismissione** il record DNS va rimosso **per primo**: un sottodominio che punta a un
+indirizzo non piu' nostro e' rivendicabile da chiunque, e resta a nome del prodotto.
+
+---
+
+## G-28 — La CSP con nonce è incompatibile con le pagine statiche
+
+**Sintomo.** Introdotto il nonce nella Content-Security-Policy, le pagine arrivano con
+**HTTP 200** e restano **ferme a metà**: nessun errore di server, nessun 500, ma il contenuto
+non compare e i test del browser falliscono con «elemento non trovato».
+
+**Perché inganna.** Sembra un difetto dell'applicazione. È invece una conseguenza logica che
+nessuno dice ad alta voce:
+
+1. una pagina **pre-renderizzata a build time** ha l'HTML già scritto quando il nonce non
+   esiste ancora, quindi i suoi script non possono averlo;
+2. il browser, vedendo un nonce nella politica, **ignora `'unsafe-inline'`** — è la
+   compatibilità prevista dalla specifica, non un capriccio;
+3. quindi gli script della pagina statica vengono bloccati, e senza idratazione la pagina
+   resta il guscio vuoto che il server ha mandato.
+
+Nell'elenco delle rotte a fine build le pagine statiche sono marcate `○`:
+
+```
+○ /login          ← statica: il nonce non ci arriverà mai
+ƒ /app/clienti    ← dinamica: il nonce si applica
+```
+
+**Diagnosi.** Contare gli script con e senza nonce nell'HTML servito:
+
+```bash
+curl -s http://127.0.0.1:3100/login > /tmp/pagina.html
+grep -c '<script' /tmp/pagina.html
+grep -o '<script[^>]*nonce=' /tmp/pagina.html | wc -l     # se è 0, ecco il problema
+```
+
+E nel test del browser, raccogliere le violazioni dalla console: sono l'unico posto dove il
+guasto si dichiara.
+
+```ts
+page.on("console", (m) => {
+  if (/Content Security Policy|Refused to (load|execute)/i.test(m.text()))
+    violazioni.push(m.text());
+});
+expect(violazioni).toHaveLength(0);
+```
+
+**Rimedio — due mosse, servono entrambe.**
+
+1. **Resa dinamica** (`export const dynamic = "force-dynamic"` nel layout radice): il nonce
+   può esistere solo se l'HTML si genera a richiesta. Qui il prezzo è la resa statica di
+   cinque pagine (accesso, registrazione, recupero, reimpostazione, radice) — su un'istanza
+   dedicata a un singolo studio non si misura, e tutte le pagine sotto `/app` erano già
+   dinamiche perché leggono gli header.
+
+2. **Il nonce va passato anche alle librerie che scrivono script inline.** Rimaneva una
+   violazione dopo la prima mossa: `next-themes` inserisce uno script inline che applica il
+   tema **prima della prima pittura**, per evitare il lampo di colore. Next non lo firma —
+   accetta un `nonce` come proprietà:
+
+   ```tsx
+   const nonce = (await headers()).get("x-nonce") ?? undefined; // layout radice
+   <TemaProvider nonce={nonce}>{children}</TemaProvider>;
+   ```
+
+**Da tenere presente.** `'unsafe-inline'` resta nella politica come ripiego per i browser che
+il nonce non lo capiscono — quelli che lo capiscono lo ignorano. Non è una contraddizione né
+una svista: è il meccanismo di compatibilità della specifica.
+
+**Regressione coperta.** Tre asserzioni in `e2e/salute.spec.ts`: la CSP contiene un nonce,
+contiene `'strict-dynamic'`, e **il nonce cambia a ogni richiesta** — un nonce riutilizzato è
+prevedibile, e un nonce prevedibile non protegge da niente.
+
+---
+
+# PROCEDURE
+
+Le voci `P-nn` non sono guasti: sono regole di lavoro nate da un guasto, per non
+ripeterlo. Concordate fra i tre prodotti che condividono questa macchina.
+
+## P-01 — Disciplina del disco quando si costruiscono immagini
+
+**Il 18 settembre 2026 il disco è arrivato a 1,5 GB su 238 (100%) e Docker ha
+cominciato a fallire a caso.** L'abbiamo riempito in tre, e nessuno se ne è
+accorto prima del blocco.
+
+**La causa strutturale**, trovata dalla sessione FlowCRM, in `~/.docker/daemon.json`:
+
+```json
+"builder": { "gc": { "enabled": true, "defaultKeepStorage": "20GB" } }
+```
+
+Il garbage collector di BuildKit era **autorizzato a tenere 20 GB di cache**, ed
+era arrivato a 14,5: la singola voce più grossa del disco. Non un incidente — ha
+fatto esattamente ciò per cui era configurato, su una macchina senza quel
+margine. **Portato a `"4GB"`.** Senza questa correzione, tutte le regole di
+comportamento qui sotto rimandano il problema di due giorni.
+
+**Le cause immediate**, una per prodotto, dichiarate da ciascuno:
+
+- gdprhub: **otto ricostruzioni** di un'immagine da 1,86 GB in una giornata, una
+  per correzione;
+- qui: **due stack accesi insieme**, `advisorhub-*` di produzione e
+  `advisorhub-dev-*` di sviluppo, che non serve mai;
+- FlowCRM: lo stack Supabase da dodici container tenuto su fra una prova e l'altra.
+
+**Le regole:**
+
+1. **Una costruzione per LOTTO di correzioni**, non una per correzione. Si
+   accumulano le modifiche, si costruisce una volta, si verifica tutto insieme.
+2. **Pulizia a fine sessione di build**, sempre, non quando il disco urla:
+   `docker compose … down` · `docker rmi <le proprie immagini>` ·
+   `docker builder prune -af`. Trenta secondi.
+3. **Uno stack alla volta per progetto**, e mai produzione e sviluppo insieme.
+4. **`df -h` prima di avviare uno stack**: sotto i 15 GB liberi non si avvia, si
+   libera prima.
+5. **`wsl --shutdown` fa parte della pulizia**, non è un rimedio d'emergenza:
+   senza, il disco virtuale non restituisce niente (**G-21**). Va concordato con
+   chi ha container in volo.
+6. **Tetto al disco virtuale**: Docker Desktop → Resources → _Disk image size_.
+   Con un tetto, a fermarsi è **una build** invece dell'intera macchina. È
+   l'unica misura che protegge anche quando si dimenticano le altre cinque.
+7. **Mai `docker volume prune`** — si cancella per nome, con il proprietario che
+   conferma (**G-01**, **G-19**).
+
+**Un dato che rende la regola giustamente asimmetrica.** Le immagini pesano
+321 MB qui, 1,86 GB per gdprhub (Chromium per i PDF). Il vincolo stringe chi
+costruisce pesante, e a costruire meno spesso dev'essere lui — non chi costruisce
+leggero a rinunciare a verificare.
+
+**Il conto finale della giornata**: 1,5 GB → 29 GB liberi, dopo `builder prune`,
+rimozione delle immagini superate di ciascuno, riavvio di Docker con il nuovo
+tetto e compattazione del disco virtuale.
+
+## G-29 — Dashboard e report disegnavano lo stesso indicatore su scale diverse
+
+**Sintomo.** Nessuno: non fallisce niente, i numeri sono giusti. Ma lo stesso cliente appare
+con barre di riempimento diverso nella dashboard e nel PDF consegnato.
+
+**Perche' inganna.** Erano due serie di numeri scritte in due file, entrambe plausibili:
+
+| Indicatore | Dashboard | Report    |
+| ---------- | --------- | --------- |
+| ROS        | fondo 15  | fondo 20  |
+| Turnover   | fondo 3   | fondo 2,5 |
+| ROI        | fondo 15  | fondo 20  |
+| ROI indus. | fondo 12  | fondo 20  |
+| ROE        | fondo 20  | fondo 30  |
+| DSCR       | fondo 2,2 | fondo 2,5 |
+
+**Sei su sette.** Un commercialista che mostra la dashboard e poi consegna il PDF vede due
+rappresentazioni discordi dello stesso dato. Nessun numero era sbagliato: era sbagliato che
+fossero due.
+
+**Diagnosi.** Cercare le normalizzazioni fisse e confrontarle con i fondi scala dichiarati:
+
+```bash
+grep -oE "indicatori\.[a-zA-Z]+ / [0-9.]+" apps/web/src/lib/analisi/indicatori-meta.ts
+grep -oE "max: [0-9.]+" apps/web/src/lib/report/soglie.ts
+```
+
+**Rimedio.** Un solo `SCALE`, usato da entrambe le superfici.
+
+**Della stessa famiglia**, trovato insieme: le **soglie di giudizio** (10% per il ROS, 1,2 per il
+DSCR...) erano riscritte nel report accanto a quelle del motore, e le **fasce di salute**
+(30/55/75/90) esistevano in quattro copie. Ora vivono nel motore
+(`SOGLIE_GIUDIZIO`, `FASCE_SALUTE`) e le altre superfici le importano.
+
+**Regressione coperta.** `packages/engine/test/soglie.test.ts` verifica che ogni soglia
+dichiarata corrisponda al comportamento reale della funzione di giudizio — attraversandola, il
+punteggio deve cambiare. Una costante che dichiara un comportamento senza essere legata ad esso
+e' peggio di nessuna costante: sembra autorevole e puo' mentire.
+`fasce.test.ts` verifica che fascia e testo di sintesi cambino nello stesso punto.
+
+---
+
+## G-30 — La posta configurata a mano, e da nessuna parte scritto che va fatto
+
+**Sintomo.** Un'istanza appena consegnata funziona in tutto, ma **nessuna email parte**. Nessun
+errore, nessun container malato, la salute e' verde. Il recupero password non arriva, e lo
+scopre il titolare il giorno in cui ne ha bisogno.
+
+**Perche' inganna.** Lo script di onboarding accetta le variabili SMTP come **opzionali**:
+
+```bash
+SMTP_HOST=${SMTP_HOST:-}          # vuoto se nessuno lo esporta
+SMTP_PORT=${SMTP_PORT:-587}
+SMTP_FROM=${SMTP_FROM:-no-reply@${BASE_DOMAIN}}
+```
+
+Chi installa deve **sapere** di doverle esportare prima. Nel riferimento
+(`WhistleBlower/deploy/RUNBOOK.md`) la parola «smtp» compare **zero volte** — verificato — e il
+`.env.prod.example` si contraddice col resto: suggerisce `smtp.cliente.it` mentre il mittente
+predefinito e' il dominio-brand.
+
+La configurazione mancante non produce un guasto: produce **silenzio**. La coda si riempie e
+nessuno la guarda.
+
+**Diagnosi.**
+
+```bash
+grep -c -i smtp deploy/RUNBOOK.md                       # se e' 0, non e' documentato
+grep -E '^SMTP_HOST=' deploy/.env.prod                  # se e' vuoto, nulla parte
+# e la coda dice sempre la verita':
+psql -tA -c "select count(*) from mail_outbox where inviata_at is null;"
+```
+
+**Rimedio.**
+
+1. La posta **arriva col dominio**: registrando il dominio-brand su Hostinger si ha gia' SMTP, e
+   SPF/DKIM/DMARC si configurano nel pannello che gestisce la zona DNS. Nessun fornitore
+   transazionale in piu' — e la giurisdizione UE c'e' gia', Hostinger e' lituana.
+2. I valori stanno in `deploy/.env.prod.example` **con l'avvertenza in chiaro**, e la procedura
+   in `RUNBOOK.md` §0.1. Non nella testa di chi installa.
+3. La sentinella sorveglia la coda: messaggi fermi da oltre 30 minuti o con i tentativi esauriti
+   sono **critici**, perche' significano che nessuno puo' recuperare la password.
+4. **Gate di go-live**: logout, «Password dimenticata?», il messaggio deve arrivare in una
+   casella vera — **spam compreso** — e il reimposta va completato. Senza questo PASS l'istanza
+   non si dichiara attiva.
+
+**Il limite che resta, e va conosciuto.** Con una sola casella tutte le istanze condividono le
+credenziali: una VPS compromessa manda posta a nome del dominio e brucia la reputazione del
+mittente per l'intera flotta. Se il piano consente piu' caselle, **una per istanza**. Se non lo
+consente, si accetta sapendolo. Nel riferimento questa scelta non e' stata presa: e' stata subita.
+
+**Una nota di metodo.** La raccomandazione iniziale era un fornitore transazionale esterno,
+scelto ragionando per categorie — «serve un relay in UE» — invece di guardare cosa fa davvero il
+progetto che stiamo copiando. Dedurre invece di verificare: lo stesso errore che in questo
+registro compare in G-10, G-19 e G-21.
+
+---
+
+## G-31 — `netstat` dice CHE la porta è occupata, non DA CHI
+
+**Sintomo.** Playwright si rifiuta di partire:
+
+```
+Error: http://127.0.0.1:3100/api/health is already used, make sure that nothing is
+running on the port/url or set reuseExistingServer:true in config.webServer.
+```
+
+Si termina il processo che occupa la 3100, si rilancia, e dopo poco il messaggio torna.
+
+**Perché inganna.** La porta 3100 è «la porta dei nostri end-to-end», quindi chi la trova
+occupata conclude che sia un **proprio** server rimasto acceso da una sessione precedente —
+una conclusione ragionevole, perché succede davvero (**G-18**). E `netstat -ano` conferma
+l'occupazione mostrando un PID, il che sembra una prova. Non lo è: dice che c'è un processo,
+non di chi sia. Su questa macchina girano tre prodotti, e qui la 3100 era di **gdprhub**.
+
+Il risultato è che si spegne il server di sviluppo di un'altra sessione, senza errore e senza
+accorgersene: da fuori è indistinguibile dal caso legittimo. È **G-02** visto dal lato di chi
+fa il danno invece di subirlo.
+
+**Diagnosi.** Interrogare la sonda di salute: ogni prodotto ha una forma sua, e la forma è la
+firma.
+
+```bash
+curl -s http://127.0.0.1:3100/api/health
+```
+
+```json
+{"status":"ok","db":"up","version":"…"}                      ← advisorhub
+{"stato":"ok","database":"ok","studi":"ok","catalogo":{…}}   ← gdprhub
+```
+
+Il PID da solo non attribuisce niente. Se si vuole partire dal PID:
+
+```bash
+netstat -ano | grep ":3100 .*LISTENING"
+wmic process where "ProcessId=<pid>" get CommandLine       # la riga di comando, non il nome
+```
+
+**Due metodi, in quest'ordine** _(il primo da flowcrm)_. Si completano, e messi nell'ordine
+sbagliato lasciano un buco.
+
+1. **Per PERCORSO del progetto nella riga di comando.** È il più forte, perché funziona
+   anche su un processo bloccato o moribondo, che a una sonda non risponderebbe:
+
+   ```powershell
+   Get-CimInstance Win32_Process |
+     Where-Object { $_.CommandLine -like '*\sistemacommercialisti\*' }
+   ```
+
+   **Il limite, che va conosciuto**: su Windows `CommandLine` torna **vuota** per i processi
+   di un altro utente o elevati rispetto alla sessione che interroga, senza errore e senza
+   avviso. Quindi il filtro può non vedere qualcosa che invece c'è. Ma sbaglia **verso il
+   non toccare**: un processo che non si riesce ad attribuire semplicemente non compare, e
+   quindi non si chiude. È il verso giusto in cui fallire.
+
+2. **Per SONDA di salute**, su ciò che resta. Copre il caso opposto: processo vivo la cui
+   riga di comando non è leggibile.
+
+**La regola che ne segue, ed è la più utile.** Se dopo il filtro per percorso la porta
+risulta ancora occupata, **non è un processo proprio che il filtro ha mancato: è quasi
+certamente di qualcun altro.** È il momento di chiedere, non di allargare il filtro.
+
+**Rimedio.** Due regole, nell'ordine:
+
+1. **Mai terminare un processo che non si è dimostrato proprio.** La prova è il percorso o
+   la risposta della sonda, non il numero della porta né il fatto che sia `node.exe` (lo
+   sono tutti).
+2. **Spostarsi invece di sgomberare.** La configurazione Playwright legge `E2E_PORT` e ne
+   deriva la seconda porta (`E2E_PORT + 1`), quindi basta:
+
+   ```bash
+   E2E_PORT=3400 pnpm --filter web test:e2e
+   ```
+
+   Non c'è ragione di contendersi una porta su una macchina condivisa: cedere costa una
+   variabile d'ambiente, insistere costa il lavoro di qualcun altro.
+
+**Della stessa famiglia.** `taskkill //F //IM node.exe //T`, suggerito in **G-18**, uccide
+**tutti** i processi Node della macchina: su una macchina a prodotto singolo è un rimedio, su
+questa è un incidente. Va usato `//PID` con il PID attribuito, mai `//IM`.
+
+---
+
+## G-32 — Anche il metro va verificato, non solo la cosa misurata
+
+**Sintomo.** Uno strumento di misura risponde **zero**, e la conclusione ovvia è che la cosa
+misurata non ci sia. Casi reali:
+
+- `document.getAnimations()` restituisce zero animazioni su un componente che **stava animando
+  benissimo**. Il motivo: non vede dentro uno **shadow root**, e NumberFlow vive tutto lì.
+  Serviva `shadowRoot.getAnimations()`.
+- `docker system df` dice che lo spazio è stato liberato mentre `df` sull'host non si muove
+  (**G-21**): misura il contenuto, non l'occupazione.
+- `netstat` dice **che** una porta è occupata, non **da chi** (**G-31**): due processi terminati
+  appartenevano a un altro progetto.
+- `bash -n` accetta uno script con apostrofi dentro `${var:?…}`, che a runtime escono monchi.
+
+**Perché inganna.** Un valore numerico sembra un fatto. Ma ogni strumento ha un **campo visivo**,
+e fuori da quello risponde zero esattamente come risponderebbe se la cosa non esistesse.
+**Assenza di misura e misura di assenza danno lo stesso numero.**
+
+È la stessa famiglia di G-05 (un comando che dichiara successo senza effetto) e G-19 (un nome che
+sembra dire chi ha costruito un'immagine), ma applicata un passo più a monte: non alla cosa
+osservata, all'osservatore.
+
+**Diagnosi.** Prima di scrivere «non c'è», dimostrare che lo strumento **vedrebbe** la cosa se
+ci fosse:
+
+```js
+// se il metro funziona, su un caso NOTO deve dare un numero diverso da zero
+document.getAnimations().length; // 0 — ma vede dentro gli shadow root?
+el.shadowRoot.getAnimations().length; // 4 — eccole
+```
+
+Vale per qualunque misura: un controllo che non fallisce mai va fatto fallire una volta, apposta.
+È il motivo per cui in questo progetto `check-no-secrets.sh` è stato provato con un segreto
+finto, e `restore-test.sh` con un database svuotato: un cancello che non ha mai detto di no non
+si sa se sappia dirlo.
+
+**Quanto costa un metro cieco.** Non è una questione di eleganza. Su un progetto vicino, un
+cancello visivo cliccava ogni elemento di diciassette pagine ed era **verde da settimane** —
+su pagine che non si erano mai idratate. Quando ha cominciato a misurare davvero, sotto l'HTML
+morto sono emersi due difetti reali rimasti invisibili per **mesi**:
+
+- `history.replaceState` dentro un aggiornatore di `setState` — React che aggiorna il Router
+  durante il render di un altro componente: **30 occorrenze**;
+- il nonce azzerato dal browser contro il valore reso dal server: **690 occorrenze**.
+
+Entrambi corretti e riverificati a zero. Il punto non è che il cancello non trovasse difetti:
+è che **i difetti non potevano nemmeno manifestarsi**, perché il codice che li produce non
+girava. Un cancello su una pagina morta non è soltanto cieco, è **silenzioso per costruzione**.
+
+**Rimedio.** Nessuna correzione di codice: è una regola di metodo.
+
+> **Se una misura sorprende, il primo sospettato è il metro.**
+
+---
+
+## Come si aggiunge una voce
+
+1. Numero progressivo `G-nn`.
+2. **Sintomo**: cosa si vede, con il messaggio letterale.
+3. **Perché inganna**: la ragione per cui la diagnosi ovvia è sbagliata. È la parte che fa
+   risparmiare tempo a chi verrà dopo: una voce senza questa sezione vale poco.
+4. **Diagnosi**: un comando che si può incollare.
+5. **Rimedio**: la correzione, e il file dove vive.

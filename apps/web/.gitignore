@@ -40,3 +40,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# bundle autosufficienti per i container (build:migratore / build:worker)
+/migra.js
+/worker.js
+/crea-titolare.js
+
+# test end-to-end
+/test-results
+/playwright-report
+/.e2e-posta.pid

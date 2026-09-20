@@ -228,6 +228,48 @@
 }
 
 /*
+ * Barra di scorrimento discreta, per le colonne che scorrono senza gridarlo.
+ *
+ * Serve alla barra laterale e alle tabelle dense: la barra di sistema, chiara e
+ * larga, su un fondo scuro si vede piu' del contenuto. Qui si assottiglia e
+ * prende il colore del testo circostante, quindi funziona in entrambi i temi
+ * senza una regola per tema.
+ *
+ * Resta pero' una barra VERA: non si nasconde. Una colonna che scorre senza
+ * dirlo e' un pezzo di prodotto che nessuno trova.
+ */
+@utility scorri-sobrio {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, currentColor 22%, transparent) transparent;
+}
+
+/*
+ * Bersaglio comodo al dito, senza cambiare il disegno.
+ *
+ * Le linee guida chiedono 44x44 px di area toccabile. Alzare l'altezza REALE
+ * dei comandi renderebbe l'interfaccia meno densa anche su desktop, dove il
+ * puntatore e' preciso e la densita' e' un pregio (PRODUCT.md: densita'
+ * controllata). Qui si allarga soltanto l'area SENSIBILE, con uno
+ * pseudo-elemento invisibile, e solo dove il puntatore e' grossolano.
+ * Il testo resta esattamente dov'e'.
+ *
+ * Chiede `position: relative` sul chiamante quando non ce l'ha gia'.
+ */
+@utility tocco-comodo {
+  @media (pointer: coarse) {
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -0.75rem -0.5rem;
+      /* Su una riga bassa l'allargamento non arriverebbe a 44: il minimo
+         esplicito chiude il divario senza doverlo accordare a ogni chiamante. */
+      min-height: 44px;
+    }
+  }
+}
+
+/*
  * Stampa del report (pagina /stampa). Il prototipo stampava la dashboard e
  * produceva pagine mezze vuote: qui l'impaginazione è esplicita, i blocchi non
  * si spezzano e i colori di sfondo vengono conservati.

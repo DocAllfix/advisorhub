@@ -15,3 +15,7 @@ coverage/
 .vercel/
 # archivio sorgente: zip escluso, file estratti versionati
 *.zip
+
+# ambiente di produzione per istanza (generato dal provisioning)
+deploy/.env.prod
+deploy/fleet.txt

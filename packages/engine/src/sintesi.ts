@@ -30,6 +30,29 @@ export function calcolaScore(g: Giudizi): number {
   );
 }
 
+/**
+ * Fasce di salute: le soglie stanno QUI e in nessun altro posto.
+ *
+ * Erano riscritte anche in apps/web/src/lib/analisi/panoramica.ts, e due copie
+ * degli stessi numeri divergono al primo che si tocca — con la dashboard che
+ * mostra una fascia e il report un'altra, senza che niente fallisca.
+ */
+export type FasciaSalute = "ristrutturare" | "fragile" | "migliorabile" | "sana" | "eccellente";
+
+export const FASCE_SALUTE: readonly { chiave: FasciaSalute; sotto: number }[] = [
+  { chiave: "ristrutturare", sotto: 30 },
+  { chiave: "fragile", sotto: 55 },
+  { chiave: "migliorabile", sotto: 75 },
+  { chiave: "sana", sotto: 90 },
+  { chiave: "eccellente", sotto: Infinity },
+] as const;
+
+/** Fascia di salute di un punteggio 0-100. */
+export function fasciaSalute(score: number): FasciaSalute {
+  return (FASCE_SALUTE.find((f) => score < f.sotto) ?? FASCE_SALUTE[FASCE_SALUTE.length - 1]!)
+    .chiave;
+}
+
 export function calcolaSintesi(score: number): Sintesi {
   if (score < 30) {
     return {

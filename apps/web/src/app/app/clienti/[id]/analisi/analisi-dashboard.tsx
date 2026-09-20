@@ -24,7 +24,6 @@ import { INDICATORI, type ChiaveIndicatore } from "@/lib/analisi/indicatori-meta
 import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
 import { toniGrafica } from "@/lib/analisi/toni";
 import { tourCompletato } from "@/lib/tour/config";
-import { tourSimulatore } from "@/lib/tour/pagine/analisi";
 import { cn } from "@/lib/utils";
 
 import { LetturaContestuale } from "./lettura-contestuale";
@@ -107,7 +106,10 @@ export function AnalisiDashboard({
     // Il tour dei cursori ha senso solo mentre sono a schermo: parte alla
     // prima apertura, una volta sola. Il ritardo lascia disegnare il pannello.
     if (!tourCompletato("simulatore")) {
-      window.setTimeout(() => tourSimulatore(), 450);
+      window.setTimeout(
+        () => void import("@/lib/tour/pagine/analisi").then((t) => t.tourSimulatore()),
+        450,
+      );
     }
   }
   function chiudiSimulazione() {
@@ -164,10 +166,7 @@ export function AnalisiDashboard({
           {/* Il PDF si scarica: nessuna pagina intermedia, nessun dialogo di stampa */}
           {!inSimulazione && (
             <Button asChild data-tour="scarica-pdf">
-              <a
-                href={`/api/report/${clienteId}?esercizio=${esercizioSelezionatoId}`}
-                download
-              >
+              <a href={`/api/report/${clienteId}?esercizio=${esercizioSelezionatoId}`} download>
                 <Download className="size-4" />
                 Scarica PDF
               </a>
@@ -218,9 +217,7 @@ export function AnalisiDashboard({
 
       {/* La colonna del simulatore esiste solo mentre si simula: riservarla sempre
           restringerebbe gli indicatori per una colonna vuota. */}
-      <div
-        className={cn("grid grid-cols-1 gap-8", inSimulazione && "lg:grid-cols-[1fr_320px]")}
-      >
+      <div className={cn("grid grid-cols-1 gap-8", inSimulazione && "lg:grid-cols-[1fr_320px]")}>
         <div className="flex flex-col gap-8">
           {FAMIGLIE.map((famiglia, i) => (
             <section key={famiglia.titolo} data-tour={i === 0 ? "famiglia-indicatori" : undefined}>
@@ -236,7 +233,9 @@ export function AnalisiDashboard({
                       giudizio={analisiCorrente.giudizi[chiave]}
                       analisi={analisiCorrente}
                       dati={datiCorrenti}
-                      delta={inSimulazione ? { valorePrecedente: meta.valore(analisi, dati) } : null}
+                      delta={
+                        inSimulazione ? { valorePrecedente: meta.valore(analisi, dati) } : null
+                      }
                     />
                   );
                 })}
@@ -245,7 +244,7 @@ export function AnalisiDashboard({
           ))}
         </div>
         {inSimulazione && (
-          <aside className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+          <aside className="scorri-sobrio lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
             <Simulatore
               dati={datiCorrenti}
               datiSalvati={dati}

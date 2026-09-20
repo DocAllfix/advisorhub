@@ -1,6 +1,22 @@
 import type { DriveStep } from "driver.js";
 
-import { creaTour } from "../config";
+import { creaTour } from "../crea-tour";
+
+/**
+ * Il primo elemento che corrisponde E si vede.
+ *
+ * Il portafoglio ha due rese degli stessi dati: la tabella da 768px in su,
+ * l'elenco sotto. Entrambe portano gli stessi `data-tour`, ma una delle due e'
+ * sempre `display: none`, e un selettore semplice prende la prima nel DOM,
+ * che a seconda della larghezza e' quella nascosta. Il passo finirebbe su un
+ * riquadro vuoto.
+ */
+function visibile(selettore: string): () => Element {
+  return () =>
+    Array.from(document.querySelectorAll(selettore)).find((el) => el.getClientRects().length > 0) ??
+    document.querySelector(selettore) ??
+    document.body;
+}
 
 /** Tour del portafoglio: le viste, la ricerca e la lettura della salute. */
 export function tourClienti(demo: boolean) {
@@ -26,7 +42,7 @@ export function tourClienti(demo: boolean) {
       },
     },
     {
-      element: '[data-tour="colonna-salute"]',
+      element: visibile('[data-tour="colonna-salute"]'),
       popover: {
         title: "La salute a colpo d'occhio",
         description:
@@ -36,7 +52,7 @@ export function tourClienti(demo: boolean) {
       },
     },
     {
-      element: '[data-tour="riga-cliente"]',
+      element: visibile('[data-tour="riga-cliente"]'),
       popover: {
         title: "Apri un cliente",
         description:

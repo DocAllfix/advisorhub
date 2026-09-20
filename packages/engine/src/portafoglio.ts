@@ -87,9 +87,7 @@ export function sintetizzaPortafoglio(stato: StatoPortafoglio): SintesiPortafogl
     criticita.push(`${dscrSottoSoglia} con DSCR sotto 1,2`);
   }
   if (dscr6mSottoSoglia > 0) {
-    criticita.push(
-      `${dscr6mSottoSoglia} in tensione sul prospettico a 6 mesi`,
-    );
+    criticita.push(`${dscr6mSottoSoglia} in tensione sul prospettico a 6 mesi`);
   }
 
   const frase =

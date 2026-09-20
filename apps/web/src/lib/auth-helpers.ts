@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import { auth } from "./auth";
 import { db, schema } from "./db";
@@ -53,6 +53,10 @@ export const requireStudio = cache(async function requireStudio(): Promise<Studi
         ? and(eq(schema.member.userId, sessione.user.id), eq(schema.member.organizationId, attivo))
         : eq(schema.member.userId, sessione.user.id),
     )
+    // Ordine deterministico: senza, il fallback "prima membership qualsiasi"
+    // (quando activeOrganizationId e' nullo) sceglierebbe uno studio a caso il
+    // giorno in cui organizationLimit venisse alzato sopra 1.
+    .orderBy(asc(schema.member.createdAt), asc(schema.organization.id))
     .limit(1);
 
   const studio = righe[0];

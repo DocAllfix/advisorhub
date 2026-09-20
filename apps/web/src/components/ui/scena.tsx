@@ -3,6 +3,7 @@ import * as React from "react";
 
 import { Cifra } from "@/components/ui/cifra";
 import { MicroEtichetta } from "@/components/ui/micro-etichetta";
+import { PunteggioAnimato } from "@/components/ui/punteggio-animato";
 import { toniGrafica } from "@/lib/analisi/toni";
 import { cn } from "@/lib/utils";
 
@@ -108,7 +109,12 @@ function Scena({
   const colore = toniGrafica[tono];
 
   return (
-    <section data-slot="scena" data-tour="scena" className={cn("flex flex-col gap-6", className)} {...props}>
+    <section
+      data-slot="scena"
+      data-tour="scena"
+      className={cn("flex flex-col gap-6", className)}
+      {...props}
+    >
       {etichetta ? <MicroEtichetta>{etichetta}</MicroEtichetta> : null}
 
       <div className="flex flex-col items-start gap-7 sm:flex-row sm:items-center sm:gap-10">
@@ -116,7 +122,7 @@ function Scena({
           <div className="relative shrink-0">
             <Anello percentuale={punteggio} colore={colore} />
             <div className="absolute inset-0 grid place-content-center text-center">
-              <Cifra valore={punteggio} dimensione="lg" />
+              <Cifra valore={<PunteggioAnimato valore={punteggio} />} dimensione="lg" />
               {suffisso ? (
                 <span className="mt-1 text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
                   {suffisso}

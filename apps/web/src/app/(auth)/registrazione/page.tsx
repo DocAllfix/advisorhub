@@ -29,8 +29,7 @@ function slugDaNome(nome: string): string {
  * collaboratori degli studi reali.
  */
 const registrazioneAperta =
-  process.env.NEXT_PUBLIC_REGISTRAZIONE_APERTA === "true" ||
-  process.env.NODE_ENV === "development";
+  process.env.NEXT_PUBLIC_REGISTRAZIONE_APERTA === "true" || process.env.NODE_ENV === "development";
 
 function RegistrazioneForm() {
   const router = useRouter();
@@ -95,8 +94,8 @@ function RegistrazioneForm() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Accesso su richiesta</h1>
         <p className="mt-2.5 text-base text-muted-foreground">
-          L&apos;apertura di un nuovo studio non avviene da qui: le credenziali vengono
-          consegnate direttamente dopo l&apos;attivazione del servizio.
+          L&apos;apertura di un nuovo studio non avviene da qui: le credenziali vengono consegnate
+          direttamente dopo l&apos;attivazione del servizio.
         </p>
         <p className="mt-6 text-sm text-muted-foreground">
           Hai già un account?{" "}

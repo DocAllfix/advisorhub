@@ -4,9 +4,26 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+/**
+ * `containerClassName` governa il contenitore, non la tabella.
+ *
+ * Serve per l'intestazione sticky: `overflow-x-auto` fa del contenitore un
+ * blocco di scorrimento su ENTRAMBI gli assi (overflow-y `visible` calcola ad
+ * `auto` quando l'altro asse non lo e'), e uno `position: sticky` dentro un
+ * blocco senza altezza vincolata non si aggancia mai a niente. Dove la tabella
+ * ci sta senza scorrere, il chiamante rimette `overflow-visible` e lo sticky
+ * torna a lavorare sullo scorrimento della pagina.
+ */
+function Table({
+  className,
+  containerClassName,
+  ...props
+}: React.ComponentProps<"table"> & { containerClassName?: string }) {
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
+    <div
+      data-slot="table-container"
+      className={cn("relative w-full overflow-x-auto", containerClassName)}
+    >
       <table
         data-slot="table"
         className={cn("w-full caption-bottom text-sm", className)}

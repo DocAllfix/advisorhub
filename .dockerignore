@@ -1,0 +1,52 @@
+# Contesto di build: la RADICE del monorepo (serve packages/engine in sorgente).
+#
+# I pattern si confrontano con il percorso INTERO a partire dal contesto, non col
+# solo nome della cartella: `archivio` NON esclude `apps/web/.archivio`. Per
+# questo molte voci sono scritte due volte (GUASTI G-14).
+#
+# Questo file non ha niente a che vedere col .gitignore: il contesto di build e'
+# il filesystem, non l'indice di git.
+
+# --- dipendenze e artefatti di compilazione ---
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.turbo
+apps/web/worker.js
+apps/web/migra.js
+
+# --- segreti: non devono nemmeno entrare nel contesto ---
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/id_rsa*
+
+# --- materiale locale e di lavorazione ---
+.git
+.github
+archivio
+apps/web/.archivio
+*.zip
+*.pdf
+*.docx
+*.doc
+*.xlsx
+
+# --- test: non servono nell'immagine ---
+apps/web/e2e
+apps/web/playwright.config.ts
+apps/web/test-results
+apps/web/playwright-report
+packages/engine/test
+**/*.spec.ts
+**/*.test.ts
+
+# --- documentazione e strumenti ---
+deploy
+*.md
+!apps/web/public/fonts/report/LICENZA.md
+.vscode
+.idea

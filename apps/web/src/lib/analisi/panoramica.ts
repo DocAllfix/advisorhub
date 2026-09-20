@@ -1,5 +1,6 @@
 import "server-only";
 
+import { fasciaSalute, type FasciaSalute } from "@advisorhub/engine";
 import { sql } from "drizzle-orm";
 
 import { requireStudio } from "@/lib/auth-helpers";
@@ -15,7 +16,9 @@ export type RigaPanoramica = {
   dscrProspettico: number | null;
 };
 
-export type FasciaSalute = "eccellente" | "sana" | "migliorabile" | "fragile" | "ristrutturare";
+// Il tipo e le soglie vengono dal motore: qui si ri-esporta soltanto, perche'
+// le pagine lo importano da questo modulo.
+export type { FasciaSalute };
 
 /** Punto della serie storica: punteggio medio dello studio in un esercizio. */
 export type PuntoTrend = { anno: number; media: number; clienti: number };
@@ -39,14 +42,6 @@ export type Panoramica = {
    */
   deltaOmogeneo: { valore: number; annoPrec: number; clienti: number } | null;
 };
-
-function fasciaDi(score: number): FasciaSalute {
-  if (score < 30) return "ristrutturare";
-  if (score < 55) return "fragile";
-  if (score < 75) return "migliorabile";
-  if (score < 90) return "sana";
-  return "eccellente";
-}
 
 /**
  * Fotografia del portafoglio: per ogni cliente l'analisi dell'esercizio più
@@ -156,7 +151,7 @@ export async function panoramicaStudio(): Promise<Panoramica> {
     fragile: 0,
     ristrutturare: 0,
   };
-  for (const r of analizzati) distribuzione[fasciaDi(r.score!)]++;
+  for (const r of analizzati) distribuzione[fasciaSalute(r.score!)]++;
 
   return {
     distribuzione,

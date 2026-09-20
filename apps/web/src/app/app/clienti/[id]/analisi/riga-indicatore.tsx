@@ -41,16 +41,32 @@ export function RigaIndicatore({
   const cambiato = delta && delta.valorePrecedente !== valore;
 
   return (
-    <div data-tour={marcaTour ? "riga-indicatore" : undefined} className="border-b border-hairline py-4">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-        <h3 className="min-w-0 flex-1 text-sm font-semibold">
+    <div
+      data-tour={marcaTour ? "riga-indicatore" : undefined}
+      className="border-b border-hairline py-3.5"
+    >
+      {/*
+       * Tracce FISSE, non elastiche. Prima era un flex con il titolo in
+       * `flex-1` e il badge a larghezza intrinseca: «Ottimo» e «Sostiene
+       * sviluppo» misurano diverso, la differenza veniva assorbita dal titolo,
+       * e valore e barra slittavano di riga in riga. Sette indicatori che non
+       * si incolonnano sono sette letture, non un confronto.
+       *
+       * Le tracce devono essere ASSOLUTE: ogni riga e' una griglia a se', e
+       * `minmax()` si dimensionerebbe sul contenuto della singola riga,
+       * riportando il disallineamento. 11rem sulla traccia del giudizio e'
+       * misurato sull'etichetta piu' lunga del motore, «Non genera ricchezza».
+       *
+       * Sotto md la barra sparisce e restano tre elementi su due colonne: il
+       * giudizio va a capo a sinistra, sotto il titolo.
+       */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-2 md:grid-cols-[minmax(0,1fr)_7rem_5rem_11rem]">
+        <h3 className="min-w-0 text-sm font-semibold">
           {meta.titolo}
-          <span className="ml-2 text-xs font-normal text-muted-foreground">
-            {meta.sottotitolo}
-          </span>
+          <span className="ml-2 text-xs font-normal text-muted-foreground">{meta.sottotitolo}</span>
         </h3>
 
-        <span className="w-32 shrink-0 text-right whitespace-nowrap">
+        <span className="text-right whitespace-nowrap">
           <Cifra valore={<NumeroAnimato testo={valore} />} dimensione="sm" />
           {cambiato && (
             <span className="nums block font-mono text-[11px] text-muted-foreground">
@@ -66,17 +82,22 @@ export function RigaIndicatore({
         >
           <span
             className="block h-full rounded-full motion-safe:transition-all motion-safe:duration-300"
-            style={{ width: `${Math.max(0, Math.min(100, percentuale))}%`, backgroundColor: colore }}
+            style={{
+              width: `${Math.max(0, Math.min(100, percentuale))}%`,
+              backgroundColor: colore,
+            }}
           />
         </span>
 
+        {/* Allineato a sinistra nella sua traccia: cosi' i pallini di giudizio
+            formano una colonna verticale che si scorre con l'occhio. */}
         <JudgmentBadge tone={giudizio.tone}>{giudizio.label}</JudgmentBadge>
       </div>
 
-      <p className="mt-2 max-w-[72ch] text-sm text-foreground/80">
-        <span className="text-muted-foreground">Cosa puoi fare: </span>
-        {giudizio.azione}
-      </p>
+      {/* Il consiglio e' gia' scritto all'imperativo («Capitalizza: alza
+          barriere…»): si legge come consiglio senza doverlo etichettare, e
+          «Cosa puoi fare:» ripetuto sette volte era solo rumore. */}
+      <p className="mt-2 max-w-[72ch] text-sm text-foreground/80">{giudizio.azione}</p>
 
       <button
         type="button"

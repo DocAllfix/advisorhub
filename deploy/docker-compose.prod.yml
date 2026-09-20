@@ -1,0 +1,148 @@
+# Stack di UNA istanza cliente. Un server Hetzner per cliente: qui dentro c'e'
+# tutto quello che gira su quella macchina.
+#
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod up -d
+#
+# Nome di progetto ESPLICITO: senza, Compose lo deriva dalla cartella ("deploy")
+# e collide con gli altri prodotti che usano la stessa struttura. La collisione
+# non da' errore: ricrea i container dell'altro progetto e ne azzera il volume
+# (GUASTI G-01).
+name: advisorhub
+
+services:
+  db:
+    image: postgres:17-alpine
+    # NESSUN `ports`: il database non e' raggiungibile dall'esterno del server.
+    # Per una sessione psql: docker compose exec db psql -U "$POSTGRES_USER" ...
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    command:
+      # Alimentano le sonde della sentinella: query lente e connessioni.
+      - "postgres"
+      - "-c"
+      - "log_min_duration_statement=500"
+      - "-c"
+      - "log_connections=on"
+    volumes:
+      - db_dati:/var/lib/postgresql/data
+    shm_size: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    logging: &registro
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # Le migrazioni girano PRIMA del web, non al suo avvio: elimina il caso
+  # "codice nuovo, schema vecchio". Gira il bundle esbuild, che non ha bisogno
+  # di node_modules (GUASTI G-13).
+  migrazioni:
+    image: ${IMMAGINE}
+    command: ["node", "apps/web/migra.js"]
+    environment:
+      DIRECT_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      MIGRATIONS_DIR: /app/apps/web/drizzle
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+    logging: *registro
+
+  web:
+    image: ${IMMAGINE}
+    # Nessuna porta pubblicata: solo Caddy parla con l'esterno.
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DIRECT_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: https://${DOMINIO}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM}
+      GIT_SHA: ${GIT_SHA:-sconosciuto}
+      # Assente di proposito: la registrazione e' chiusa. Chi ha un invito
+      # valido si registra lo stesso (GUASTI G-25).
+      # REGISTRAZIONE_APERTA=
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://127.0.0.1:3000/api/health'').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      db: { condition: service_healthy }
+      migrazioni: { condition: service_completed_successfully }
+    mem_limit: 1g
+    restart: unless-stopped
+    logging: *registro
+
+  # Drena la coda di posta. Container separato invece di un endpoint HTTP:
+  # nessuna superficie in piu' e nessun token da custodire.
+  posta:
+    image: ${IMMAGINE}
+    command: ["node", "apps/web/worker.js"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM}
+    depends_on:
+      db: { condition: service_healthy }
+      migrazioni: { condition: service_completed_successfully }
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *registro
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      # In produzione DEVONO essere 80/443: Let's Encrypt valida con HTTP-01
+      # sulla porta 80. Le variabili servono solo a collaudare lo stack su una
+      # macchina dove quelle porte sono gia' occupate.
+      - "${PORTA_HTTP:-80}:80"
+      - "${PORTA_HTTPS:-443}:443"
+    environment:
+      DOMINIO: ${DOMINIO}
+      # "tls internal" per collaudare senza DNS pubblico. La variabile deve
+      # contenere la direttiva INTERA: `internal` da solo non e' una direttiva e
+      # Caddy va in crash-loop (GUASTI G-15).
+      CADDY_TLS: ${CADDY_TLS:-}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_dati:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+    logging: *registro
+
+  # Riavvia i container che si dichiarano malati. La sentinella dira' CHE e'
+  # successo: senza, un crash-loop resta invisibile.
+  autoheal:
+    image: willfarrell/autoheal:latest
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: all
+      AUTOHEAL_INTERVAL: 30
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    logging: *registro
+
+volumes:
+  db_dati:
+  caddy_dati:
+  caddy_config:

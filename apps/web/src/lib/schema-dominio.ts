@@ -209,3 +209,41 @@ export const scadenze = pgTable(
     ),
   ],
 );
+
+/**
+ * Coda di posta in uscita.
+ *
+ * Le email non partono dentro la richiesta dell'utente: vengono accodate qui
+ * nella stessa transazione del dominio e spedite da un worker separato. Se il
+ * relay SMTP è irraggiungibile, la richiesta dell'utente riesce comunque e il
+ * messaggio non si perde — senza questa coda, un timeout durante un recupero
+ * password lascerebbe la persona chiusa fuori in modo definitivo.
+ *
+ * organizationId è nullable: il recupero password precede la risoluzione dello
+ * studio (si conosce solo l'email).
+ */
+export const mailOutbox = pgTable(
+  "mail_outbox",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").references(() => organization.id, {
+      onDelete: "cascade",
+    }),
+    destinatario: text("destinatario").notNull(),
+    oggetto: text("oggetto").notNull(),
+    corpoTesto: text("corpo_testo").notNull(),
+    corpoHtml: text("corpo_html"),
+    tentativi: integer("tentativi").default(0).notNull(),
+    ultimoErrore: text("ultimo_errore"),
+    inviataAt: timestamp("inviata_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    // Indice parziale: il worker interroga solo le non inviate, che sono poche
+    // anche quando la tabella è cresciuta.
+    index("mail_outbox_da_inviare_idx")
+      .on(t.createdAt)
+      .where(sql`${t.inviataAt} is null`),
+    check("mail_outbox_tentativi_non_negativi", sql`${t.tentativi} >= 0`),
+  ],
+);

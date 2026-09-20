@@ -1,6 +1,8 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { CalendarClock, Check, MoreHorizontal, Plus, Undo2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -18,18 +20,31 @@ import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { MESSAGGIO_DEMO } from "@/lib/demo";
 import { completaScadenza, eliminaScadenza } from "@/lib/scadenze/actions";
 import type { ScadenzaLista } from "@/lib/scadenze/queries";
-import { etichettaCategoria } from "@/lib/scadenze/schema";
+import { etichettaCategoria } from "@/lib/scadenze/etichette";
 
-import { ScadenzaForm, type ScadenzaModificabile } from "./scadenza-form";
+import type { ScadenzaModificabile } from "./scadenza-form";
+
+/*
+ * Il modulo si carica al primo clic che lo apre, non con la pagina: porta con
+ * se' react-hook-form e zod, qualche centinaio di KB che la pagina analizzava
+ * all'avvio per un pannello che la maggior parte delle visite non apre.
+ * Dopo il primo uso resta montato, cosi' l'animazione di chiusura continua a
+ * funzionare.
+ */
+const ScadenzaForm = dynamic(() => import("./scadenza-form").then((m) => m.ScadenzaForm), {
+  ssr: false,
+});
 
 type Filtro = "da-fare" | "completate" | "tutte";
 
 const oggiISO = () => new Date().toISOString().slice(0, 10);
 
 function formatData(iso: string) {
-  return new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "long", year: "numeric" }).format(
-    new Date(iso + "T00:00:00"),
-  );
+  return new Intl.DateTimeFormat("it-IT", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(iso + "T00:00:00"));
 }
 
 function giorniA(iso: string): number {
@@ -60,6 +75,10 @@ export function Scadenzario({
   const [filtro, setFiltro] = useState<Filtro>("da-fare");
   const [formAperto, setFormAperto] = useState(false);
   const [inModifica, setInModifica] = useState<ScadenzaModificabile | null>(null);
+  const [formUsato, setFormUsato] = useState(false);
+  // Completare una scadenza la toglie dall'elenco «da fare»: senza transizione
+  // la riga sparisce e quelle sotto saltano su, e non si capisce quale sia andata.
+  const [rifScadenze] = useAutoAnimate<HTMLUListElement>();
 
   const visibili = useMemo(() => {
     if (filtro === "tutte") return scadenze;
@@ -70,6 +89,7 @@ export function Scadenzario({
   function apriNuova() {
     if (demo) return toast.error(MESSAGGIO_DEMO);
     setInModifica(null);
+    setFormUsato(true);
     setFormAperto(true);
   }
   function apriModifica(s: ScadenzaLista) {
@@ -82,6 +102,7 @@ export function Scadenzario({
       clienteId: s.clienteId,
       note: s.note,
     });
+    setFormUsato(true);
     setFormAperto(true);
   }
 
@@ -149,9 +170,16 @@ export function Scadenzario({
               Nessuna scadenza in questa vista.
             </p>
           ) : (
-            <ul data-tour="elenco-scadenze" className="mt-4 border-t border-hairline">
+            <ul
+              ref={rifScadenze}
+              data-tour="elenco-scadenze"
+              className="mt-4 border-t border-hairline"
+            >
               {visibili.map((s, i) => (
-                <li key={s.id} className="flex items-center gap-3 border-b border-hairline py-3.5 transition-colors hover:bg-muted/40">
+                <li
+                  key={s.id}
+                  className="flex items-center gap-3 border-b border-hairline py-3.5 transition-colors hover:bg-muted/40"
+                >
                   <button
                     type="button"
                     data-tour={i === 0 ? "completa-scadenza" : undefined}
@@ -179,7 +207,8 @@ export function Scadenzario({
                   </div>
 
                   <span className="hidden shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground sm:inline">
-                    {etichettaCategoria[s.categoria as keyof typeof etichettaCategoria] ?? s.categoria}
+                    {etichettaCategoria[s.categoria as keyof typeof etichettaCategoria] ??
+                      s.categoria}
                   </span>
                   <StatoScadenza s={s} />
 
@@ -226,13 +255,15 @@ export function Scadenzario({
         </>
       )}
 
-      <ScadenzaForm
-        aperto={formAperto}
-        onCambioApertura={setFormAperto}
-        scadenza={inModifica}
-        clienti={clienti}
-        onSalvata={() => router.refresh()}
-      />
+      {formUsato && (
+        <ScadenzaForm
+          aperto={formAperto}
+          onCambioApertura={setFormAperto}
+          scadenza={inModifica}
+          clienti={clienti}
+          onSalvata={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }

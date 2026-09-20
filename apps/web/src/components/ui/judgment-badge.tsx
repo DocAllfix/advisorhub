@@ -14,8 +14,7 @@ const judgmentBadgeVariants = cva(
       tone: {
         // La scala parte dal verde: l'ottanio resta il colore dell'azione
         eccellente: "border-success/30 bg-success-subtle text-success-foreground",
-        buono:
-          "border-success-buono/30 bg-success-buono-subtle text-success-buono-foreground",
+        buono: "border-success-buono/30 bg-success-buono-subtle text-success-buono-foreground",
         attenzione: "border-warning/40 bg-warning-subtle text-warning-foreground",
         critico: "border-danger/30 bg-danger-subtle text-danger-foreground",
         nd: "border-border bg-muted text-muted-foreground",

@@ -1,3 +1,5 @@
+import { SOGLIE_GIUDIZIO } from "@advisorhub/engine";
+
 import type { ChiaveIndicatore } from "@/lib/analisi/indicatori-meta";
 
 /**
@@ -26,26 +28,46 @@ export interface ScalaIndicatore {
 }
 
 export const SCALE: Record<ChiaveIndicatore, ScalaIndicatore> = {
-  ros: { max: 20, soglia: 10, etichetta: "soglia 10%", descrizione: "Redditività delle vendite" },
+  ros: {
+    max: 20,
+    soglia: SOGLIE_GIUDIZIO.ros.soglia,
+    etichetta: "soglia 10%",
+    descrizione: "Redditività delle vendite",
+  },
   turnover: {
     max: 2.5,
-    soglia: 1,
+    soglia: SOGLIE_GIUDIZIO.turnover.soglia,
     etichetta: "soglia 1,0",
     descrizione: "Rotazione del capitale",
   },
-  roi: { max: 20, soglia: 8, etichetta: "soglia 8%", descrizione: "Rendimento del capitale" },
-  roiI: { max: 20, soglia: 5, etichetta: "soglia sviluppo 5%", descrizione: "Lettura industriale" },
-  roe: { max: 30, soglia: 5, etichetta: "fascia buona 5-15%", descrizione: "Remunera il capitale di rischio" },
+  roi: {
+    max: 20,
+    soglia: SOGLIE_GIUDIZIO.roi.soglia,
+    etichetta: "soglia 8%",
+    descrizione: "Rendimento del capitale",
+  },
+  roiI: {
+    max: 20,
+    soglia: SOGLIE_GIUDIZIO.roiI.soglia,
+    etichetta: "soglia sviluppo 5%",
+    descrizione: "Lettura industriale",
+  },
+  roe: {
+    max: 30,
+    soglia: SOGLIE_GIUDIZIO.roe.soglia,
+    etichetta: "fascia buona 5-15%",
+    descrizione: "Remunera il capitale di rischio",
+  },
   gi: {
     max: 6,
-    soglia: 2,
+    soglia: SOGLIE_GIUDIZIO.gi.soglia,
     etichetta: "soglia 2 anni",
     minoreMeglio: true,
     descrizione: "Anni di rientro (PFN/EBITDA)",
   },
   dscr: {
     max: 2.5,
-    soglia: 1.2,
+    soglia: SOGLIE_GIUDIZIO.dscr.soglia,
     etichetta: "soglia bancabile 1,20",
     descrizione: "Copertura del servizio debito",
   },
@@ -54,7 +76,7 @@ export const SCALE: Record<ChiaveIndicatore, ScalaIndicatore> = {
 /** Il prospettico 6M non è fra i sette: ha una sezione propria (art. 3 CCII). */
 export const SCALA_DSCR_6M: ScalaIndicatore = {
   max: 2.5,
-  soglia: 1.1,
+  soglia: SOGLIE_GIUDIZIO.dscr6m.soglia,
   etichetta: "soglia CNDCEC 1,10",
   descrizione: "Copertura prospettica del debito",
 };

@@ -5,6 +5,33 @@ import type { DatiBilancio, Giudizio, Indicatori } from "./types";
  * (testi bonificati dagli errori di codifica dell'originale).
  */
 
+/**
+ * Soglie di giudizio: il confine oltre il quale un indicatore e' considerato
+ * soddisfacente. Sono LE STESSE usate dalle funzioni giudica* qui sotto, e da
+ * qui le prende anche il report (apps/web/src/lib/report/soglie.ts), che prima
+ * le riscriveva a mano.
+ *
+ * `minoreMeglio` vale per l'indice di gravosita': meno anni di rientro, meglio e'.
+ *
+ * Il test `soglie.test.ts` verifica che questi numeri corrispondano davvero al
+ * comportamento delle funzioni: se qualcuno spostasse un `if` senza aggiornare
+ * la costante, il motore direbbe una cosa e il report un'altra, e nessuno se ne
+ * accorgerebbe fino a quando un cliente non lo fa notare.
+ */
+export const SOGLIE_GIUDIZIO = {
+  ros: { soglia: 10, minoreMeglio: false },
+  turnover: { soglia: 1, minoreMeglio: false },
+  roi: { soglia: 8, minoreMeglio: false },
+  roiI: { soglia: 5, minoreMeglio: false },
+  roe: { soglia: 5, minoreMeglio: false },
+  gi: { soglia: 2, minoreMeglio: true },
+  dscr: { soglia: 1.2, minoreMeglio: false },
+  /** Prospettico 6M: soglia CNDCEC, fuori dai sette (art. 3 CCII). */
+  dscr6m: { soglia: 1.1, minoreMeglio: false },
+} as const satisfies Record<string, { soglia: number; minoreMeglio: boolean }>;
+
+export type ChiaveSoglia = keyof typeof SOGLIE_GIUDIZIO;
+
 export function giudicaRos(ros: number | null): Giudizio {
   if (ros === null) {
     return {

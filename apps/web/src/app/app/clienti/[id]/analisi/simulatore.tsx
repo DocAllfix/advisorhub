@@ -105,11 +105,7 @@ function Riga<T extends string>({
       return;
     }
     const limitato = Math.max(min, Math.min(max, n));
-    setAvviso(
-      limitato !== n
-        ? `Oltre il simulabile: portato a ${formatEuro(limitato)}.`
-        : null,
-    );
+    setAvviso(limitato !== n ? `Oltre il simulabile: portato a ${formatEuro(limitato)}.` : null);
     onCambio(cursore.campo, limitato);
   }
 
@@ -139,7 +135,11 @@ function Riga<T extends string>({
         />
       </div>
       {avviso && (
-        <p id={idAvviso} role="alert" className="mt-1 text-right text-[10px] text-danger-foreground">
+        <p
+          id={idAvviso}
+          role="alert"
+          className="mt-1 text-right text-[10px] text-danger-foreground"
+        >
           {avviso}
         </p>
       )}

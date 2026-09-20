@@ -7,9 +7,12 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type RowData,
   type SortingState,
 } from "@tanstack/react-table";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ArrowUpDown, MoreHorizontal, Plus, RotateCcw, Search } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -26,9 +29,10 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
-import { sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
+import { inAllerta as allerta, sinteticoDaScore } from "@/lib/analisi/sintesi-breve";
 import { toniGrafica, toniTesto } from "@/lib/analisi/toni";
 import { MESSAGGIO_DEMO } from "@/lib/demo";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -39,9 +43,34 @@ import {
 } from "@/components/ui/table";
 import { archiviaCliente, ripristinaCliente } from "@/lib/clienti/actions";
 import type { ClienteArchiviato, ClienteLista } from "@/lib/clienti/queries";
-import { etichettaDimensione } from "@/lib/clienti/schema";
+import { etichettaDimensione } from "@/lib/clienti/etichette";
 
-import { ClienteForm, type ClienteModificabile } from "./cliente-form";
+import type { ClienteModificabile } from "./cliente-form";
+
+/*
+ * Il modulo si carica al primo clic che lo apre, non con la pagina: porta con
+ * se' react-hook-form e zod, qualche centinaio di KB che la pagina analizzava
+ * all'avvio per un pannello che la maggior parte delle visite non apre.
+ * Dopo il primo uso resta montato, cosi' l'animazione di chiusura continua a
+ * funzionare.
+ */
+const ClienteForm = dynamic(() => import("./cliente-form").then((m) => m.ClienteForm), {
+  ssr: false,
+});
+
+/**
+ * Priorita' di colonna. Con venti-sessanta clienti la tabella non ha bisogno di
+ * paginazione, ma ha bisogno che a restringersi siano le colonne accessorie e
+ * non quella che porta il giudizio.
+ */
+declare module "@tanstack/react-table" {
+  // I due parametri restano perche' l'augmentation deve avere la stessa firma
+  // dell'interfaccia originale per fondersi con essa; qui non servono.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    classe?: string;
+  }
+}
 
 function formatData(d: Date) {
   return new Intl.DateTimeFormat("it-IT", {
@@ -52,13 +81,7 @@ function formatData(d: Date) {
 }
 
 /** Intestazione di colonna ordinabile, resa come micro-etichetta. */
-function Intestazione({
-  etichetta,
-  onOrdina,
-}: {
-  etichetta: string;
-  onOrdina?: () => void;
-}) {
+function Intestazione({ etichetta, onOrdina }: { etichetta: string; onOrdina?: () => void }) {
   if (!onOrdina) {
     return (
       <span className="text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
@@ -182,15 +205,26 @@ export function Portafoglio({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [formAperto, setFormAperto] = useState(false);
   const [inModifica, setInModifica] = useState<ClienteModificabile | null>(null);
+  const [formUsato, setFormUsato] = useState(false);
+  /*
+   * Ordinamento, filtro e cambio vista riscrivono l'elenco di colpo: le righe
+   * sparivano e ricomparivano altrove senza che l'occhio potesse seguirle.
+   * AutoAnimate non inietta stili ne' script (usa solo WAAPI) e si disattiva
+   * da solo sotto prefers-reduced-motion: verificato nel pacchetto.
+   */
+  const [rifElenco] = useAutoAnimate<HTMLUListElement>();
+  const [rifCorpo] = useAutoAnimate<HTMLTableSectionElement>();
 
   function apriNuovo() {
     if (demo) return toast.error(MESSAGGIO_DEMO);
     setInModifica(null);
+    setFormUsato(true);
     setFormAperto(true);
   }
   function apriModifica(c: ClienteLista) {
     if (demo) return toast.error(MESSAGGIO_DEMO);
     setInModifica(c);
+    setFormUsato(true);
     setFormAperto(true);
   }
 
@@ -242,30 +276,15 @@ export function Portafoglio({
         </Link>
       ),
     },
-    {
-      accessorKey: "dimensione",
-      header: () => <Intestazione etichetta="Dimensione" />,
-      cell: ({ row }) =>
-        row.original.dimensione ? (
-          <span className="text-sm text-muted-foreground">
-            {etichettaDimensione[row.original.dimensione as keyof typeof etichettaDimensione]}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
-    },
-    {
-      accessorKey: "codiceAteco",
-      header: () => <Intestazione etichetta="ATECO" />,
-      cell: ({ row }) =>
-        row.original.codiceAteco ? (
-          <span className="nums font-mono text-sm text-muted-foreground">
-            {row.original.codiceAteco}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
-    },
+    /*
+     * SALUTE subito dopo il nome: e' il dato per cui questa schermata esiste, e
+     * stava quarta, dopo una colonna ATECO quasi sempre vuota. A 375 px
+     * finiva fuori dallo schermo e l'unica cosa visibile era il trattino
+     * dell'ATECO.
+     *
+     * `classe` e' la priorita' di colonna: le secondarie si ritirano quando lo
+     * spazio manca, invece di spingere fuori quella che conta.
+     */
     {
       id: "salute",
       header: ({ column }) => (
@@ -282,11 +301,18 @@ export function Portafoglio({
         }
         const s = sinteticoDaScore(score);
         return (
-          <span data-tour="colonna-salute" className="relative z-10 inline-flex items-center gap-3">
+          <span
+            data-tour="colonna-salute"
+            className="relative z-10 grid grid-cols-[2rem_9rem] items-center gap-3 lg:grid-cols-[2rem_4rem_9rem]"
+          >
+            {/* text-base e non text-lg: in tabella il punteggio e' uno di
+                sessanta, e con la riga da 18px di riga si arrivava a 68px di
+                altezza contro i ~40 che DESIGN.md chiede a una tabella densa.
+                Resta il dato piu' marcato della riga, senza dettarne l'altezza. */}
             <Cifra
               valore={score}
               dimensione="sm"
-              className="w-8 text-right text-lg"
+              className="text-right text-base"
               style={{ color: toniTesto[s.tone] }}
             />
             <span className="hidden h-1 w-16 shrink-0 rounded-full bg-muted lg:block" aria-hidden>
@@ -301,8 +327,35 @@ export function Portafoglio({
       },
     },
     {
+      accessorKey: "dimensione",
+      header: () => <Intestazione etichetta="Dimensione" />,
+      meta: { classe: "hidden lg:table-cell" },
+      cell: ({ row }) =>
+        row.original.dimensione ? (
+          <span className="text-sm text-muted-foreground">
+            {etichettaDimensione[row.original.dimensione as keyof typeof etichettaDimensione]}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
+      accessorKey: "codiceAteco",
+      header: () => <Intestazione etichetta="ATECO" />,
+      meta: { classe: "hidden xl:table-cell" },
+      cell: ({ row }) =>
+        row.original.codiceAteco ? (
+          <span className="nums font-mono text-sm text-muted-foreground">
+            {row.original.codiceAteco}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
       accessorKey: "updatedAt",
       header: () => <Intestazione etichetta="Aggiornato" />,
+      meta: { classe: "hidden lg:table-cell" },
       cell: ({ row }) => (
         <span className="nums text-sm text-muted-foreground">
           {formatData(row.original.updatedAt)}
@@ -323,7 +376,7 @@ export function Portafoglio({
     },
   ];
 
-  const inAllerta = clienti.filter((c) => c.score !== null && c.score < 55);
+  const inAllerta = clienti.filter((c) => allerta(c.score));
   const datiVista = vista === "allerta" ? inAllerta : clienti;
 
   const table = useReactTable({
@@ -383,7 +436,12 @@ export function Portafoglio({
         <>
           <div className="mt-7 flex flex-wrap items-end justify-between gap-4">
             {/* Viste: il portafoglio non è solo un elenco, è una lista di priorità */}
-            <div data-tour="viste" className="flex gap-1.5" role="group" aria-label="Filtra il portafoglio">
+            <div
+              data-tour="viste"
+              className="flex gap-1.5"
+              role="group"
+              aria-label="Filtra il portafoglio"
+            >
               {(
                 [
                   ["attivi", "Attivi", clienti.length],
@@ -429,70 +487,167 @@ export function Portafoglio({
           {vista === "archiviati" ? (
             <ElencoArchiviati archiviati={archiviati} onRipristina={ripristina} />
           ) : (
-          <div className="mt-5 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((hg) => (
-                  <TableRow key={hg.id} className="border-hairline hover:bg-transparent">
-                    {hg.headers.map((h) => (
-                      <TableHead key={h.id} className="h-auto pb-2.5">
-                        {h.isPlaceholder
-                          ? null
-                          : flexRender(h.column.columnDef.header, h.getContext())}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {nessunRisultato ? (
-                  <TableRow className="border-hairline hover:bg-transparent">
-                    <TableCell colSpan={columns.length} className="h-28 text-center">
-                      <p className="text-muted-foreground">
-                        {vista === "allerta" && !filtro
-                          ? "Nessun cliente sotto la soglia di attenzione."
-                          : `Nessun cliente per «${filtro}».`}
-                      </p>
-                      {filtro && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-3"
-                          onClick={() => setFiltro("")}
-                        >
-                          Azzera la ricerca
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  table.getRowModel().rows.map((row, i) => (
-                    <TableRow
-                      key={row.id}
-                      data-tour={i === 0 ? "riga-cliente" : undefined}
-                      className="relative cursor-pointer border-hairline hover:bg-muted/40"
+            <>
+              {nessunRisultato ? (
+                <div className="mt-10 text-center">
+                  <p className="text-muted-foreground">
+                    {vista === "allerta" && !filtro
+                      ? "Nessun cliente sotto la soglia di attenzione."
+                      : `Nessun cliente per «${filtro}».`}
+                  </p>
+                  {filtro && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => setFiltro("")}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="py-3.5">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
+                      Azzera la ricerca
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/*
+                   * Sotto md la tabella diventa un ELENCO. Prima restava
+                   * tabella e scorreva in orizzontale: la colonna Salute
+                   * finiva fuori schermo, senza che niente lo dicesse, e
+                   * l'utente vedeva tre nomi e tre trattini.
+                   *
+                   * Non sono schede: una scheda per cliente sarebbe la
+                   * risposta pigra e moltiplicherebbe i bordi. E' la stessa
+                   * forma che la Panoramica usa gia' per «Da rivedere per
+                   * primi», quindi un pattern in due posti, non due.
+                   */}
+                  <ul ref={rifElenco} className="mt-5 border-t border-hairline md:hidden">
+                    {table.getRowModel().rows.map((row, i) => {
+                      const c = row.original;
+                      const s = c.score === null ? null : sinteticoDaScore(c.score);
+                      return (
+                        <li key={row.id} className="border-b border-hairline">
+                          {/*
+                           * Due righe, non una. Con nome, punteggio e badge
+                           * tutti in fila, il badge a larghezza variabile
+                           * («Sana» contro «Da ristrutturare») spostava il
+                           * punteggio di riga in riga, e fissarne la traccia
+                           * avrebbe lasciato un centinaio di pixel alla
+                           * ragione sociale. Mandando il badge sotto, il
+                           * punteggio prende una traccia fissa e si
+                           * incolonna, e il nome si tiene tutta la larghezza.
+                           */}
+                          <Link
+                            href={`/app/clienti/${c.id}`}
+                            data-tour={i === 0 ? "riga-cliente" : undefined}
+                            className="tocco-comodo grid grid-cols-[minmax(0,1fr)_2.5rem] items-baseline gap-x-3 gap-y-1.5 py-3 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          >
+                            <span className="truncate font-medium">{c.ragioneSociale}</span>
+                            {/*
+                             * La seconda colonna e' FISSA e contiene solo il
+                             * punteggio. Il badge sta su una riga propria a
+                             * tutta larghezza: se dividesse la colonna col
+                             * punteggio, la larghezza la detterebbe lui, che
+                             * cambia da «Sana» a «Da ristrutturare», e ogni
+                             * riga essendo una griglia a se' i numeri
+                             * finirebbero a x diverse.
+                             */}
+                            {s === null ? (
+                              <span aria-hidden className="text-right text-muted-foreground">
+                                —
+                              </span>
+                            ) : (
+                              <Cifra
+                                data-tour={i === 0 ? "colonna-salute" : undefined}
+                                valore={c.score}
+                                dimensione="sm"
+                                className="text-right text-lg"
+                                style={{ color: toniTesto[s.tone] }}
+                              />
+                            )}
+                            <span className="col-span-2 flex items-center justify-between gap-3">
+                              <span className="truncate text-xs text-muted-foreground">
+                                {c.dimensione
+                                  ? etichettaDimensione[
+                                      c.dimensione as keyof typeof etichettaDimensione
+                                    ]
+                                  : "Dimensione non indicata"}
+                                {" · "}
+                                {formatData(c.updatedAt)}
+                              </span>
+                              {s === null ? (
+                                <span className="shrink-0 text-xs text-muted-foreground">
+                                  Da analizzare
+                                </span>
+                              ) : (
+                                <JudgmentBadge tone={s.tone}>{s.label}</JudgmentBadge>
+                              )}
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {/*
+                   * `md:overflow-visible` restituisce lo sticky allo
+                   * scorrimento della pagina: dentro un contenitore
+                   * `overflow-x-auto` l'intestazione non si aggancerebbe a
+                   * nulla. Da md in su la tabella ci sta senza scorrere,
+                   * perche' le colonne accessorie si sono gia' ritirate.
+                   */}
+                  <Table containerClassName="scorri-sobrio mt-5 hidden md:block md:overflow-visible">
+                    <TableHeader>
+                      {table.getHeaderGroups().map((hg) => (
+                        <TableRow key={hg.id} className="border-hairline hover:bg-transparent">
+                          {hg.headers.map((h) => (
+                            <TableHead
+                              key={h.id}
+                              className={cn(
+                                "sticky top-0 z-20 h-auto bg-background pb-2.5",
+                                h.column.columnDef.meta?.classe,
+                              )}
+                            >
+                              {h.isPlaceholder
+                                ? null
+                                : flexRender(h.column.columnDef.header, h.getContext())}
+                            </TableHead>
+                          ))}
+                        </TableRow>
                       ))}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                    </TableHeader>
+                    <TableBody ref={rifCorpo}>
+                      {table.getRowModel().rows.map((row, i) => (
+                        <TableRow
+                          key={row.id}
+                          data-tour={i === 0 ? "riga-cliente" : undefined}
+                          className="relative cursor-pointer border-hairline hover:bg-muted/40"
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell
+                              key={cell.id}
+                              className={cn("py-2", cell.column.columnDef.meta?.classe)}
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
+            </>
           )}
         </>
       )}
 
-      <ClienteForm
-        aperto={formAperto}
-        onCambioApertura={setFormAperto}
-        cliente={inModifica}
-        onSalvato={() => router.refresh()}
-      />
+      {formUsato && (
+        <ClienteForm
+          aperto={formAperto}
+          onCambioApertura={setFormAperto}
+          cliente={inModifica}
+          onSalvato={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }

@@ -11,8 +11,7 @@ import { authClient } from "@/lib/auth-client";
 
 /** Coerente con la pagina di registrazione: se è chiusa, non si invita ad andarci. */
 const registrazioneAperta =
-  process.env.NEXT_PUBLIC_REGISTRAZIONE_APERTA === "true" ||
-  process.env.NODE_ENV === "development";
+  process.env.NEXT_PUBLIC_REGISTRAZIONE_APERTA === "true" || process.env.NODE_ENV === "development";
 
 function LoginForm() {
   const router = useRouter();
@@ -39,10 +38,17 @@ function LoginForm() {
     router.push(searchParams.get("da") ?? "/app");
   }
 
+  const appenaReimpostata = searchParams.get("reimpostata") === "1";
+
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight">Accedi</h1>
       <p className="mt-2.5 text-base text-muted-foreground">Lo spazio di lavoro del tuo studio.</p>
+      {appenaReimpostata && (
+        <p className="mt-5 rounded-md border border-hairline bg-card px-3.5 py-2.5 text-sm text-muted-foreground">
+          Password aggiornata. Accedi con quella nuova.
+        </p>
+      )}
       <form onSubmit={accedi} className="mt-8 grid gap-5" noValidate>
         <div className="grid gap-1.5">
           <Label htmlFor="email">Email</Label>
@@ -56,7 +62,15 @@ function LoginForm() {
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="password">Password</Label>
+          <div className="flex items-baseline justify-between gap-3">
+            <Label htmlFor="password">Password</Label>
+            <Link
+              href="/recupera-password"
+              className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+            >
+              Password dimenticata?
+            </Link>
+          </div>
           <Input
             id="password"
             type="password"

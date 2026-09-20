@@ -41,9 +41,7 @@ export default async function SchedaClientePage({ params }: { params: Promise<{ 
   // Salute corrente dall'esercizio più recente: prima la scheda mostrava
   // "Da analizzare" anche per clienti già analizzati.
   const recente = esercizi[0];
-  const analisi = recente
-    ? analizza(datiDa(recente), previsionaleDa(recente) ?? undefined)
-    : null;
+  const analisi = recente ? analizza(datiDa(recente), previsionaleDa(recente) ?? undefined) : null;
   const sintetico = analisi ? sinteticoDaScore(analisi.score) : null;
 
   const identita = [

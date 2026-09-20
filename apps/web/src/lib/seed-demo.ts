@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 import { analizza, type DatiBilancio, type DatiPrevisionali6M } from "@advisorhub/engine";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -15,7 +13,9 @@ import * as dominio from "./schema-dominio";
  */
 const BASE = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 const EMAIL = "demo@advisorhub.it";
-const PASSWORD = "DemoAdvisor2026!";
+// Password dello studio dimostrativo: da variabile d'ambiente, non nel
+// sorgente versionato. Il valore di ripiego vale solo in sviluppo locale.
+const PASSWORD = process.env.DEMO_PASSWORD ?? "DemoAdvisor2026!";
 const STUDIO = "Studio Demo Commercialisti";
 
 const pool = new Pool({ connectionString: process.env.DIRECT_URL });

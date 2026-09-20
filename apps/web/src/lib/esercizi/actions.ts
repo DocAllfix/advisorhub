@@ -12,7 +12,8 @@ import { revalidatePath } from "next/cache";
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import { requireStudio, vietatoInDemo } from "@/lib/auth-helpers";
-import { db } from "@/lib/db";
+import { eUuid } from "@/lib/id";
+import { db, type Esecutore } from "@/lib/db";
 import { analisi, auditLog, clienti, esercizi } from "@/lib/schema-dominio";
 
 import { esercizioSchema, separaEsercizio, type EsercizioInput } from "./schema";
@@ -48,19 +49,25 @@ async function verificaCliente(clienteId: string, organizationId: string) {
   return c ?? null;
 }
 
-/** Calcola l'analisi col motore e la salva come snapshot versionato. */
+/**
+ * Calcola l'analisi col motore e la salva come snapshot versionato.
+ *
+ * Prende l'esecutore perche' va scritta nella stessa transazione dell'esercizio:
+ * un esercizio senza analisi mostrerebbe punteggio nullo in portafoglio.
+ */
 async function salvaAnalisi(
+  esecutore: Esecutore,
   esercizioId: string,
   clienteId: string,
   dati: ReturnType<typeof separaEsercizio>["dati"],
   previsionale: ReturnType<typeof separaEsercizio>["previsionale"],
 ) {
   const risultato = analizza(dati, previsionale ?? undefined);
-  const [{ v }] = await db
+  const [{ v }] = await esecutore
     .select({ v: sql<number>`coalesce(max(${analisi.versione}), 0) + 1` })
     .from(analisi)
     .where(eq(analisi.esercizioId, esercizioId));
-  await db.insert(analisi).values({
+  await esecutore.insert(analisi).values({
     clienteId,
     esercizioId,
     versione: v,
@@ -75,6 +82,7 @@ export async function creaEsercizio(
   clienteId: string,
   input: EsercizioInput,
 ): Promise<RisultatoEsercizio> {
+  if (!eUuid(clienteId)) return { ok: false, errore: "Cliente non trovato." };
   const studio = await requireStudio();
   const bloccato = vietatoInDemo(studio);
   if (bloccato) return bloccato;
@@ -86,13 +94,28 @@ export async function creaEsercizio(
   if (!parsed.success) return erroreValidazione(parsed.error.issues);
   const { dati, previsionale } = separaEsercizio(parsed.data);
 
+  // Esercizio, analisi e traccia di audit sono un fatto solo: o si salvano
+  // tutti e tre, o nessuno. Senza transazione, un errore a meta' lascerebbe un
+  // esercizio senza analisi (punteggio nullo) o una modifica senza traccia.
   let esercizioId: string;
   try {
-    const [creato] = await db
-      .insert(esercizi)
-      .values({ clienteId, anno: parsed.data.anno, ...dati, ...(previsionale ?? {}) })
-      .returning({ id: esercizi.id });
-    esercizioId = creato!.id;
+    esercizioId = await db.transaction(async (tx) => {
+      const [creato] = await tx
+        .insert(esercizi)
+        .values({ clienteId, anno: parsed.data.anno, ...dati, ...(previsionale ?? {}) })
+        .returning({ id: esercizi.id });
+      const id = creato!.id;
+      await salvaAnalisi(tx, id, clienteId, dati, previsionale);
+      await tx.insert(auditLog).values({
+        organizationId,
+        userId,
+        azione: "esercizio.creato",
+        entita: "esercizio",
+        entitaId: id,
+        dettagli: { clienteId, anno: parsed.data.anno },
+      });
+      return id;
+    });
   } catch (e) {
     if (isAnnoDuplicato(e)) {
       return {
@@ -104,16 +127,6 @@ export async function creaEsercizio(
     throw e;
   }
 
-  await salvaAnalisi(esercizioId, clienteId, dati, previsionale);
-  await db.insert(auditLog).values({
-    organizationId,
-    userId,
-    azione: "esercizio.creato",
-    entita: "esercizio",
-    entitaId: esercizioId,
-    dettagli: { clienteId, anno: parsed.data.anno },
-  });
-
   revalidatePath(`/app/clienti/${clienteId}`);
   return { ok: true, id: esercizioId };
 }
@@ -122,6 +135,7 @@ export async function modificaEsercizio(
   esercizioId: string,
   input: EsercizioInput,
 ): Promise<RisultatoEsercizio> {
+  if (!eUuid(esercizioId)) return { ok: false, errore: "Esercizio non trovato." };
   const studio = await requireStudio();
   const bloccato = vietatoInDemo(studio);
   if (bloccato) return bloccato;
@@ -140,17 +154,27 @@ export async function modificaEsercizio(
   if (!esistente) return { ok: false, errore: "Esercizio non trovato." };
 
   try {
-    await db
-      .update(esercizi)
-      .set({
-        anno: parsed.data.anno,
-        ...dati,
-        liquiditaIniziale: previsionale?.liquiditaIniziale ?? null,
-        entrate6m: previsionale?.entrate6m ?? null,
-        uscite6m: previsionale?.uscite6m ?? null,
-        debito6m: previsionale?.debito6m ?? null,
-      })
-      .where(eq(esercizi.id, esercizioId));
+    await db.transaction(async (tx) => {
+      await tx
+        .update(esercizi)
+        .set({
+          anno: parsed.data.anno,
+          ...dati,
+          liquiditaIniziale: previsionale?.liquiditaIniziale ?? null,
+          entrate6m: previsionale?.entrate6m ?? null,
+          uscite6m: previsionale?.uscite6m ?? null,
+          debito6m: previsionale?.debito6m ?? null,
+        })
+        .where(eq(esercizi.id, esercizioId));
+      await salvaAnalisi(tx, esercizioId, esistente.clienteId, dati, previsionale);
+      await tx.insert(auditLog).values({
+        organizationId,
+        userId,
+        azione: "esercizio.modificato",
+        entita: "esercizio",
+        entitaId: esercizioId,
+      });
+    });
   } catch (e) {
     if (isAnnoDuplicato(e)) {
       return {
@@ -162,20 +186,12 @@ export async function modificaEsercizio(
     throw e;
   }
 
-  await salvaAnalisi(esercizioId, esistente.clienteId, dati, previsionale);
-  await db.insert(auditLog).values({
-    organizationId,
-    userId,
-    azione: "esercizio.modificato",
-    entita: "esercizio",
-    entitaId: esercizioId,
-  });
-
   revalidatePath(`/app/clienti/${esistente.clienteId}`);
   return { ok: true, id: esercizioId };
 }
 
 export async function eliminaEsercizio(esercizioId: string): Promise<RisultatoEsercizio> {
+  if (!eUuid(esercizioId)) return { ok: false, errore: "Esercizio non trovato." };
   const studio = await requireStudio();
   const bloccato = vietatoInDemo(studio);
   if (bloccato) return bloccato;
@@ -190,14 +206,16 @@ export async function eliminaEsercizio(esercizioId: string): Promise<RisultatoEs
 
   // Le analisi di un esercizio rimosso non hanno più significato: senza questa
   // pulizia resterebbero orfane e il cliente mostrerebbe ancora un punteggio.
-  await db.delete(analisi).where(eq(analisi.esercizioId, esercizioId));
-  await db.delete(esercizi).where(eq(esercizi.id, esercizioId));
-  await db.insert(auditLog).values({
-    organizationId,
-    userId,
-    azione: "esercizio.eliminato",
-    entita: "esercizio",
-    entitaId: esercizioId,
+  await db.transaction(async (tx) => {
+    await tx.delete(analisi).where(eq(analisi.esercizioId, esercizioId));
+    await tx.delete(esercizi).where(eq(esercizi.id, esercizioId));
+    await tx.insert(auditLog).values({
+      organizationId,
+      userId,
+      azione: "esercizio.eliminato",
+      entita: "esercizio",
+      entitaId: esercizioId,
+    });
   });
 
   revalidatePath(`/app/clienti/${esistente.clienteId}`);
@@ -208,6 +226,7 @@ export async function eliminaEsercizio(esercizioId: string): Promise<RisultatoEs
 export async function esportaEserciziCsv(
   clienteId: string,
 ): Promise<{ ok: true; csv: string; nomeFile: string } | { ok: false; errore: string }> {
+  if (!eUuid(clienteId)) return { ok: false, errore: "Cliente non trovato." };
   const { organizationId } = await requireStudio();
   const cliente = await verificaCliente(clienteId, organizationId);
   if (!cliente) return { ok: false, errore: "Cliente non trovato." };

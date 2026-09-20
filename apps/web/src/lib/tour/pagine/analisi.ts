@@ -1,6 +1,6 @@
 import type { DriveStep } from "driver.js";
 
-import { creaTour } from "../config";
+import { creaTour } from "../crea-tour";
 
 /**
  * Tour dell'Analisi: è la schermata che vende il prodotto, quindi i passi

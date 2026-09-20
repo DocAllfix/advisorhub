@@ -39,7 +39,7 @@ export function Guida({ demo }: { demo: boolean }) {
     // lascia assestare il primo disegno prima di puntare gli elementi.
     const attesa = window.setTimeout(() => {
       segnaBenvenutoMostrato();
-      voce.avvia(demo);
+      void voce.avvia(demo);
     }, 700);
     return () => window.clearTimeout(attesa);
   }, [pronto, voce, demo]);

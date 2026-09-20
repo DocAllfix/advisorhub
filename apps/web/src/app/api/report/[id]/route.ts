@@ -2,12 +2,16 @@ import { analizza } from "@advisorhub/engine";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
 import { auth } from "@/lib/auth";
+import { requireStudio } from "@/lib/auth-helpers";
 import { datiDa, previsionaleDa } from "@/lib/analisi/da-esercizio";
 import { getCliente } from "@/lib/clienti/queries";
 import { etichettaDimensione } from "@/lib/clienti/schema";
 import { listEsercizi } from "@/lib/esercizi/queries";
 import { DocumentoReport } from "@/lib/report/documento";
+import { segnalaErrore } from "@/lib/telemetria";
 
 // I font si leggono dal disco: serve il runtime Node, non l'edge
 export const runtime = "nodejs";
@@ -25,14 +29,20 @@ function nomeFile(ragioneSociale: string, anno: number) {
 
 /**
  * Genera il report in PDF e lo restituisce come allegato: il browser lo
- * scarica senza aprire pagine intermedie. Il tenant scoping resta quello di
- * getCliente/listEsercizi, che partono da requireStudio.
+ * scarica senza aprire pagine intermedie.
+ *
+ * requireStudio() e' chiamata esplicitamente anche se getCliente/listEsercizi
+ * la invocano gia': la sicurezza di questa route non deve dipendere da cosa
+ * fanno internamente le query che usa. E' memoizzata per richiesta, quindi non
+ * costa nulla.
  */
-export async function GET(
-  richiesta: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(richiesta: Request, { params }: { params: Promise<{ id: string }> }) {
+  await requireStudio();
+
   const { id } = await params;
+  if (!z.string().uuid().safeParse(id).success) {
+    return new NextResponse("Cliente non trovato.", { status: 404 });
+  }
   const esercizioParam = new URL(richiesta.url).searchParams.get("esercizio");
 
   const cliente = await getCliente(id);
@@ -49,26 +59,34 @@ export async function GET(
 
   const studio = await auth.api.getFullOrganization({ headers: await headers() }).catch(() => null);
 
-  const pdf = await renderToBuffer(
-    DocumentoReport({
-      d: {
-        studio: studio?.name ?? "Studio",
-        ragioneSociale: cliente.ragioneSociale,
-        anno: e.anno,
-        dimensione: cliente.dimensione
-          ? (etichettaDimensione[cliente.dimensione as keyof typeof etichettaDimensione] ?? null)
-          : null,
-        codiceAteco: cliente.codiceAteco,
-        dati,
-        analisi,
-        dataOggi: new Intl.DateTimeFormat("it-IT", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        }).format(new Date()),
-      },
-    }),
-  );
+  let pdf: Buffer;
+  try {
+    pdf = (await renderToBuffer(
+      DocumentoReport({
+        d: {
+          studio: studio?.name ?? "Studio",
+          ragioneSociale: cliente.ragioneSociale,
+          anno: e.anno,
+          dimensione: cliente.dimensione
+            ? (etichettaDimensione[cliente.dimensione as keyof typeof etichettaDimensione] ?? null)
+            : null,
+          codiceAteco: cliente.codiceAteco,
+          dati,
+          analisi,
+          dataOggi: new Intl.DateTimeFormat("it-IT", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          }).format(new Date()),
+        },
+      }),
+    )) as unknown as Buffer;
+  } catch (errore) {
+    // Tipicamente: font non trovati nell'immagine, o dati di bilancio che
+    // fanno esplodere il layout. Va segnalato, non mostrato all'utente.
+    segnalaErrore(errore, { origine: "report-pdf", clienteId: id });
+    return new NextResponse("Non e' stato possibile generare il report.", { status: 500 });
+  }
 
   return new NextResponse(pdf as unknown as BodyInit, {
     headers: {

@@ -1,0 +1,46 @@
+# Ambiente di sviluppo locale: database + cattura della posta.
+#
+#   docker compose -f deploy/docker-compose.dev.yml up -d
+#
+# Mailpit intercetta OGNI email in uscita: nessun messaggio reale parte mai da
+# sviluppo o dai test. Interfaccia su http://localhost:8025
+#
+# Mailpit e non MailHog: MailHog e' fermo dal 2020 e la 1.0.1 ha una XSS nota
+# nell'interfaccia. Mailpit e' un rimpiazzo diretto, stesse porte 1025/8025.
+# Nome di progetto ESPLICITO: senza, Compose lo deriva dalla cartella ("deploy")
+# e collide con gli altri prodotti che usano la stessa struttura. La collisione
+# non da' errore: ricrea i container dell'altro progetto con la propria
+# configurazione, azzerando il database.
+name: advisorhub-dev
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: advisorhub
+      POSTGRES_PASSWORD: sviluppo
+      POSTGRES_DB: advisorhub
+    ports:
+      # 5433 e non 5432: su questa macchina la porta standard e' gia' occupata
+      # da un altro progetto. Il container resta sulla 5432 internamente.
+      - "5433:5432"
+    volumes:
+      - db_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U advisorhub -d advisorhub"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # interfaccia web
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  db_dev:

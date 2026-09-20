@@ -1,16 +1,8 @@
 "use client";
 
 import { formatNumero } from "@advisorhub/engine";
+import dynamic from "next/dynamic";
 import { useState } from "react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+/*
+ * recharts arriva dopo il primo disegno: i grafici stanno sotto la piega e non
+ * devono pesare sull'avvio della pagina. `ssr: false` perche' ResponsiveContainer
+ * misura il contenitore, cosa che sul server non si puo' fare. Nessun
+ * segnaposto: il riquadro a altezza fissa che lo ospita tiene gia' il posto.
+ */
+const GraficoLinea = dynamic(() => import("./grafico-linea"), { ssr: false });
 
 export type PuntoSerie = {
   anno: number;
@@ -89,50 +89,7 @@ function MiniGrafico({
         </p>
       ) : (
         <div className="mt-2 h-36">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={dati} margin={{ top: 6, right: 8, bottom: 0, left: -4 }}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey="anno"
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={{ stroke: "var(--border)" }}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                width={48}
-                // Senza formatter recharts stampa 1.05 mentre la pagina scrive 1,40.
-                // Sull'asse i decimali servono solo se il valore li ha davvero:
-                // "12,00" sfora la banda e verrebbe tagliato in "2,00".
-                tickFormatter={(v: number) => formatNumero(v, Number.isInteger(v) ? 0 : decimali)}
-              />
-              <Tooltip
-                cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1 }}
-                contentStyle={{
-                  background: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-                labelFormatter={(l) => `Esercizio ${l}`}
-                formatter={(v) => [
-                  typeof v === "number" ? `${formatNumero(v, decimali)}${suffisso}` : "n.d.",
-                  titolo,
-                ]}
-              />
-              <Line
-                type="monotone"
-                dataKey="valore"
-                stroke="var(--chart-1)"
-                strokeWidth={2}
-                dot={{ r: 4, fill: "var(--chart-1)", strokeWidth: 0 }}
-                activeDot={{ r: 5 }}
-                connectNulls
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <GraficoLinea titolo={titolo} suffisso={suffisso} decimali={decimali} dati={dati} />
         </div>
       )}
     </figure>

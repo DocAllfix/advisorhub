@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 import { randomUUID } from "node:crypto";
 
 import { analizza, type DatiBilancio, type DatiPrevisionali6M } from "@advisorhub/engine";
