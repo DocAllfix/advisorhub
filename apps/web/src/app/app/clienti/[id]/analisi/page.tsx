@@ -9,7 +9,8 @@ import { datiDa, previsionaleDa } from "@/lib/analisi/da-esercizio";
 import { getCliente } from "@/lib/clienti/queries";
 import { listEsercizi } from "@/lib/esercizi/queries";
 
-import { AnalisiDashboard } from "./analisi-dashboard";
+import { ContenitoreAnalisi } from "./contenitore-analisi";
+import { VistaAnalisi } from "./vista-analisi";
 
 export default async function AnalisiPage({
   params,
@@ -70,17 +71,45 @@ export default async function AnalisiPage({
       };
     });
 
+  // La serie fino all'esercizio in lettura: mostrare anni successivi a quello
+  // a schermo darebbe una variazione che non riguarda il numero mostrato.
+  const indiceAnno = serie.findIndex((s) => s.anno === selezionato.anno);
+  const serieFinoAdOra = indiceAnno >= 0 ? serie.slice(0, indiceAnno + 1) : serie;
+  const delta =
+    indiceAnno > 0
+      ? {
+          valore: serie[indiceAnno]!.score - serie[indiceAnno - 1]!.score,
+          annoPrec: serie[indiceAnno - 1]!.anno,
+        }
+      : null;
+
+  /*
+   * La vista e' resa QUI, dal server, e passata come figlio al contenitore
+   * client. Cosi' resta HTML e non viene idratata: il contenitore la mostra
+   * finche' non si entra in simulazione, e le poche interazioni (selettore
+   * dell'esercizio, «Simula», scarico del PDF) restano vive.
+   */
   return (
-    <AnalisiDashboard
+    <ContenitoreAnalisi
       clienteId={cliente.id}
       ragioneSociale={cliente.ragioneSociale}
+      anno={selezionato.anno}
       esercizi={esercizi.map((e) => ({ id: e.id, anno: e.anno }))}
       esercizioSelezionatoId={selezionato.id}
-      anno={selezionato.anno}
       dati={dati}
       previsionale={previsionale}
       analisi={analisi}
       serie={serie}
-    />
+    >
+      <VistaAnalisi
+        clienteId={cliente.id}
+        esercizioSelezionatoId={selezionato.id}
+        analisi={analisi}
+        dati={dati}
+        serie={serie}
+        trend={serieFinoAdOra.map((s) => ({ anno: s.anno, media: s.score }))}
+        delta={delta}
+      />
+    </ContenitoreAnalisi>
   );
 }

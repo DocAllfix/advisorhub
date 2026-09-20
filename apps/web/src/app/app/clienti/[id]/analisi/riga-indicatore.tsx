@@ -1,15 +1,11 @@
-"use client";
-
 import type { Analisi, DatiBilancio, Giudizio } from "@advisorhub/engine";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
 
 import { Cifra } from "@/components/ui/cifra";
 import { JudgmentBadge } from "@/components/ui/judgment-badge";
 import { NumeroAnimato } from "@/components/ui/numero-animato";
 import type { MetaIndicatore } from "@/lib/analisi/indicatori-meta";
 import { toniGrafica } from "@/lib/analisi/toni";
-import { cn } from "@/lib/utils";
 
 /**
  * Un indicatore come riga editoriale: valore e scala incolonnati con gli altri
@@ -34,7 +30,6 @@ export function RigaIndicatore({
   /** Bersaglio del passo di guida sulla singola riga: solo la prima. */
   marcaTour?: boolean;
 }) {
-  const [aperta, setAperta] = useState(false);
   const valore = meta.valore(analisi, dati);
   const percentuale = meta.percentuale(analisi, dati);
   const colore = toniGrafica[giudizio.tone];
@@ -99,20 +94,27 @@ export function RigaIndicatore({
           «Cosa puoi fare:» ripetuto sette volte era solo rumore. */}
       <p className="mt-2 max-w-[72ch] text-sm text-foreground/80">{giudizio.azione}</p>
 
-      <button
-        type="button"
-        onClick={() => setAperta((v) => !v)}
-        aria-expanded={aperta}
-        className="mt-2 flex min-h-11 items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-h-8"
-      >
-        Cosa significa
-        <ChevronDown
-          className={cn("size-3.5 transition-transform", aperta && "rotate-180")}
-          aria-hidden
-        />
-      </button>
+      {/*
+       * Apertura con <details>, non con useState.
+       *
+       * Era l'unico stato di questo componente, e per uno stato solo l'intera
+       * riga doveva essere un componente client: sette righe per pagina,
+       * idratate per aprire un paragrafo. Con <details> l'interazione la fa il
+       * browser, il componente diventa server e non porta JavaScript.
+       *
+       * L'accessibilita' non ci perde: <summary> e' gia' un bersaglio
+       * focalizzabile con `aria-expanded` gestito dal browser, che e' piu' di
+       * quanto facesse il bottone precedente.
+       */}
+      <details className="group">
+        <summary className="mt-2 flex min-h-11 cursor-pointer list-none items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-h-8 [&::-webkit-details-marker]:hidden">
+          Cosa significa
+          <ChevronDown
+            className="size-3.5 transition-transform group-open:rotate-180"
+            aria-hidden
+          />
+        </summary>
 
-      {aperta && (
         <div className="mt-2.5 max-w-[72ch] space-y-2 text-xs leading-relaxed text-foreground/80">
           <p className="nums inline-block rounded bg-muted/60 px-2 py-1 font-mono text-[11px] text-muted-foreground">
             {meta.formula}
@@ -123,7 +125,7 @@ export function RigaIndicatore({
             {meta.extra(analisi, dati)}
           </p>
         </div>
-      )}
+      </details>
     </div>
   );
 }
