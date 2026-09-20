@@ -182,7 +182,10 @@ export function osservaConsole(page: Page) {
     // abbiamo previsto — ed e' esattamente come questo cancello e' nato cieco
     // la prima volta (G-33). Il prezzo di questa impostazione e' il rumore, e
     // su una build di produzione e' stato misurato a zero.
-    if ((m.type() === "error" || m.type() === "warning") && !RUMORE_AMMESSO.some((r) => r.test(t))) {
+    if (
+      (m.type() === "error" || m.type() === "warning") &&
+      !RUMORE_AMMESSO.some((r) => r.test(t))
+    ) {
       altriMessaggi.push(`[${m.type()}] ${t}`);
     }
   });

@@ -1229,9 +1229,9 @@ link che React stampa porta al messaggio esteso.
 **Le due impostazioni possibili, e il prezzo di ciascuna.** Confrontando la soluzione con quella
 della sessione gdprhub, che sullo stesso problema aveva scelto la strada opposta:
 
-| Impostazione | Come | Prezzo |
-|---|---|---|
-| **Elencare cosa cercare** (la nostra, all'inizio) | filtri sulle forme di difetto note | **cieca su cio' che non e' stato previsto** — e' precisamente questo guasto |
+| Impostazione                                       | Come                                                      | Prezzo                                                                                                             |
+| -------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Elencare cosa cercare** (la nostra, all'inizio)  | filtri sulle forme di difetto note                        | **cieca su cio' che non e' stato previsto** — e' precisamente questo guasto                                        |
 | **Raccogliere tutto meno una allowlist** (la loro) | ogni errore e avviso fallisce, tranne poche voci motivate | **rumore**: da loro 25 segnalazioni su 52 in un giro non erano difetti. Un cancello che grida si smette di leggere |
 
 Il secondo rischio e' reale quanto il primo, ma **non e' simmetrico nei costi**: un cancello cieco
@@ -1255,12 +1255,12 @@ adotta **a costo nullo**, e `osservaConsole()` ora raccoglie ogni errore o avvis
 nulla**. Il cancello continua a segnalare avvisi che credevi esclusi.
 
 **Perche' inganna.** pnpm non fallisce e non ignora in silenzio: stampa un **avviso**, che in una
-CI verbosa scorre via. La configurazione *sembra* attiva perche' e' li', scritta, nel posto in cui
+CI verbosa scorre via. La configurazione _sembra_ attiva perche' e' li', scritta, nel posto in cui
 stava prima.
 
 **Rimedio.** Su pnpm 11 va in **`pnpm-workspace.yaml`**, non in `package.json`.
 
-*(Scoperta dalla sessione frontend di questo progetto.)*
+_(Scoperta dalla sessione frontend di questo progetto.)_
 
 ---
 
@@ -1281,7 +1281,7 @@ G-33). Cercare sempre anche dentro i percorsi incorporati:
 find .next/standalone -type d -name nanoid
 ```
 
-*(Scoperta dalla sessione frontend di questo progetto.)*
+_(Scoperta dalla sessione frontend di questo progetto.)_
 
 ---
 
@@ -1305,7 +1305,7 @@ file ha modifiche non committate **qui**?». La domanda giusta era un'altra: «e
 questo file **da qualche parte** nel repository?». Un `git diff` pulito si legge come «campo
 libero», e su una macchina con tre sessioni non lo e'.
 
-E' il rovescio esatto di CONSEGNA §2.1 — *una rete che non e' nel repository non e' una rete*.
+E' il rovescio esatto di CONSEGNA §2.1 — _una rete che non e' nel repository non e' una rete_.
 Qui il lavoro **era** nel repository: solo non sul ramo da cui stavo guardando.
 
 **Diagnosi.** Prima di riscrivere un file su una macchina condivisa:
@@ -1321,10 +1321,10 @@ messaggio e vale un'unione andata male.
 **Rimedio.** I due cancelli sono stati **riuniti**, non scelti: coprono difetti diversi e
 nessuno dei due basta da solo.
 
-| Cancello | Vede | Cieco su |
-|---|---|---|
+| Cancello                                 | Vede                                                 | Cieco su                                                                         |
+| ---------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `osservaConsole()` (console + eccezioni) | l'idratazione **sbagliata**, anche minificata (G-33) | una pagina che non si idrata affatto: non emette nessun messaggio da raccogliere |
-| sonda su `__reactFiber` | l'idratazione **assente**: React non e' mai partito | una pagina viva che rende il contenuto sbagliato |
+| sonda su `__reactFiber`                  | l'idratazione **assente**: React non e' mai partito  | una pagina viva che rende il contenuto sbagliato                                 |
 
 > **Un `git diff` pulito non significa «nessuno ci sta lavorando». Significa «non qui, non ora».**
 
@@ -1359,9 +1359,9 @@ grep -n "COPY .*\.js" deploy/Dockerfile     # cosa il runtime COPIA
 definizione: due liste che devono restare uguali sono due liste che prima o poi divergeranno.
 
 > **«Mai eseguito» e «funzionante» si assomigliano moltissimo, finche' non si guarda.**
-> Fratello maggiore del corollario di G-33: *un cancello mai attraversato non e' un cancello*.
+> Fratello maggiore del corollario di G-33: _un cancello mai attraversato non e' un cancello_.
 
-*(Scoperto dalla sessione frontend di questo progetto, alla prima esecuzione reale del rilascio.)*
+_(Scoperto dalla sessione frontend di questo progetto, alla prima esecuzione reale del rilascio.)_
 
 ---
 
@@ -1379,10 +1379,10 @@ Qui usiamo `next/font/google` in `apps/web/src/app/layout.tsx:3` (IBM Plex Sans 
 
 **Da non confondere con G-09.** Sono **due sistemi di font distinti**:
 
-| | Quali | Quando servono | Dove stanno |
-|---|---|---|---|
-| Interfaccia | IBM Plex Sans/Mono | scaricati **in build** da Google | inglobati nell'artefatto |
-| Report PDF | sei `.ttf` | letti **a runtime** | `apps/web/public/fonts/report/` |
+|             | Quali              | Quando servono                   | Dove stanno                     |
+| ----------- | ------------------ | -------------------------------- | ------------------------------- |
+| Interfaccia | IBM Plex Sans/Mono | scaricati **in build** da Google | inglobati nell'artefatto        |
+| Report PDF  | sei `.ttf`         | letti **a runtime**              | `apps/web/public/fonts/report/` |
 
 Il secondo e' gia' costato un guasto (G-09). Il primo non si e' ancora manifestato **solo** perche'
 non abbiamo mai costruito in un ambiente chiuso.
@@ -1398,9 +1398,9 @@ grep -rn "next/font" apps/web/src
 serviti da `public/` con `next/font/local`. Finche' si costruisce in CI con rete, non e' urgente —
 ma va saputo **prima**, non durante un rilascio.
 
-*(Segnalato dalla sessione gdprhub, che ci si e' imbattuta quando un aggiornamento ha invalidato
+_(Segnalato dalla sessione gdprhub, che ci si e' imbattuta quando un aggiornamento ha invalidato
 la cache dei font e Google ha limitato dodici richieste in raffica: build precedente 0 avvisi di
-rete, quella dopo 12, la riprova 0.)*
+rete, quella dopo 12, la riprova 0.)_
 
 ---
 
@@ -1412,8 +1412,8 @@ verificando contenuto, CSP e idratazione. Verde. Eppure **non ha mai scaricato r
 
 **Perche' inganna.** Il grafico si disegna **solo con almeno due esercizi** — in
 `trend-esercizi.tsx`, cerca la stringa «Servono almeno due esercizi»: con un esercizio solo
-compare quella e la libreria non viene mai chiesta. *(Riferimento per contenuto e non per numero
-di riga: quel file e' in evoluzione e un numero invecchia in un pomeriggio.)* Il cliente di prova della suite ne aveva **uno**.
+compare quella e la libreria non viene mai chiesta. _(Riferimento per contenuto e non per numero
+di riga: quel file e' in evoluzione e un numero invecchia in un pomeriggio.)_ Il cliente di prova della suite ne aveva **uno**.
 
 Quindi il test attraversava la pagina piu' pesante **senza mai toccare il caso pesante** — e non
 per un difetto del test, ma per una proprieta' dei dati. La stessa trappola colpiva chi guardava
@@ -1469,8 +1469,8 @@ cambiati insieme.
 esplicito anche quando **nessun chunk contiene recharts** — build vecchia, o libreria rimossa.
 Senza quel controllo diventerebbe verde misurando il vuoto: G-32 applicata al test stesso.
 
-*(Scoperto dalla sessione frontend mentre verificava il rinvio di recharts: senza il secondo
-esercizio, il nuovo cancello sarebbe stato verde per il motivo sbagliato.)*
+_(Scoperto dalla sessione frontend mentre verificava il rinvio di recharts: senza il secondo
+esercizio, il nuovo cancello sarebbe stato verde per il motivo sbagliato.)_
 
 ---
 
