@@ -78,3 +78,27 @@ export async function inCoda(destinatario: string): Promise<number> {
     return r.rows[0].n as number;
   });
 }
+
+/**
+ * Aggiunge un esercizio a un cliente che ce l'ha gia'.
+ *
+ * Serve ai test sui grafici: con UN solo esercizio i mini-grafici non si
+ * disegnano affatto (mostrano «Servono almeno due esercizi») e recharts non
+ * viene mai chiesto. Un test sul caricamento del grafico fatto su un cliente a
+ * un esercizio passerebbe sempre, misurando un'assenza invece di un rinvio
+ * (GUASTI G-32).
+ *
+ * I valori sono un po' piu' bassi dell'esercizio pieno, cosi' le serie hanno
+ * una pendenza e non una retta.
+ */
+export async function aggiungiEsercizio(clienteId: string, anno: number): Promise<void> {
+  await conDatabase(async (c) => {
+    await c.query(
+      `insert into esercizi (cliente_id, anno, val_prod, fatturato, ro, cap_invest,
+         patr_netto, utile_netto, ebitda, pfn, servizio_debito, flusso_cassa)
+       values ($1, $2, 2600000, 2400000, 240000, 1900000,
+         800000, 150000, 350000, 520000, 130000, 300000)`,
+      [clienteId, anno],
+    );
+  });
+}
