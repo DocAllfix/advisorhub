@@ -1410,9 +1410,10 @@ rete, quella dopo 12, la riprova 0.)*
 verificando contenuto, CSP e idratazione. Verde. Eppure **non ha mai scaricato recharts**, cioe'
 348 KB, il pezzo piu' costoso di quella pagina.
 
-**Perche' inganna.** Il grafico si disegna **solo con almeno due esercizi**
-(`trend-esercizi.tsx:131`): con uno solo compare «Servono almeno due esercizi» e la libreria non
-viene mai chiesta. Il cliente di prova della suite ne aveva **uno**.
+**Perche' inganna.** Il grafico si disegna **solo con almeno due esercizi** — in
+`trend-esercizi.tsx`, cerca la stringa «Servono almeno due esercizi»: con un esercizio solo
+compare quella e la libreria non viene mai chiesta. *(Riferimento per contenuto e non per numero
+di riga: quel file e' in evoluzione e un numero invecchia in un pomeriggio.)* Il cliente di prova della suite ne aveva **uno**.
 
 Quindi il test attraversava la pagina piu' pesante **senza mai toccare il caso pesante** — e non
 per un difetto del test, ma per una proprieta' dei dati. La stessa trappola colpiva chi guardava
@@ -1436,6 +1437,12 @@ superarla**, altrimenti la copertura e' apparente.
 
 **Rimedio.** `aggiungiEsercizio()` in `apps/web/e2e/dati.ts`, cosi' il cliente di prova della
 pagina di analisi ha due esercizi e il grafico si disegna davvero.
+
+> **Dove vive il rimedio, al momento in cui questa voce e' scritta.** `aggiungiEsercizio()`,
+> `apps/web/e2e/peso-avvio.spec.ts` e l'`IntersectionObserver` in `trend-esercizi.tsx` stanno
+> **sul ramo della PR #6 (`grafici-a-richiesta`), non ancora su `main`**. Su un altro ramo questi
+> riferimenti non risolvono, e l'assenza non significa che il rimedio sia stato rimosso — G-36.
+> Se non li trovi: `git log --all --oneline -- apps/web/e2e/peso-avvio.spec.ts`.
 
 > **«Il test passa di li'» non significa «il test lo prova».** Fra le due cose stanno i dati.
 
