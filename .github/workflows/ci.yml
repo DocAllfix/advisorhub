@@ -157,6 +157,14 @@ jobs:
       - name: Sicurezza del perimetro spedito
         run: node deploy/audit-artefatto.mjs
 
+      # Tetto al JavaScript per pagina. Non rende veloce niente: si accorge di
+      # una REGRESSIONE, che è l'unica cosa che le misure di tempo su una
+      # macchina condivisa non riescono a fare (il benchmarkIndex di Lighthouse
+      # oscilla del doppio fra una corsa e l'altra). I KB non dipendono dalla
+      # CPU di chi misura.
+      - name: Peso del JavaScript per pagina
+        run: node deploy/budget-js.mjs
+
       - name: Test end-to-end
         run: pnpm --filter web test:e2e
 
