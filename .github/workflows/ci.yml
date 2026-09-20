@@ -144,6 +144,19 @@ jobs:
       - name: Prepara la build di produzione
         run: pnpm --filter web e2e:prepara
 
+      # Cancello di sicurezza sul perimetro che spediamo DAVVERO.
+      #
+      # Sta qui e non nel lavoro `sicurezza` perché ha bisogno della build, e
+      # questo lavoro la fa comunque: non costa una seconda compilazione.
+      #
+      # Prima il cancello era `pnpm audit --audit-level=high` sull'albero
+      # completo, e bloccava il RILASCIO (`immagine` dipende da `sicurezza`)
+      # per avvisi che vivono in eslint e nella CLI di shadcn. Misurato:
+      # 18 alti nell'albero, 10 con --prod, 1 dentro l'immagine. Severo sul
+      # perimetro sbagliato è severo per finta.
+      - name: Sicurezza del perimetro spedito
+        run: node deploy/audit-artefatto.mjs
+
       - name: Test end-to-end
         run: pnpm --filter web test:e2e
 
@@ -173,13 +186,40 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      # Vulnerabilità note nelle dipendenze. Non esisteva alcun controllo.
-      - name: Audit delle dipendenze
-        run: pnpm audit --audit-level=high
-
+      # L'audit delle dipendenze NON sta più qui: il cancello bloccante vive nel
+      # lavoro end-to-end e guarda l'artefatto spedito (`audit-artefatto.mjs`),
+      # mentre il quadro completo lo pubblica il lavoro `avvisi`, che non blocca.
+      #
       # Nessun .env, chiave privata o segreto verosimile nel repository.
       - name: Nessun segreto nel repository
         run: bash deploy/check-no-secrets.sh
+
+  # Quadro COMPLETO delle vulnerabilità, strumenti di sviluppo inclusi.
+  #
+  # Volutamente FUORI da `needs` di `immagine`: informa, non blocca.
+  #
+  # È un lavoro a sé e non un `continue-on-error` dentro `sicurezza`, per due
+  # ragioni. Un cancello che a volte non blocca rende ambiguo il proprio verde:
+  # il nome prometterebbe una cosa che l'esito non significa più. E qui NON si
+  # usa `continue-on-error` nemmeno sul lavoro separato, perché renderebbe verde
+  # un lavoro che ha trovato qualcosa: diventa rosso e si vede, ma non essendo
+  # fra le dipendenze di `immagine` non ferma il rilascio.
+  #
+  # Si chiama `avvisi` e non `sicurezza-completa` proprio perché nessuno lo
+  # scambi per un cancello.
+  avvisi:
+    name: Avvisi sulle dipendenze (non bloccante)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Albero completo
+        run: pnpm audit --audit-level=high
 
   immagine:
     name: Costruisci e pubblica l'immagine

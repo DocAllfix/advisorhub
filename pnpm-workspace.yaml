@@ -21,3 +21,19 @@ minimumReleaseAgeExclude:
   - "@next/swc-win32-x64-msvc@16.2.11"
   - eslint-config-next@16.2.11
   - next@16.2.11
+
+# Eccezioni PUNTUALI all'audit di sicurezza.
+#
+# Le impostazioni vivono qui e non in package.json: pnpm 11 non legge piu' il
+# campo `pnpm` del manifesto, e lo ignora con un AVVISO, non con un errore.
+# Un'eccezione scritta nel posto sbagliato non filtra niente e sembra attiva.
+#
+# Motivazione e data di revisione stanno in "//eccezioni-audit" nel
+# package.json di radice. Non si aggiunge una riga qui senza entrambe:
+# un'eccezione senza scadenza si eredita per sempre e smette di essere una
+# decisione.
+auditConfig:
+  ignoreGhsas:
+    # nanoid <3.3.18: ciclo infinito con generatori PERSONALIZZATI, che non
+    # passiamo. Vive solo nella copia compilata dentro Next. Revisione 2026-12-19.
+    - GHSA-2v37-7h3g-55p8

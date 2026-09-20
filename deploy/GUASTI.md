@@ -172,8 +172,16 @@ node .next/standalone/apps/web/server.js
 Conseguenza: i test end-to-end vanno eseguiti contro **quello**, non contro `next start`.
 È anche più corretto — è l'artefatto che va davvero in produzione.
 
-**Verificato su Next 16.2.11.** `public/` viene copiato dentro `.next/standalone/apps/web/`.
-`.next/static` invece **va copiato a mano** (lo fa il Dockerfile).
+**Verificato su Next 16.2.11 e 16.3.5.** `public/` viene copiato dentro
+`.next/standalone/apps/web/`. `.next/static` invece **va copiato a mano** (lo fa il
+Dockerfile). Il comportamento non è cambiato con l'aggiornamento: i sei font del report
+erano al loro posto nella build standalone e `report-pdf.spec.ts` è rimasto verde.
+
+**Sulla 16.3.5 la convenzione `middleware` è ancora solo deprecata**, non rimossa: la build
+stampa l'avviso e suggerisce il codemod `middleware-to-proxy`, ma compila e l'elenco delle
+rotte mostra `ƒ Proxy (Middleware)`. La CSP con nonce per richiesta continua a funzionare
+(`salute.spec.ts` verifica nonce, `strict-dynamic` e nonce diverso a ogni richiesta). Il
+rename andrà fatto, ma è una scelta, non un'urgenza.
 
 ---
 
@@ -1097,6 +1105,61 @@ certamente di qualcun altro.** È il momento di chiedere, non di allargare il fi
 **Della stessa famiglia.** `taskkill //F //IM node.exe //T`, suggerito in **G-18**, uccide
 **tutti** i processi Node della macchina: su una macchina a prodotto singolo è un rimedio, su
 questa è un incidente. Va usato `//PID` con il PID attribuito, mai `//IM`.
+
+---
+
+## G-32 — Anche il metro va verificato, non solo la cosa misurata
+
+**Sintomo.** Uno strumento di misura risponde **zero**, e la conclusione ovvia è che la cosa
+misurata non ci sia. Casi reali:
+
+- `document.getAnimations()` restituisce zero animazioni su un componente che **stava animando
+  benissimo**. Il motivo: non vede dentro uno **shadow root**, e NumberFlow vive tutto lì.
+  Serviva `shadowRoot.getAnimations()`.
+- `docker system df` dice che lo spazio è stato liberato mentre `df` sull'host non si muove
+  (**G-21**): misura il contenuto, non l'occupazione.
+- `netstat` dice **che** una porta è occupata, non **da chi** (**G-31**): due processi terminati
+  appartenevano a un altro progetto.
+- `bash -n` accetta uno script con apostrofi dentro `${var:?…}`, che a runtime escono monchi.
+
+**Perché inganna.** Un valore numerico sembra un fatto. Ma ogni strumento ha un **campo visivo**,
+e fuori da quello risponde zero esattamente come risponderebbe se la cosa non esistesse.
+**Assenza di misura e misura di assenza danno lo stesso numero.**
+
+È la stessa famiglia di G-05 (un comando che dichiara successo senza effetto) e G-19 (un nome che
+sembra dire chi ha costruito un'immagine), ma applicata un passo più a monte: non alla cosa
+osservata, all'osservatore.
+
+**Diagnosi.** Prima di scrivere «non c'è», dimostrare che lo strumento **vedrebbe** la cosa se
+ci fosse:
+
+```js
+// se il metro funziona, su un caso NOTO deve dare un numero diverso da zero
+document.getAnimations().length; // 0 — ma vede dentro gli shadow root?
+el.shadowRoot.getAnimations().length; // 4 — eccole
+```
+
+Vale per qualunque misura: un controllo che non fallisce mai va fatto fallire una volta, apposta.
+È il motivo per cui in questo progetto `check-no-secrets.sh` è stato provato con un segreto
+finto, e `restore-test.sh` con un database svuotato: un cancello che non ha mai detto di no non
+si sa se sappia dirlo.
+
+**Quanto costa un metro cieco.** Non è una questione di eleganza. Su un progetto vicino, un
+cancello visivo cliccava ogni elemento di diciassette pagine ed era **verde da settimane** —
+su pagine che non si erano mai idratate. Quando ha cominciato a misurare davvero, sotto l'HTML
+morto sono emersi due difetti reali rimasti invisibili per **mesi**:
+
+- `history.replaceState` dentro un aggiornatore di `setState` — React che aggiorna il Router
+  durante il render di un altro componente: **30 occorrenze**;
+- il nonce azzerato dal browser contro il valore reso dal server: **690 occorrenze**.
+
+Entrambi corretti e riverificati a zero. Il punto non è che il cancello non trovasse difetti:
+è che **i difetti non potevano nemmeno manifestarsi**, perché il codice che li produce non
+girava. Un cancello su una pagina morta non è soltanto cieco, è **silenzioso per costruzione**.
+
+**Rimedio.** Nessuna correzione di codice: è una regola di metodo.
+
+> **Se una misura sorprende, il primo sospettato è il metro.**
 
 ---
 

@@ -10,6 +10,14 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },
+  "//eccezioni-audit": [
+    "Eccezioni PUNTUALI all'audit di sicurezza. Ogni voce ha motivazione e DATA DI REVISIONE:",
+    "un'eccezione senza scadenza si eredita per sempre e smette di essere una decisione.",
+    "GHSA-2v37-7h3g-55p8 - nanoid <3.3.18, ciclo infinito con generatori PERSONALIZZATI.",
+    "  Presente solo nella copia compilata dentro Next (next/dist/compiled/nanoid): non lo",
+    "  chiamiamo noi e non passiamo generatori. Si chiude quando Next aggiorna la sua copia.",
+    "  Revisione: 2026-12-19, o prima se si aggiorna Next."
+  ],
   "devDependencies": {
     "prettier": "^3.9.5"
   }
