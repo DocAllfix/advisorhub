@@ -15,10 +15,28 @@
  * I KB invece non dipendono dalla CPU di chi misura (GUASTI G-32: se una
  * misura sorprende, il primo sospettato e' il metro).
  *
- * COSA MISURA. I chunk che la rotta dichiara nel suo
+ * COSA MISURA, e perche' due colonne.
+ *
+ * AVVIO: i chunk che la rotta dichiara nel suo
  * `page_client-reference-manifest.js`, cioe' il JavaScript che il browser
  * scarica per QUELLA pagina. Non i chunk condivisi di avvio, che sono uguali
  * per tutte e si misurano altrove.
+ *
+ * DIFFERITO: i chunk di `next/dynamic`, che stanno in un manifest diverso
+ * (`page/react-loadable-manifest.json`) e nel primo non compaiono affatto.
+ *
+ * La prima versione guardava solo l'avvio, e il risultato e' stato un cancello
+ * che si compiaceva: dichiarava l'analisi a 331 KB mentre 348 KB di recharts
+ * stavano in un chunk differito che non vedeva — piu' di quanto misurasse.
+ * Peggio: un import spostato sotto `next/dynamic` spariva dal conto e sembrava
+ * un guadagno anche quando il chunk continuava a scaricarsi all'avvio.
+ *
+ * I due tetti sono separati apposta. Sommarli punirebbe un rinvio fatto bene;
+ * tenerne uno solo sarebbe tornare a non vedere.
+ *
+ * QUELLO CHE QUESTO CONTO NON DICE e' QUANDO un chunk differito si scarica
+ * davvero: `ssr: false` significa «non sul server», non «al bisogno». Quello
+ * si prova solo guardando le richieste di rete, e vive in e2e.
  *
  * I tetti sono fissati poco sopra i valori reali del giorno in cui sono stati
  * scritti: abbastanza stretti da vedere una regressione, abbastanza larghi da
@@ -42,13 +60,17 @@ const NEXT = join(RADICE, "apps/web/.next");
  * Il margine e' scelto, non generoso: con +90 KB di spazio una regressione del
  * 25% sarebbe passata inosservata, e un tetto che non si raggiunge mai non
  * misura niente. Con questo margine ci sta un'icona in piu', non una libreria.
+ *
+ * `differito: 0` non e' pigrizia: quelle due rotte oggi non hanno nessun
+ * `next/dynamic`, e se domani ne compare uno vogliamo accorgercene e decidere,
+ * non ereditarlo.
  */
 const TETTI = [
-  { rotta: "app/page", nome: "panoramica", tetto: 330 },
-  { rotta: "app/clienti/page", nome: "portafoglio", tetto: 410 },
-  { rotta: "app/clienti/[id]/analisi/page", nome: "analisi", tetto: 370 },
-  { rotta: "app/scadenze/page", nome: "scadenze", tetto: 330 },
-  { rotta: "(auth)/login/page", nome: "accesso", tetto: 140 },
+  { rotta: "app/page", nome: "panoramica", tetto: 330, differito: 0 },
+  { rotta: "app/clienti/page", nome: "portafoglio", tetto: 410, differito: 380 },
+  { rotta: "app/clienti/[id]/analisi/page", nome: "analisi", tetto: 370, differito: 440 },
+  { rotta: "app/scadenze/page", nome: "scadenze", tetto: 330, differito: 380 },
+  { rotta: "(auth)/login/page", nome: "accesso", tetto: 140, differito: 0 },
 ];
 
 if (!existsSync(NEXT)) {
@@ -56,11 +78,8 @@ if (!existsSync(NEXT)) {
   process.exit(2);
 }
 
-function pesoRotta(rotta) {
-  const manifest = join(NEXT, "server/app", `${rotta}_client-reference-manifest.js`);
-  if (!existsSync(manifest)) return null;
-  const testo = readFileSync(manifest, "utf8");
-  const chunk = new Set(testo.match(/static\/chunks\/[A-Za-z0-9_~.-]+\.js/g) ?? []);
+/** Somma in KB dei chunk indicati, ignorando i nomi che non esistono su disco. */
+function sommaKb(chunk) {
   let kb = 0;
   for (const c of chunk) {
     const f = join(NEXT, c);
@@ -69,22 +88,42 @@ function pesoRotta(rotta) {
   return Math.round(kb);
 }
 
+function pesoRotta(rotta) {
+  const manifest = join(NEXT, "server/app", `${rotta}_client-reference-manifest.js`);
+  if (!existsSync(manifest)) return null;
+  const testo = readFileSync(manifest, "utf8");
+  const avvio = new Set(testo.match(/static\/chunks\/[A-Za-z0-9_~.-]+\.js/g) ?? []);
+
+  // I chunk di next/dynamic stanno in un manifest tutto loro: assente = nessuno.
+  const loadable = join(NEXT, "server/app", rotta, "react-loadable-manifest.json");
+  const differiti = new Set();
+  if (existsSync(loadable)) {
+    for (const voce of Object.values(JSON.parse(readFileSync(loadable, "utf8")))) {
+      for (const f of voce.files ?? []) differiti.add(f);
+    }
+  }
+
+  return { avvio: sommaKb(avvio), differito: sommaKb(differiti), quanti: differiti.size };
+}
+
 let sforati = 0;
 console.log("[budget-js] JavaScript per pagina, contro il tetto\n");
-for (const { rotta, nome, tetto } of TETTI) {
-  const kb = pesoRotta(rotta);
-  if (kb === null) {
+console.log(`  ${"".padEnd(14)}   all'avvio            differito (next/dynamic)`);
+for (const { rotta, nome, tetto, differito } of TETTI) {
+  const peso = pesoRotta(rotta);
+  if (peso === null) {
     console.error(`  ${nome.padEnd(14)} manifest assente — la rotta è stata rinominata?`);
     sforati++;
     continue;
   }
-  const margine = tetto - kb;
-  const stato = margine < 0 ? "SFORA" : "ok";
+  const colonna = (kb, t) => {
+    if (kb > t) sforati++;
+    return `${String(kb).padStart(4)} su ${String(t).padStart(4)} KB ${(kb > t ? "SFORA" : "ok").padEnd(5)}`;
+  };
   console.log(
-    `  ${nome.padEnd(14)} ${String(kb).padStart(4)} KB  su ${String(tetto).padStart(4)} KB` +
-      `  ${margine >= 0 ? "+" : ""}${margine} KB  ${stato}`,
+    `  ${nome.padEnd(14)} ${colonna(peso.avvio, tetto)}  ${colonna(peso.differito, differito)}` +
+      `${peso.quanti ? ` in ${peso.quanti} chunk` : ""}`,
   );
-  if (margine < 0) sforati++;
 }
 
 if (sforati === 0) {
@@ -93,12 +132,15 @@ if (sforati === 0) {
 }
 
 console.error(
-  `\n[budget-js] ${sforati} pagine oltre il tetto.\n` +
+  `\n[budget-js] ${sforati} tetti superati.\n` +
     "Di solito non è una scelta: è un import che tira dentro più di quanto sembra.\n" +
     "Prima di alzare il tetto, guarda COSA è entrato:\n" +
     "  - una libreria che serve solo a un pannello -> caricala con next/dynamic;\n" +
     "  - un'etichetta importata da un modulo con schemi zod -> separa le etichette;\n" +
     "  - un componente diventato client per un solo stato -> vedi se basta <details>.\n" +
+    "Se a sforare è la colonna DIFFERITO, ricorda che spostare un import sotto\n" +
+    "next/dynamic non lo toglie: lo sposta. Perché si scarichi davvero al bisogno\n" +
+    "serve che il componente non venga reso finché non serve.\n" +
     "Se il tetto va alzato davvero, alzalo scrivendo nel commit perché.",
 );
 process.exit(1);
