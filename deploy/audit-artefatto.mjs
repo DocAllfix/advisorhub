@@ -7,13 +7,28 @@
  * tre bundle e `drizzle`), e dentro `standalone` ci finisce ciò che il file
  * tracing di Next ha davvero raggiunto. I due insiemi sono molto diversi.
  *
- * Misurato su questo progetto il 19 settembre 2026, con 18 avvisi alti:
+ * Misurato il 21 settembre 2026 (prima misura il 19; il numero
+ * dell'immagine e' cambiato, quelli del grafo no):
  *
- *     albero completo   18 alti   include eslint, vitest, la CLI di shadcn
+ *     albero completo   18 alti   eslint (brace-expansion, js-yaml), la catena
+ *                                 di build di Next (browserslist), ajv sotto il
+ *                                 plugin webpack di Sentry (fast-uri), e la
+ *                                 catena di shadcn (undici, ip-address)
  *     --prod            10 alti   include il plugin webpack di Sentry e
  *                                 styled-jsx > @babel/core dentro Next:
  *                                 dipendenze legittime, ma di COMPILAZIONE
- *     immagine reale     1 alto   nanoid, nella copia compilata dentro Next
+ *     immagine reale     0 alti   il 19 era 1, nanoid dentro next/dist/compiled
+ *                                 (G-35); oggi non e' piu' segnalato
+ *
+ * NESSUNO DEI DICIOTTO E' RISOLVIBILE DA QUI, ed e' bene saperlo prima di
+ * provarci: vivono tutti in dipendenze altrui, che aggiorneranno quando
+ * vorranno. Nemmeno togliendo shadcn, che e' stato provato: non e' la CLI
+ * occasionale che sembra, `globals.css:3` fa `@import "shadcn/tailwind.css"`
+ * e senza di lei la build non parte (G-42).
+ *
+ * Per questo il cancello guarda l'immagine e non il grafo. La distanza fra 18
+ * e 0 non e' una scorciatoia: e' la misura di quanto il grafo non c'entri con
+ * cio' che spediamo.
  *
  * Con `--audit-level=high` sull'albero completo il cancello bloccava il
  * RILASCIO (il lavoro `immagine` dipende da `sicurezza`) per un `js-yaml` che
