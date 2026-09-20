@@ -39,6 +39,33 @@ applicare il tema prima della prima pittura. Se aggiungi una libreria simile, pa
 **Gli stili inline vanno bene**: `style-src` ammette `'unsafe-inline'` proprio perché le
 animazioni scrivono sull'attributo `style` a runtime, dove il nonce non si applica.
 
+**Se aggiungi una seconda libreria con nonce, leggi questo prima.**
+
+Il browser **azzera l'attributo `nonce` nel DOM** dopo il parsing: è una difesa contro
+l'esfiltrazione, non un difetto. Se React ri-rende quell'elemento sul client trova `nonce=""`
+dove il server aveva un valore, e segnala una mancata corrispondenza di idratazione. Su un
+progetto vicino erano **690 occorrenze**, tutte invisibili in produzione.
+
+**La discriminante è dove nasce lo script, non quale attributo porta.**
+
+| Lo script lo emette…                      | Cosa fare                                                                                                                                                                                                              |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| un componente **client** (`"use client"`) | Il codice gira due volte, server e browser: si possono far **combaciare** i valori, rendendo il nonce come stringa vuota sul client — che è esattamente ciò che il browser lascia nel DOM                              |
+| un componente **server**                  | Nel browser quel codice non viene mai eseguito: il valore viaggia già serializzato e `typeof window` non ha un secondo giro in cui valutarsi. Lì `suppressHydrationWarning` **non è la scorciatoia, è l'unica strada** |
+
+**Il criterio pratico**: prima di sopprimere, guarda se i due valori possono combaciare. Se
+possono, falli combaciare — così la spia delle mancate corrispondenze resta accesa per quelle
+vere. Se non possono, sopprimi **sul singolo elemento**, mai ereditando da `<html>`: una
+soppressione larga spegne la spia per tutta la pagina.
+
+**Da noi il caso è il primo**, verificato: `TemaProvider` è un componente client
+(`"use client"`), e `next-themes@0.4.6` applica entrambi i rimedi —
+`suppressHydrationWarning` sullo script e `nonce: typeof window === "undefined" ? valore : ""`.
+`layout.tsx:57` è l'unico punto dove passiamo il nonce, quindi la superficie è una sola ed è
+coperta. Nessuna azione.
+
+_(Regola arrivata dalla sessione gdprhub, che sui 690 messaggi ci si era bruciata davvero.)_
+
 ### 1.3 I font del report NON si spostano
 
 `apps/web/public/fonts/report/` — sei `.ttf` letti a runtime da
@@ -73,7 +100,7 @@ funziona e ti serve. Non «correggerlo».
 ```bash
 pnpm lint                              # 0 errori (2 warning sono preesistenti, vedi §4)
 pnpm test                              # 156 test del motore, golden inclusi
-pnpm --filter web test:e2e             # 17 end-to-end
+pnpm --filter web test:e2e             # 18 end-to-end (era 17)
 ```
 
 Gli end-to-end richiedono il database e Mailpit:
@@ -98,6 +125,21 @@ pnpm --filter web test:e2e
 I test girano contro il **server standalone di produzione**, non contro `next dev`:
 `next start` non funziona con `output: "standalone"` (parte, dice Ready, risponde 500 a tutto
 — **G-06**).
+
+### 2.1 Prima di fidarti della rete, controlla che esista dove serve
+
+La prima consegna diceva «hai 17 end-to-end come rete» **senza dire che vivevano solo
+su questo disco**: nessuno li aveva mai committati, e `ci.yml` li invocava. Su un
+checkout pulito la CI chiamava test inesistenti — e il workflow non era mai stato
+eseguito davvero, quindi nascondeva anche un conflitto fra `version: 11` nel job e
+`packageManager` in `package.json`, che faceva morire ogni installazione.
+
+Sono stati risolti entrambi dalla sessione frontend. La regola che ne resta:
+
+> **Una rete di sicurezza che non è nel repository non è una rete.** Prima di contarci,
+> `git ls-files` sui percorsi che la compongono.
+
+Vale anche per i test che scriverai tu.
 
 ---
 
@@ -127,6 +169,27 @@ L'app è in **italiano**, e lo sono anche i nomi di variabili e funzioni. Mantie
 
 ---
 
+## 4bis. Cose già fatte bene, che sembrano da correggere
+
+Segnalate dalla sessione frontend dopo averle lette nel codice. Le elenco perché chi
+arriva dopo rischia di «sistemarle»:
+
+- **Il popover di driver.js è già tematizzato sui token.** Non va ri-stilizzato.
+- **Lo stato «filtro a zero risultati» del portafoglio esiste** ed è fatto bene.
+- **La cornice del pannello DSCR 6M è deliberata**: il commento nel codice spiega che
+  risponde all'art. 3 CCII. Non è un'incoerenza visiva.
+
+E una che riguarda i contenuti, non il layout:
+
+- **`"Attenziona"`** in `packages/engine/src/giudizi.ts:297` è un imperativo dove ogni
+  altra etichetta è nominale. **Non è un refuso**: compare nel prototipo HTML del
+  committente (`archivio/Dashboard-Roi-Strategie-Imprese3b.html`), è documentato in
+  `ANALISI.md:31` ed è fissato da `giudizi.test.ts:102`. Cambiarlo altererebbe una
+  stringa già comparsa nei report consegnati: **è una decisione del committente, non
+  tua**.
+
+---
+
 ## 5. Disciplina del disco — leggila, non è burocrazia
 
 Il 18 settembre il disco è arrivato a **1,5 GB su 238** e Docker ha cominciato a fallire a
@@ -149,7 +212,7 @@ container di un altro progetto azzerandone il volume, senza errori** (**G-01**).
 
 ## 6. Se trovi un guasto nuovo
 
-`deploy/GUASTI.md` è un registro vivo, a 30 voci, condiviso in spirito con altri due prodotti
+`deploy/GUASTI.md` è un registro vivo, a 32 voci, condiviso in spirito con altri due prodotti
 sulla stessa macchina. Ogni voce ha: sintomo, **perché inganna**, diagnosi incollabile, rimedio.
 
 La sezione «perché inganna» è quella che fa risparmiare tempo a chi viene dopo — una voce
