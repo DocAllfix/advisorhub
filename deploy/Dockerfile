@@ -37,9 +37,16 @@ ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
     GIT_SHA=$GIT_SHA \
     NEXT_TELEMETRY_DISABLED=1
 COPY . .
+# `build:bundle` e non i singoli: il runtime copia TRE bundle (migra, worker,
+# crea-titolare) e qui se ne costruivano due. L'immagine falliva su
+# `COPY crea-titolare.js`, ma nessuno lo sapeva: il lavoro `immagine` dipende
+# dai cancelli, e finche' l'audit e' stato rosso non e' mai stato eseguito.
+# Un cancello mai attraversato non e' un cancello (GUASTI G-32).
+#
+# Con lo script aggregato, un quarto bundle aggiunto a `build:bundle` finisce
+# nell'immagine senza che qualcuno debba ricordarsi di toccare anche questo file.
 RUN pnpm --filter web build \
- && pnpm --filter web build:migratore \
- && pnpm --filter web build:worker
+ && pnpm --filter web build:bundle
 
 # ------------------------------------------------------------------- runtime --
 FROM node:22-alpine AS runtime
