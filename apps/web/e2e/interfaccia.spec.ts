@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { creaStudio, emailUnica, intestazioni } from "./aiuto";
+import { creaStudio, emailUnica, intestazioni, osservaConsole } from "./aiuto";
 import { creaClienteConEsercizio, idStudio, rendiDimostrativo } from "./dati";
 
 /**
@@ -42,15 +42,7 @@ test("accesso dall'interfaccia e navigazione autenticata", async ({ page, contex
     data: { name: "Studio Interfaccia", slug: `interfaccia-${Date.now()}` },
   });
 
-  // Ogni violazione della CSP finisce in console: se la raccolgo, un errore di
-  // configurazione non passa inosservato.
-  const violazioni: string[] = [];
-  page.on("console", (m) => {
-    const t = m.text();
-    if (/Content Security Policy|Refused to (load|execute|apply)/i.test(t)) violazioni.push(t);
-  });
-  const erroriPagina: string[] = [];
-  page.on("pageerror", (e) => erroriPagina.push(e.message));
+  const spia = osservaConsole(page);
 
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Accedi" })).toBeVisible();
@@ -66,8 +58,7 @@ test("accesso dall'interfaccia e navigazione autenticata", async ({ page, contex
   await page.waitForURL("**/app", { timeout: 30_000 });
   await expect(page.locator("body")).toContainText(/Studio Interfaccia|Panoramica|clienti/i);
 
-  expect(violazioni, `violazioni CSP: ${violazioni.join(" | ")}`).toHaveLength(0);
-  expect(erroriPagina, `errori JS: ${erroriPagina.join(" | ")}`).toHaveLength(0);
+  spia.verifica("accesso");
 });
 
 /**
@@ -91,13 +82,7 @@ test("ogni superficie autenticata si idrata sotto la CSP, larga e stretta", asyn
   const org = await idStudio(request);
   const cliente = await creaClienteConEsercizio(org, "Superfici Spa");
 
-  const violazioni: string[] = [];
-  const erroriPagina: string[] = [];
-  page.on("console", (m) => {
-    const t = m.text();
-    if (/Content Security Policy|Refused to (load|execute|apply)/i.test(t)) violazioni.push(t);
-  });
-  page.on("pageerror", (e) => erroriPagina.push(e.message));
+  const spia = osservaConsole(page);
 
   await page.goto("/login");
   await page.locator("#email").fill(studio.email);
@@ -152,8 +137,7 @@ test("ogni superficie autenticata si idrata sotto la CSP, larga e stretta", asyn
     }
   }
 
-  expect(violazioni, `violazioni CSP: ${violazioni.join(" | ")}`).toHaveLength(0);
-  expect(erroriPagina, `errori JS: ${erroriPagina.join(" | ")}`).toHaveLength(0);
+  spia.verifica("superfici");
 });
 
 test("lo studio dimostrativo è dichiarato in sola lettura", async ({ page, context, baseURL }) => {

@@ -1,4 +1,4 @@
-import { expect, type APIRequestContext } from "@playwright/test";
+import { expect, type APIRequestContext, type Page } from "@playwright/test";
 
 /**
  * Utilità condivise dai test end-to-end.
@@ -118,4 +118,63 @@ export function primoLink(testo: string): string {
   const m = testo.match(/https?:\/\/\S+/);
   if (!m) throw new Error(`Nessun link nel messaggio:\n${testo}`);
   return m[0];
+}
+
+/**
+ * Raccoglie dalla console del browser le famiglie di difetti che non danno mai
+ * un errore HTTP, quindi non si vedono in nessun altro modo:
+ *
+ *  - le violazioni della Content-Security-Policy;
+ *  - le MANCATE CORRISPONDENZE DI IDRATAZIONE di React.
+ *
+ * La seconda va guardata proprio qui, e non negli asserti sul contenuto: il
+ * server rende comunque l'HTML giusto, quindi un `toContainText` passa anche su
+ * una pagina che non si e' idratata affatto. Su un progetto vicino erano 690
+ * occorrenze rimaste invisibili per mesi (GUASTI G-32).
+ *
+ * ATTENZIONE AL RICONOSCIMENTO — e' il punto dove questo cancello era gia'
+ * nato cieco una volta (GUASTI G-33). In sviluppo React scrive il messaggio
+ * per esteso ("Hydration failed because the server rendered ..."), ma questi
+ * test girano contro la BUILD DI PRODUZIONE, dove lo stesso difetto esce
+ * minificato e SENZA la parola "hydration":
+ *
+ *   Minified React error #418; visit https://react.dev/errors/418?args[]=text
+ *
+ * Per questo non filtriamo una lista di codici — cambierebbe a ogni versione
+ * di React e tornerebbe a mentire in silenzio — ma QUALUNQUE errore React
+ * minificato. Un errore React su una pagina che deve funzionare e' comunque un
+ * difetto, e il link che React stampa porta al messaggio completo.
+ */
+function èIdratazione(t: string): boolean {
+  return /hydrat/i.test(t) || /Minified React error #\d+/.test(t);
+}
+
+export function osservaConsole(page: Page) {
+  const violazioni: string[] = [];
+  const idratazione: string[] = [];
+  const erroriPagina: string[] = [];
+
+  page.on("console", (m) => {
+    const t = m.text();
+    if (/Content Security Policy|Refused to (load|execute|apply)/i.test(t)) violazioni.push(t);
+    if (èIdratazione(t)) idratazione.push(t);
+  });
+  // In produzione la mancata corrispondenza arriva come eccezione non
+  // catturata, non come messaggio di console: senza questo ramo finirebbe fra
+  // i generici "errori JS" e nessuno capirebbe dove guardare.
+  page.on("pageerror", (e) => {
+    if (èIdratazione(e.message)) idratazione.push(e.message);
+    else erroriPagina.push(e.message);
+  });
+
+  return {
+    verifica(dove: string) {
+      expect(violazioni, `${dove} — violazioni CSP: ${violazioni.join(" | ")}`).toHaveLength(0);
+      expect(
+        idratazione,
+        `${dove} — idratazione o errore React (apri il link per il messaggio esteso): ${idratazione.join(" | ")}`,
+      ).toHaveLength(0);
+      expect(erroriPagina, `${dove} — errori JS: ${erroriPagina.join(" | ")}`).toHaveLength(0);
+    },
+  };
 }
