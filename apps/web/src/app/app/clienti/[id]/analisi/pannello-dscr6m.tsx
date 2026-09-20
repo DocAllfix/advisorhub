@@ -1,5 +1,3 @@
-"use client";
-
 import { formatEuro, formatNumero, type Analisi } from "@advisorhub/engine";
 import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
