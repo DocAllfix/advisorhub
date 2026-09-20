@@ -149,15 +149,45 @@ function èIdratazione(t: string): boolean {
   return /hydrat/i.test(t) || /Minified React error #\d+/.test(t);
 }
 
+/**
+ * Messaggi noti e innocui, da NON far fallire. Tenerla corta e motivata: ogni
+ * voce qui e' un difetto che in futuro non vedremo piu'.
+ *
+ * Oggi e' vuota, e non per pigrizia — e' stato misurato: su tutte le superfici
+ * autenticate, a 1440 e a 375, la suite produce ZERO messaggi di errore o
+ * avviso oltre a quelli gia' classificati. Chi dovesse aggiungerne uno scriva
+ * accanto perche'.
+ */
+const RUMORE_AMMESSO: RegExp[] = [];
+
 export function osservaConsole(page: Page) {
   const violazioni: string[] = [];
   const idratazione: string[] = [];
+  const altriMessaggi: string[] = [];
   const erroriPagina: string[] = [];
 
   page.on("console", (m) => {
     const t = m.text();
-    if (/Content Security Policy|Refused to (load|execute|apply)/i.test(t)) violazioni.push(t);
-    if (èIdratazione(t)) idratazione.push(t);
+    if (/Content Security Policy|Refused to (load|execute|apply)/i.test(t)) {
+      violazioni.push(t);
+      return;
+    }
+    if (èIdratazione(t)) {
+      idratazione.push(t);
+      return;
+    }
+    // Tutto il resto che e' errore o avviso viene raccolto lo stesso. E' la
+    // scelta piu' robusta delle due possibili: elencare le categorie di
+    // difetto che ci interessano significa essere ciechi su quelle che non
+    // abbiamo previsto — ed e' esattamente come questo cancello e' nato cieco
+    // la prima volta (G-33). Il prezzo di questa impostazione e' il rumore, e
+    // su una build di produzione e' stato misurato a zero.
+    if (
+      (m.type() === "error" || m.type() === "warning") &&
+      !RUMORE_AMMESSO.some((r) => r.test(t))
+    ) {
+      altriMessaggi.push(`[${m.type()}] ${t}`);
+    }
   });
   // In produzione la mancata corrispondenza arriva come eccezione non
   // catturata, non come messaggio di console: senza questo ramo finirebbe fra
@@ -173,6 +203,10 @@ export function osservaConsole(page: Page) {
       expect(
         idratazione,
         `${dove} — idratazione o errore React (apri il link per il messaggio esteso): ${idratazione.join(" | ")}`,
+      ).toHaveLength(0);
+      expect(
+        altriMessaggi,
+        `${dove} — messaggi di errore o avviso non previsti: ${altriMessaggi.join(" | ")}`,
       ).toHaveLength(0);
       expect(erroriPagina, `${dove} — errori JS: ${erroriPagina.join(" | ")}`).toHaveLength(0);
     },

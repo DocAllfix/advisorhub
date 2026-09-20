@@ -1163,6 +1163,317 @@ girava. Un cancello su una pagina morta non è soltanto cieco, è **silenzioso p
 
 ---
 
+## G-33 — Il cancello nato cieco: stringhe di sviluppo contro build di produzione
+
+**Sintomo.** Un cancello che raccoglie messaggi dalla console del browser per intercettare le
+**mancate corrispondenze di idratazione** di React. Il filtro era `/hydrat/i`, ricavato leggendo le
+stringhe **nel runtime installato** e non a memoria:
+
+```
+"Hydration failed because the server rendered ..."
+"A tree hydrated but some attributes of the server rendered HTML didn't ..."
+```
+
+Sembrava metodo. Non lo era: quelle stringhe stanno in `react-dom/cjs/react-dom-client.**development**.js`,
+e **i nostri end-to-end girano contro la build di produzione** (`playwright.config.ts`, per i motivi
+di G-06 e G-09). In produzione lo stesso identico difetto esce cosi':
+
+```
+Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]=
+```
+
+**Nessuna occorrenza della parola «hydration».** Il cancello sarebbe stato cieco esattamente
+nell'ambiente per cui era stato scritto.
+
+**Perche' inganna.** La verifica era stata fatta — le stringhe erano vere, lette dal pacchetto
+installato, non inventate. Il salto e' stato **dedurre che valessero anche in produzione**. È la
+stessa famiglia di G-32, un passo piu' a monte: non ho sbagliato a leggere il metro, ho letto il
+metro giusto **nell'ambiente sbagliato**.
+
+Peggio: il difetto non era nemmeno silenzioso del tutto. L'errore #418 arriva come `pageerror`, non
+come messaggio di console, quindi finiva nel secchio generico «errori JS». Il test **falliva
+comunque**, ma con un'etichetta che non diceva dove guardare — e un fallimento che non si sa
+leggere e' un fallimento che si archivia come rumore.
+
+**Diagnosi.** Non si indovina: si provoca il difetto e si guarda cosa esce davvero. Senza toccare
+il sorgente e senza ricostruire l'immagine, si altera l'HTML reso dal server prima che il browser
+lo parsifichi, cosi' la mancata corrispondenza la produce **React stesso**:
+
+```ts
+await page.route("**/login", async (route) => {
+  if (route.request().resourceType() !== "document") return route.continue();
+  const risposta = await route.fetch();
+  const html = (await risposta.text()).replace(">Accedi<", ">Accedj<");
+  await route.fulfill({ response: risposta, body: html });
+});
+```
+
+**Rimedio.** In `apps/web/e2e/aiuto.ts`, `osservaConsole()` riconosce **due** forme, e il ramo
+`pageerror` applica lo stesso riconoscimento del ramo `console`:
+
+```ts
+function èIdratazione(t: string): boolean {
+  return /hydrat/i.test(t) || /Minified React error #\d+/.test(t);
+}
+```
+
+Deliberatamente **non** una lista di codici (#418, #423, #425…): cambierebbe a ogni versione di
+React e il cancello tornerebbe a mentire in silenzio, che e' il guasto da cui siamo partiti.
+Qualunque errore React minificato su una pagina che deve funzionare e' comunque un difetto, e il
+link che React stampa porta al messaggio esteso.
+
+> **Un cancello va provato nell'ambiente in cui girera', non in quello in cui e' comodo provarlo.**
+> Corollario operativo: prima di fidarsi, **fallo fallire apposta**. Questo si e' rivelato cieco
+> al primo tentativo di farlo fallire, non al primo difetto vero — che sarebbe arrivato mesi dopo.
+
+**Le due impostazioni possibili, e il prezzo di ciascuna.** Confrontando la soluzione con quella
+della sessione gdprhub, che sullo stesso problema aveva scelto la strada opposta:
+
+| Impostazione                                       | Come                                                      | Prezzo                                                                                                             |
+| -------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Elencare cosa cercare** (la nostra, all'inizio)  | filtri sulle forme di difetto note                        | **cieca su cio' che non e' stato previsto** — e' precisamente questo guasto                                        |
+| **Raccogliere tutto meno una allowlist** (la loro) | ogni errore e avviso fallisce, tranne poche voci motivate | **rumore**: da loro 25 segnalazioni su 52 in un giro non erano difetti. Un cancello che grida si smette di leggere |
+
+Il secondo rischio e' reale quanto il primo, ma **non e' simmetrico nei costi**: un cancello cieco
+tace per mesi, uno rumoroso lo scopri il giorno stesso.
+
+Da noi e' stato **misurato prima di scegliere**, non deciso a priori: su tutte le superfici
+autenticate, a 1440 e a 375 px, la build di produzione produce **zero** messaggi di errore o
+avviso oltre a quelli gia' classificati. Il rumore che loro pagano nasce dal girare in
+**sviluppo**, dove React e Next parlano molto di piu'. Quindi qui la seconda impostazione si
+adotta **a costo nullo**, e `osservaConsole()` ora raccoglie ogni errore o avviso con
+`RUMORE_AMMESSO` vuota.
+
+> **Fra un cancello cieco e uno rumoroso, scegli in base a una misura, non a un'intuizione.**
+> E se la misura dice zero, la scelta non e' un compromesso.
+
+---
+
+## G-34 — pnpm 11 ignora `pnpm.auditConfig` in `package.json`, con un avviso
+
+**Sintomo.** Un'eccezione di audit scritta sotto `pnpm.auditConfig` in `package.json` **non filtra
+nulla**. Il cancello continua a segnalare avvisi che credevi esclusi.
+
+**Perche' inganna.** pnpm non fallisce e non ignora in silenzio: stampa un **avviso**, che in una
+CI verbosa scorre via. La configurazione _sembra_ attiva perche' e' li', scritta, nel posto in cui
+stava prima.
+
+**Rimedio.** Su pnpm 11 va in **`pnpm-workspace.yaml`**, non in `package.json`.
+
+_(Scoperta dalla sessione frontend di questo progetto.)_
+
+---
+
+## G-35 — I pacchetti incorporati in `next/dist/compiled` sfuggono a una scansione di `node_modules`
+
+**Sintomo.** Uno script che verifica quali pacchetti vulnerabili finiscono davvero
+nell'artefatto spedito cercava solo sotto `node_modules` e dichiarava `nanoid` **non spedito**.
+
+**Perche' inganna.** `nanoid` c'e' eccome, ma sta in **`next/dist/compiled/nanoid`**: Next
+incorpora diverse dipendenze dentro di se'. Il cancello taceva proprio sull'unico pacchetto
+vulnerabile realmente presente nell'immagine — il caso peggiore, perche' un cancello verde su
+un artefatto vulnerabile e' peggio di nessun cancello.
+
+**Diagnosi.** Scoperto **solo** provando a farlo fallire, togliendo l'eccezione (corollario di
+G-33). Cercare sempre anche dentro i percorsi incorporati:
+
+```bash
+find .next/standalone -type d -name nanoid
+```
+
+_(Scoperta dalla sessione frontend di questo progetto.)_
+
+---
+
+## G-36 — `git diff` dice il vero sul ramo attivo, e tace su quello che sta per essere unito
+
+**Sintomo.** Due sessioni lavorano **nella stessa cartella** su rami diversi. Prima di riscrivere
+`apps/web/e2e/interfaccia.spec.ts` ho controllato come si deve:
+
+```bash
+git status --short          # M  apps/web/e2e/interfaccia.spec.ts
+git diff apps/web/e2e/interfaccia.spec.ts   # vuoto: solo fine riga CRLF
+```
+
+Conclusione: «nessuno lo sta modificando, posso riscriverlo». **Falso.** Un cancello
+sull'idratazione era gia' committato sul ramo `frontend-composizione`, mentre il ramo attivo era
+partito **prima** di quel commit. La mia riscrittura non toccava lavoro non committato — lo
+avrebbe cancellato **al momento dell'unione**.
+
+**Perche' inganna.** Il comando ha risposto correttamente alla domanda che gli ho fatto: «questo
+file ha modifiche non committate **qui**?». La domanda giusta era un'altra: «esiste lavoro su
+questo file **da qualche parte** nel repository?». Un `git diff` pulito si legge come «campo
+libero», e su una macchina con tre sessioni non lo e'.
+
+E' il rovescio esatto di CONSEGNA §2.1 — _una rete che non e' nel repository non e' una rete_.
+Qui il lavoro **era** nel repository: solo non sul ramo da cui stavo guardando.
+
+**Diagnosi.** Prima di riscrivere un file su una macchina condivisa:
+
+```bash
+git log --all --oneline -5 -- <percorso>     # chi lo ha toccato, su QUALUNQUE ramo
+git branch -a --contains <commit>            # dove vive quel lavoro
+```
+
+E, quando il costo e' basso, chiedere alla sessione che potrebbe averlo in mano: costa un
+messaggio e vale un'unione andata male.
+
+**Rimedio.** I due cancelli sono stati **riuniti**, non scelti: coprono difetti diversi e
+nessuno dei due basta da solo.
+
+| Cancello                                 | Vede                                                 | Cieco su                                                                         |
+| ---------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `osservaConsole()` (console + eccezioni) | l'idratazione **sbagliata**, anche minificata (G-33) | una pagina che non si idrata affatto: non emette nessun messaggio da raccogliere |
+| sonda su `__reactFiber`                  | l'idratazione **assente**: React non e' mai partito  | una pagina viva che rende il contenuto sbagliato                                 |
+
+> **Un `git diff` pulito non significa «nessuno ci sta lavorando». Significa «non qui, non ora».**
+
+---
+
+## G-37 — Un passo di rilascio mai eseguito non e' un rilascio
+
+**Sintomo.** Alla **prima esecuzione vera** del lavoro `immagine` in CI, la costruzione fallisce:
+il runtime copia **tre** bundle autonomi, la fase di build ne costruiva **due**. Mancava
+`build:titolare`.
+
+**Perche' inganna.** Il difetto era li' da sempre e nessun controllo lo vedeva, per una ragione
+strutturale: `immagine` dipende dai cancelli di qualita' e sicurezza, e **finche' l'audit e' rosso
+quel lavoro non viene mai eseguito**. Un passo di rilascio protetto da un cancello che non passa
+non e' «pronto»: e' **non verificato**, e sembra pronto perche' e' scritto.
+
+E' l'esatto parallelo di G-32 applicato alla catena di rilascio: li' il metro non poteva misurare,
+qui il passo non poteva essere eseguito. In entrambi i casi il verde non significava niente.
+
+**Diagnosi.** Per ogni passo che l'artefatto attraversera', chiedersi **quando e' stato eseguito
+per l'ultima volta davvero** — non quando e' stato scritto. Se la risposta e' «mai», va forzato
+almeno una volta, anche a mano, anche fuori dalle condizioni che lo proteggono.
+
+Qui bastava confrontare le due liste:
+
+```bash
+grep -n "build:" apps/web/package.json      # cosa la build COSTRUISCE
+grep -n "COPY .*\.js" deploy/Dockerfile     # cosa il runtime COPIA
+```
+
+**Rimedio.** Corretto usando `build:bundle`, che costruisce tutti e tre i bundle da un'unica
+definizione: due liste che devono restare uguali sono due liste che prima o poi divergeranno.
+
+> **«Mai eseguito» e «funzionante» si assomigliano moltissimo, finche' non si guarda.**
+> Fratello maggiore del corollario di G-33: _un cancello mai attraversato non e' un cancello_.
+
+_(Scoperto dalla sessione frontend di questo progetto, alla prima esecuzione reale del rilascio.)_
+
+---
+
+## G-38 — `next/font/google` scarica i font DURANTE la build: una build senza rete fallisce
+
+**Sintomo.** La costruzione dell'immagine fallisce, o rallenta con avvisi di rete, su una macchina
+che non raggiunge `fonts.googleapis.com`.
+
+**Perche' inganna.** A runtime i font sono serviti da noi — vengono scaricati in fase di build e
+inglobati nell'artefatto — quindi **la CSP regge e in produzione non si vede niente**. Il
+requisito di rete e' invisibile proprio perche' riguarda un momento diverso da quello in cui il
+problema si manifesterebbe. Oggi funziona solo perche' la CI ha rete verso Google.
+
+Qui usiamo `next/font/google` in `apps/web/src/app/layout.tsx:3` (IBM Plex Sans e Mono).
+
+**Da non confondere con G-09.** Sono **due sistemi di font distinti**:
+
+|             | Quali              | Quando servono                   | Dove stanno                     |
+| ----------- | ------------------ | -------------------------------- | ------------------------------- |
+| Interfaccia | IBM Plex Sans/Mono | scaricati **in build** da Google | inglobati nell'artefatto        |
+| Report PDF  | sei `.ttf`         | letti **a runtime**              | `apps/web/public/fonts/report/` |
+
+Il secondo e' gia' costato un guasto (G-09). Il primo non si e' ancora manifestato **solo** perche'
+non abbiamo mai costruito in un ambiente chiuso.
+
+**Diagnosi.** Prima di spostare la costruzione su un runner interno o una macchina di rilascio
+senza uscita verso Internet:
+
+```bash
+grep -rn "next/font" apps/web/src
+```
+
+**Rimedio.** Se la costruzione dovra' avvenire in rete chiusa, i font vanno scaricati una volta e
+serviti da `public/` con `next/font/local`. Finche' si costruisce in CI con rete, non e' urgente —
+ma va saputo **prima**, non durante un rilascio.
+
+_(Segnalato dalla sessione gdprhub, che ci si e' imbattuta quando un aggiornamento ha invalidato
+la cache dei font e Google ha limitato dodici richieste in raffica: build precedente 0 avvisi di
+rete, quella dopo 12, la riprova 0.)_
+
+---
+
+## G-39 — I dati di prova decidono quale codice gira: attraversare una pagina non e' esercitarla
+
+**Sintomo.** La suite end-to-end visitava la pagina di analisi a ogni corsa, su due larghezze,
+verificando contenuto, CSP e idratazione. Verde. Eppure **non ha mai scaricato recharts**, cioe'
+348 KB, il pezzo piu' costoso di quella pagina.
+
+**Perche' inganna.** Il grafico si disegna **solo con almeno due esercizi** — in
+`trend-esercizi.tsx`, cerca la stringa «Servono almeno due esercizi»: con un esercizio solo
+compare quella e la libreria non viene mai chiesta. _(Riferimento per contenuto e non per numero
+di riga: quel file e' in evoluzione e un numero invecchia in un pomeriggio.)_ Il cliente di prova della suite ne aveva **uno**.
+
+Quindi il test attraversava la pagina piu' pesante **senza mai toccare il caso pesante** — e non
+per un difetto del test, ma per una proprieta' dei dati. La stessa trappola colpiva chi guardava
+la rete a mano in locale: con un cliente appena creato, il grafico non si disegna e tutto sembra
+leggero.
+
+E' la famiglia di G-32 con una causa diversa: li' era cieco lo **strumento**, qui sono muti i
+**dati**. Un cancello puo' essere perfetto e restare silenzioso perche' il ramo costoso non viene
+mai raggiunto.
+
+**Diagnosi.** Per ogni pagina, chiedersi **quale condizione dei dati accende la parte cara** —
+una soglia, un elenco non vuoto, un permesso, uno stato — e verificare che i dati di prova la
+superino:
+
+```bash
+grep -rn "Servono almeno\|non ci sono\|length > 1\|length >= 2" apps/web/src --include=*.tsx
+```
+
+Se un ramo costoso e' protetto da una soglia, **i dati di prova vanno costruiti apposta per
+superarla**, altrimenti la copertura e' apparente.
+
+**Rimedio.** `aggiungiEsercizio()` in `apps/web/e2e/dati.ts`, cosi' il cliente di prova della
+pagina di analisi ha due esercizi e il grafico si disegna davvero.
+
+> **Dove vive il rimedio, al momento in cui questa voce e' scritta.** `aggiungiEsercizio()`,
+> `apps/web/e2e/peso-avvio.spec.ts` e l'`IntersectionObserver` in `trend-esercizi.tsx` stanno
+> **sul ramo della PR #6 (`grafici-a-richiesta`), non ancora su `main`**. Su un altro ramo questi
+> riferimenti non risolvono, e l'assenza non significa che il rimedio sia stato rimosso — G-36.
+> Se non li trovi: `git log --all --oneline -- apps/web/e2e/peso-avvio.spec.ts`.
+
+> **«Il test passa di li'» non significa «il test lo prova».** Fra le due cose stanno i dati.
+
+**Il rovescio, che e' la parte che cambia comportamento.** Questo guasto non nasce da sbadataggine:
+nasce **dall'aver fatto la cosa prudente**. Il cliente di prova e' minimo — un esercizio, valori
+tondi, nessuna serie storica — e lo e' per una ragione buona: un dato comune ricco cambia i
+conteggi sotto i piedi di ogni altro test, su un database condiviso con `workers: 1` e
+`fullyParallel: false`.
+
+Ma e' esattamente quella minimalita' a non raggiungere mai i rami costosi. **La cautela che protegge
+la suite e' la stessa forza che tiene interi pezzi di prodotto fuori dal cono della rete.** Non va
+abbandonata: va messo nel conto il prezzo.
+
+**La via d'uscita, e la regola da seguire:**
+
+> **I dati ricchi se li crea il test che ne ha bisogno, mai la fixture comune.**
+
+Costa una funzione in piu' e non cambia niente a nessuno. Qui `aggiungiEsercizio()` e' chiamata da
+un **solo** test, che si crea studio e cliente propri: `creaClienteConEsercizio()` e' rimasta
+intatta. Se il secondo esercizio fosse finito li' dentro, i conteggi di ogni altro test sarebbero
+cambiati insieme.
+
+**E il cancello nuovo si guarda le spalle da solo.** `peso-avvio.spec.ts` fallisce con un messaggio
+esplicito anche quando **nessun chunk contiene recharts** — build vecchia, o libreria rimossa.
+Senza quel controllo diventerebbe verde misurando il vuoto: G-32 applicata al test stesso.
+
+_(Scoperto dalla sessione frontend mentre verificava il rinvio di recharts: senza il secondo
+esercizio, il nuovo cancello sarebbe stato verde per il motivo sbagliato.)_
+
+---
+
 ## Come si aggiunge una voce
 
 1. Numero progressivo `G-nn`.
