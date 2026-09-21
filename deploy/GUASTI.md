@@ -1474,6 +1474,206 @@ esercizio, il nuovo cancello sarebbe stato verde per il motivo sbagliato.)_
 
 ---
 
+## G-40 — Prettier letto fuori dal repository e' un altro prettier
+
+**Sintomo.** Per capire se un file committato passa il formattatore, lo si estrae con `git show` in
+una cartella temporanea e ci si lancia prettier. Tre file risultano **non formattati**. Nel
+repository gli stessi identici byte sono **perfetti**.
+
+**Perche' inganna.** Prettier cerca la configurazione **risalendo dalla cartella del file che sta
+controllando**, non da dove lo lanci. Un file estratto fuori dall'albero non trova
+`.prettierrc.json` e ricade sui valori predefiniti: `printWidth` **80 invece di 100**. Venti
+colonne in meno bastano a far fallire tabelle e firme scritte per stare in cento.
+
+La misura sembra piu' rigorosa di quella normale — «guardo il contenuto committato, non il working
+tree, cosi' i fine riga non mi ingannano» — e proprio per questo convince: **si e' tolto di mezzo un
+difetto noto e se ne e' introdotto uno ignoto**.
+
+**Diagnosi — la controprova che isola la causa.** Stesso blob, stessa cartella, cambia **solo** la
+configurazione:
+
+```bash
+T="$(mktemp -d)"; git show "HEAD:deploy/budget-js.mjs" > "$T/budget-js.mjs"
+pnpm exec prettier --check "$T/budget-js.mjs"                          # rosso  (printWidth 80)
+pnpm exec prettier --config .prettierrc.json --check "$T/budget-js.mjs" # verde  (printWidth 100)
+```
+
+Se si vuole controllare un blob committato, o si passa `--config` esplicito, o lo si estrae
+**dentro** l'albero:
+
+```bash
+mkdir -p .tmp-verifica/<cartella>
+git show "HEAD:<file>" | dos2unix > .tmp-verifica/<file>
+pnpm exec prettier --check .tmp-verifica && rm -rf .tmp-verifica
+```
+
+**Due dettagli da non tramandare sbagliati**, perche' una voce giusta sul meccanismo sbagliato non
+serve a nessuno:
+
+- la configurazione di questo progetto sta in **`.prettierrc.json`**, non dentro `package.json`
+  (`package.json` contiene solo la dipendenza). Chiederlo allo strumento invece di cercarlo a mano:
+
+  ```bash
+  pnpm exec prettier --find-config-path apps/web/e2e/dati.ts   # -> .prettierrc.json
+  ```
+
+  Questo dettaglio stava per finire nella voce **sbagliato**, ed e' istruttivo come ci e' arrivato
+  vicino: era stato cercato con una catena di ripieghi in un comando solo — `.prettierrc`, poi
+  `.prettierrc.json`, poi la chiave in `package.json` — e il risultato era stato letto **senza
+  sapere quale ramo l'avesse prodotto**. Aveva risposto il secondo, era stato raccontato il terzo.
+  Contenuto giusto, origine sbagliata. **Un output vero letto da un comando ambiguo inganna quanto
+  un output falso**, ed e' piu' difficile da sospettare perche' il dato che si vede e' corretto;
+
+- i CRLF **non c'entravano**: `git show` verso una pipe o verso un file ha dato qui lo stesso
+  identico conteggio di byte (6478), quindi nessuna conversione era avvenuta. La causa era una
+  sola, ed e' la configurazione.
+
+> **Uno strumento che legge la propria configurazione dal percorso cambia identita' col percorso.**
+> Vale per prettier, eslint, tsc: spostare un file per esaminarlo puo' cambiare cio' che lo esamina.
+
+---
+
+## G-41 — Un cancello non bloccante che fallisce sempre spegne il segnale di tutti gli altri
+
+**Sintomo.** Ogni corsa della CI su `main` risulta **rossa**, da sempre, per ogni fusione. Tutte.
+
+Non e' un difetto: e' un lavoro **deliberatamente non bloccante** — gli avvisi sulle dipendenze —
+tenuto fuori da `needs` ma **senza** `continue-on-error`, proprio perche' si volesse vederlo.
+
+**Perche' inganna.** L'intenzione era la visibilita'; il risultato e' **rumore costante**. Quando
+l'esito complessivo e' rosso comunque, «la CI e' rossa» smette di portare informazione — e da li'
+a concludere «quel controllo non e' mai stato eseguito» il passo e' breve. E' successo davvero in
+questo progetto: guardando una colonna di rossi veri si e' dedotto che il formattatore non fosse
+mai passato su tre file, mentre a livello di **singolo lavoro** era `success` e li aveva
+approvati.
+
+E' G-33 applicata un livello sopra. Li' era un cancello rumoroso che si smette di leggere; qui e'
+un cancello rumoroso che rende illeggibili **tutti gli altri**, perche' ne oscura l'unico
+indicatore aggregato.
+
+**Diagnosi.** Mai leggere l'esito complessivo di una corsa che contiene lavori informativi.
+Guardare i singoli lavori:
+
+```bash
+gh run view <id> --json jobs --jq '.jobs[] | "\(.conclusion)	\(.name)"'
+```
+
+**Rimedio.** In astratto le strade sono due — rendere il lavoro non fallente, oppure risolvere le
+segnalazioni — e vanno scelte, non lasciate in mezzo.
+
+**In questo progetto la seconda esisteva, e per un giorno l'abbiamo creduta impossibile.**
+
+La prima stesura di questa voce diceva il contrario: che le segnalazioni alte vivessero in eslint,
+nella catena di build di Next, in `ajv` sotto il plugin webpack di Sentry e in `shadcn`, e che
+quindi **nessuna fosse aggiornabile da qui**, lasciando come unica strada `continue-on-error`.
+Il fatto era vero — le portavano davvero quei pacchetti. La conclusione no.
+
+Non si era guardato il dato decisivo: `pnpm audit --json` riporta per ogni avviso le
+`patched_versions`, e per **tutte e sei** le librerie esisteva una correzione a una patch di
+distanza, **dentro l'intervallo gia' accettato dal pacchetto che le usava**. Una dipendenza
+transitiva non si aggiorna dichiarandola, ma il lockfile la aggiorna benissimo:
+
+```bash
+pnpm update -r --depth Infinity brace-expansion fast-uri js-yaml browserslist undici ip-address
+```
+
+Solo `pnpm-lock.yaml` toccato, nessun `package.json`, nessuna versione principale cambiata.
+Albero completo da **18 alti a 0**, `--prod` da 10 a 0 (resta l'eccezione dichiarata su
+`nanoid`, che vive dentro `next/dist/compiled`). Verificato con lint, golden, build da cache
+vuota, tetto JS e i 19 end-to-end: nessun effetto. Il lavoro `avvisi` e' tornato verde **senza
+spegnerlo**.
+
+> **L'albero delle dipendenze dice CHI porta un avviso, non SE si puo' correggere.** Prima di
+> dichiararlo irrisolvibile si guardano `patched_versions` e l'intervallo del genitore.
+
+E' G-42 alla seconda istanza, nello stesso giorno: un fatto verificato — «le portano eslint e Next»
+— da cui si e' tratta un'inferenza piu' larga di quanto il fatto reggesse.
+
+**Quindi l'ordine dei rimedi, quando questo lavoro torna rosso:** prima l'aggiornamento del
+lockfile e la verifica completa, build compresa; `continue-on-error` solo se una correzione davvero
+non esiste, dichiarandolo nel commento accanto con la data della misura, perche' e' una rinuncia e
+non una pulizia.
+
+_(Paragrafo corretto dalla sessione frontend il 21 settembre, dopo la chiusura della sessione che
+aveva scritto la voce: la premessa sbagliata gliel'aveva passata proprio la sessione frontend.)_
+
+> **Un allarme che suona sempre non e' un allarme: e' il rumore di fondo sopra cui non si sente
+> piu' niente.**
+
+---
+
+## G-42 — Una ricerca negativa vale solo quanto lo spazio che copre
+
+**Sintomo.** `shadcn` risulta una dipendenza di sviluppo **non usata da nessuno**: non compare negli
+script di alcun `package.json`, non nei workflow, non nel Dockerfile, non fra gli `import` del
+sorgente TypeScript. Quattro ricerche, tutte corrette. Conclusione: si puo' rimuovere, e con essa
+lo stack che si porta dietro (express, hono, ajv, express-rate-limit, dotenvx).
+
+Tolta la riga, **lint verde, typecheck verde, 186 pacchetti in meno**. Poi la build:
+
+```
+CssSyntaxError: Can't resolve 'shadcn/tailwind.css' in apps/web/src/app
+```
+
+`apps/web/src/app/globals.css:3` fa `@import "shadcn/tailwind.css"`, e il pacchetto spedisce
+`dist/tailwind.css`. **Non e' una CLI occasionale: e' una dipendenza di build.**
+
+**Perche' inganna.** Nessuna delle quattro ricerche era sbagliata; nessuna poteva trovare un
+`@import` dentro un foglio di stile. Si cerca bene **dove ci si aspetta che la cosa sia**, e si
+conclude l'assenza da una ricerca che non avrebbe potuto trovarla. E' la stessa forma di G-35, dove
+una scansione di `node_modules` non guardava dentro `next/dist/compiled`.
+
+Due segnali c'erano e sono stati mancati da due sessioni insieme: `components.json` dichiarava
+`"style": "radix-nova"`, cioe' che la versione della CLI conta; e una seconda sessione ha
+**confermato** l'analisi con una ricerca che filtrava `*.json`, `*.yml`, `*.md` e `Dockerfile` —
+**nessun CSS**. Una conferma ottenuta con lo stesso punto cieco non e' una conferma: e' lo stesso
+esperimento ripetuto.
+
+**Diagnosi.** Il punto trasferibile non e' «cercare anche nei CSS». E':
+
+> **Lo spazio della ricerca va dichiarato insieme al risultato.**
+>
+> «Non compare da nessuna parte» era **falso**.
+> «Non compare in `package.json`, workflow, Dockerfile e import JS/TS» era **vero** — e avrebbe
+> fatto vedere il buco a chiunque lo leggesse.
+
+La formulazione onesta contiene la propria confutazione; quella comoda no.
+
+**Rimedio.** Per una dipendenza che si sospetta inutile, la prova non e' la ricerca: e' **togliere e
+costruire**. Lint e typecheck non guardano i fogli di stile, quindi restano verdi e confermano la
+tesi sbagliata.
+
+```bash
+grep -rn "shadcn" apps/web/src --include=*.css --include=*.scss
+pnpm --filter web build      # l'unica prova che vale
+```
+
+Il prezzo evitato era concreto: senza la build, quella modifica sarebbe passata da lint e typecheck
+e avrebbe rotto la costruzione dell'immagine in CI.
+
+---
+
+## G-43 — Causa rimossa, sintomo identico: la cache di Turbopack sopravvive al ripristino
+
+**Sintomo.** Dopo aver annullato una modifica che rompeva la build e aver reinstallato le
+dipendenze, **la build continua a fallire con lo stesso identico errore**. Per qualche minuto
+sembra che il ripristino non abbia funzionato, o che il danno sia piu' profondo.
+
+**Perche' inganna.** L'errore e' identico parola per parola, quindi la mente lo legge come
+«il problema c'e' ancora» invece che «sto guardando un residuo». La causa era gia' sparita: a
+parlare era la cache di Turbopack in `apps/web/.next`, scritta durante la build rotta.
+
+**Rimedio.**
+
+```bash
+rm -rf apps/web/.next && pnpm --filter web build
+```
+
+> **Un sintomo che sopravvive alla sua causa sta descrivendo il passato.** Dopo un ripristino, la
+> prima cosa da invalidare e' la cache, non la diagnosi.
+
+---
+
 ## Come si aggiunge una voce
 
 1. Numero progressivo `G-nn`.
