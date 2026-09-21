@@ -7,13 +7,30 @@
  * tre bundle e `drizzle`), e dentro `standalone` ci finisce ciò che il file
  * tracing di Next ha davvero raggiunto. I due insiemi sono molto diversi.
  *
- * Misurato su questo progetto il 19 settembre 2026, con 18 avvisi alti:
+ * Misurato il 19 settembre 2026, quando questo cancello e' nato:
  *
  *     albero completo   18 alti   include eslint, vitest, la CLI di shadcn
  *     --prod            10 alti   include il plugin webpack di Sentry e
  *                                 styled-jsx > @babel/core dentro Next:
  *                                 dipendenze legittime, ma di COMPILAZIONE
  *     immagine reale     1 alto   nanoid, nella copia compilata dentro Next
+ *
+ * Rimisurato il 21 settembre, dopo un aggiornamento del SOLO lockfile:
+ *
+ *     albero completo    0 alti   (piu' l'eccezione dichiarata su nanoid)
+ *     --prod             0 alti
+ *     immagine reale     0 alti
+ *
+ * I diciotto sembravano irrisolvibili perche' vivevano in dipendenze di
+ * dipendenze. Non lo erano: per tutti esisteva una versione corretta a una
+ * patch di distanza, dentro l'intervallo gia' accettato dal pacchetto che li
+ * usava, e `pnpm update -r --depth Infinity <nomi>` li ha presi senza toccare
+ * un solo package.json. Prima di dichiarare un avviso non correggibile si
+ * guardano `patched_versions` e l'intervallo del genitore, non l'albero: l'albero
+ * dice CHI lo porta, non SE si puo' aggiornare.
+ *
+ * Questo cancello resta comunque sull'immagine e non sul grafo: il grafo
+ * tornera' a riempirsi, e non tutto quello che lo riempie arriva ai clienti.
  *
  * Con `--audit-level=high` sull'albero completo il cancello bloccava il
  * RILASCIO (il lavoro `immagine` dipende da `sicurezza`) per un `js-yaml` che

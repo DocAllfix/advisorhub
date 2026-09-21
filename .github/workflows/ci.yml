@@ -151,9 +151,10 @@ jobs:
       #
       # Prima il cancello era `pnpm audit --audit-level=high` sull'albero
       # completo, e bloccava il RILASCIO (`immagine` dipende da `sicurezza`)
-      # per avvisi che vivono in eslint e nella CLI di shadcn. Misurato:
-      # 18 alti nell'albero, 10 con --prod, 1 dentro l'immagine. Severo sul
-      # perimetro sbagliato è severo per finta.
+      # per avvisi che vivono in eslint e nella CLI di shadcn. Misurato il 19
+      # settembre 2026: 18 alti nell'albero, 10 con --prod, 1 dentro
+      # l'immagine (il 21, dopo un aggiornamento del lockfile, zero ovunque).
+      # Severo sul perimetro sbagliato è severo per finta.
       - name: Sicurezza del perimetro spedito
         run: node deploy/audit-artefatto.mjs
 
@@ -215,6 +216,16 @@ jobs:
   #
   # Si chiama `avvisi` e non `sicurezza-completa` proprio perché nessuno lo
   # scambi per un cancello.
+  #
+  # ROSSO DEVE ESSERE L'ECCEZIONE. Per giorni questo lavoro e' stato rosso a
+  # ogni corsa, e il risultato e' stato che ogni corsa di `main` sembrava
+  # fallita: qualcuno ne ha dedotto che un controllo verde non fosse mai stato
+  # eseguito (GUASTI G-41). La causa non era irrisolvibile, era trascurata: un
+  # lockfile mai aggiornato. Quando torna rosso, la prima mossa e'
+  #   pnpm update -r --depth Infinity <pacchetti segnalati>
+  # seguito dalla verifica completa (build compresa: lint e typecheck non
+  # guardano i fogli di stile, G-42). `continue-on-error` e' l'ultima risorsa,
+  # non la prima.
   avvisi:
     name: Avvisi sulle dipendenze (non bloccante)
     runs-on: ubuntu-latest
