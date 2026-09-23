@@ -32,7 +32,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-DOMINIO_BRAND="${DOMINIO_BRAND:-advisorhub.it}"
+DOMINIO_BRAND="${DOMINIO_BRAND:-finbeacon.it}"
 REGIONE="${REGIONE:-nbg1}"          # Norimberga: UE, per il GDPR
 IMMAGINE="${IMMAGINE:?Imposta IMMAGINE (es. ghcr.io/org/advisorhub:<git-sha>)}"
 FLEET="deploy/fleet.txt"

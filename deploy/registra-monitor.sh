@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Registra (o rimuove) un'istanza sul control plane condiviso.
 #
-#   ./deploy/registra-monitor.sh acme acme.advisorhub.it
+#   ./deploy/registra-monitor.sh acme acme.finbeacon.it
 #   ./deploy/registra-monitor.sh --rimuovi acme
 #
 # Il control plane è una VPS nostra, condivisa fra i tre prodotti (la costruisce
@@ -17,7 +17,7 @@ set -euo pipefail
 if [ "${1:-}" = "--rimuovi" ]; then AZIONE=rimuovi; SLUG="${2:?slug mancante}"; DOMINIO=""
 else AZIONE=crea; SLUG="${1:?slug mancante}"; DOMINIO="${2:?dominio mancante}"; fi
 
-CONTROL="${CONTROL_PLANE:-https://monitor.advisorhub.it}"
+CONTROL="${CONTROL_PLANE:-https://monitor.finbeacon.it}"
 : "${GLITCHTIP_TOKEN:?Imposta GLITCHTIP_TOKEN}"
 : "${KUMA_TOKEN:?Imposta KUMA_TOKEN}"
 GT_ORG="${GLITCHTIP_ORG:-advisorhub}"
