@@ -23,13 +23,44 @@ AZIONE="${1:?Uso: dns-hostinger.sh crea|rimuovi <slug> [ip]}"
 SLUG="${2:?slug mancante}"
 IP="${3:-}"
 
-DOMINIO_BRAND="${DOMINIO_BRAND:-advisorhub.it}"
+# Il dominio-brand e' finbeacon.it, verificato sull'account Hostinger.
+#
+# Il valore predefinito era advisorhub.it, che NON e' fra i domini dell'account:
+# scritto quando il token non c'era ancora e nessuno poteva controllarlo.
+#
+# E il difetto non si sarebbe fatto notare, perche' la rete di sicurezza qui
+# sotto non lo copre. L'API risponde 200 con LISTA VUOTA per qualunque dominio
+# non posseduto, compreso uno inventato:
+#
+#     GET zones/finbeacon.it                  -> 200  [due record]
+#     GET zones/advisorhub.it                 -> 200  []
+#     GET zones/dominio-inventato-12345.it    -> 200  []
+#
+# Una zona inesistente e' quindi INDISTINGUIBILE da una zona vuota: l'istantanea
+# salverebbe [], il conteggio direbbe 0 prima e 0 dopo, e nessuno dei due griderebbe.
+# Da qui il controllo esplicito sul portafoglio, prima di qualunque scrittura.
+DOMINIO_BRAND="${DOMINIO_BRAND:-finbeacon.it}"
 API="https://developers.hostinger.com/api/dns/v1/zones/${DOMINIO_BRAND}"
 : "${HOSTINGER_API_TOKEN:?Imposta HOSTINGER_API_TOKEN (dal gestore di password, mai nel repository)}"
 AUTH=(-H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json")
 
 ISTANTANEE="${ISTANTANEE:-$HOME/.advisorhub/dns}"
 mkdir -p "$ISTANTANEE"
+
+# Il dominio-brand e' davvero NOSTRO? Senza questo, scrivere su un dominio che
+# non possediamo fallisce in silenzio (vedi sopra). Costa una chiamata.
+verifica_proprieta() {
+  local trovato
+  trovato=$(curl -fsS "${AUTH[@]}" "https://developers.hostinger.com/api/domains/v1/portfolio"     | python3 -c 'import sys,json
+d=json.load(sys.stdin)
+print("si" if any(x.get("domain")==sys.argv[1] for x in d) else "no")' "$DOMINIO_BRAND")
+  if [ "$trovato" != "si" ]; then
+    echo "ERRORE: '$DOMINIO_BRAND' non e' fra i domini di questo account Hostinger." >&2
+    echo "        Scrivere su una zona non posseduta non da' errore: da' una lista vuota." >&2
+    echo "        Controlla DOMINIO_BRAND, o il token." >&2
+    exit 1
+  fi
+}
 
 conta_record() {
   curl -fsS "${AUTH[@]}" "$API" | python3 -c 'import sys,json
@@ -48,6 +79,7 @@ istantanea() {
 case "$AZIONE" in
   crea)
     [ -n "$IP" ] || { echo "ERRORE: serve l'indirizzo IP" >&2; exit 1; }
+    verifica_proprieta
     PRIMA=$(conta_record)
     ISTA=$(istantanea)
     echo "[dns] record prima: $PRIMA — istantanea: $ISTA"
@@ -70,6 +102,7 @@ case "$AZIONE" in
   rimuovi)
     # Alla dismissione il DNS va per PRIMO: un record che punta a un indirizzo
     # non piu' nostro e' un sottodominio che qualcun altro puo' rivendicare.
+    verifica_proprieta
     PRIMA=$(conta_record)
     ISTA=$(istantanea)
     curl -fsS -X DELETE "${AUTH[@]}" "$API" \

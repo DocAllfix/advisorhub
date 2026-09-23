@@ -74,5 +74,5 @@ echo "[backup] completato"
 #  15 2 * * *  cd /opt/advisorhub && \
 #              RESTIC_REPOSITORY=sftp:uXXXXX@uXXXXX.your-storagebox.de:/backup/acme \
 #              RESTIC_PASSWORD_FILE=/root/.advisorhub-restic \
-#              SENTINELLA_WEBHOOK=https://monitor.advisorhub.it/push/xxxx \
+#              SENTINELLA_WEBHOOK=https://monitor.finbeacon.it/push/xxxx \
 #              ./deploy/backup.sh >> /var/log/advisorhub-backup.log 2>&1

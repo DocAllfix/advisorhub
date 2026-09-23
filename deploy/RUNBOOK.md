@@ -15,6 +15,9 @@ TLS automatico. Il cliente non configura nulla.
 ## 0. Prerequisiti (una tantum, prima del primo cliente)
 
 - [ ] **Dominio-brand registrato** e pannello DNS Hostinger accessibile.
+      Il dominio-brand di questo prodotto e' **`finbeacon.it`** (l'account ha anche
+      `finbeacon.eu`, non usato). Dove sotto compare `<dominio-brand>`, si legge
+      `finbeacon.it`; gli script lo hanno gia' come valore predefinito.
 - [ ] Record **CAA** sul dominio: `0 issue "letsencrypt.org"`.
 - [ ] **Progetti Hetzner separati**: uno per il prodotto, uno chiamato `backup` con
       la Storage Box. Token distinti — `hcloud` gestisce anche le Storage Box, e un

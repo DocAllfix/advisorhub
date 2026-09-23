@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Verifica esterna delle intestazioni di sicurezza promesse da un'istanza.
 #
-#   ./deploy/security-headers-check.sh https://acme.advisorhub.it
+#   ./deploy/security-headers-check.sh https://acme.finbeacon.it
 #
 # PASS/FAIL su ciascuna, exit 1 se ne manca almeno una. E' un CANCELLO, non un
 # rapporto: lo usa update-fleet.sh per fermare un aggiornamento che le fa
