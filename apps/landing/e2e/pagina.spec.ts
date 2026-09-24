@@ -201,3 +201,57 @@ test("il giro guidato apre una voce alla volta e mostra il pezzo di prodotto giu
   await expect(pannello).toContainText(formatNumero(dopo.indicatori.dscrProspettico!, 2));
   spia.verifica("giro guidato");
 });
+
+/**
+ * Le due pagine legali, raggiunte come le raggiunge chi le apre davvero: dal
+ * collegamento sotto il modulo e da quello del piede. L'informativa dell'art. 13
+ * deve essere leggibile nel momento in cui si lasciano i dati; una pagina che
+ * risponde 200 ma nessuno ha mai aperto non è una pagina provata (G-28).
+ */
+test("privacy e note legali si aprono dai loro collegamenti, complete e pulite", async ({
+  page,
+}) => {
+  const spia = osservaConsole(page);
+  for (const larghezza of [1440, 375]) {
+    await page.setViewportSize({ width: larghezza, height: 900 });
+
+    await page.goto("/#richiesta");
+    await page.getByRole("link", { name: "informativa sulla privacy" }).click();
+    await expect(page).toHaveURL(/\/privacy$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Informativa sulla privacy");
+    for (const sezione of [
+      "Titolare del trattamento",
+      "Quali dati trattiamo",
+      "Perché, e su quale base",
+      "Chi li tratta",
+      "Per quanto tempo",
+      "I tuoi diritti",
+      "Se non ci dai i dati",
+    ]) {
+      await expect(page.getByRole("heading", { level: 2, name: sezione })).toBeVisible();
+    }
+    // Il contatto del titolare c'è, oppure la pagina dice che manca: mai tutti e due, mai nessuno.
+    const contatti = await page.locator('main a[href^="mailto:"], main .da-completare').count();
+    expect(contatti, "contatto del titolare nell'informativa").toBe(1);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth),
+      `scorrimento orizzontale su /privacy a ${larghezza}px`,
+    ).toBe(false);
+
+    await page.getByRole("contentinfo").getByRole("link", { name: "Note legali" }).click();
+    await expect(page).toHaveURL(/\/note-legali$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Note legali");
+    for (const sezione of [
+      "Chi pubblica questo sito",
+      "I dati mostrati in queste pagine",
+      "Marchi",
+    ]) {
+      await expect(page.getByRole("heading", { level: 2, name: sezione })).toBeVisible();
+    }
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth),
+      `scorrimento orizzontale su /note-legali a ${larghezza}px`,
+    ).toBe(false);
+  }
+  spia.verifica("pagine legali");
+});
