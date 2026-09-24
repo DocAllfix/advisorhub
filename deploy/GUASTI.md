@@ -21,6 +21,10 @@ Due regole attraversano metà di questo elenco:
 > Postgres, percorsi sui server. Oggi è `finbeacon` ovunque, come il marchio. **Le voci scritte prima
 > citano i nomi com'erano allora**, e restano così di proposito: sono il resoconto di ciò che è
 > successo. Nei comandi da copiare, sostituisci `advisorhub` con `finbeacon`.
+> Lo stesso giorno il repository GitHub e' passato da `DocAllfix/advisorhub` a
+> `DocAllfix/finbeacon` (stesso ID, 1307908860; GitHub reindirizza il vecchio indirizzo), e con
+> lui le immagini: `ghcr.io/docallfix/finbeacon`. Quelle vecchie restano in
+> `ghcr.io/docallfix/advisorhub`, non usate da nessun server.
 
 ---
 
@@ -1403,6 +1407,24 @@ grep -rn "next/font" apps/web/src
 **Rimedio.** Se la costruzione dovra' avvenire in rete chiusa, i font vanno scaricati una volta e
 serviti da `public/` con `next/font/local`. Finche' si costruisce in CI con rete, non e' urgente —
 ma va saputo **prima**, non durante un rilascio.
+
+**Si e' manifestato il 24/09 in CI**, sul lavoro «Test end-to-end sulla build di produzione» della
+PR #12. Il messaggio **non parla di rete**:
+
+```
+Module not found: Can't resolve '@vercel/turbopack-next/internal/font/google/font'
+Error while looking up import map: next/font/google queries have exactly one entry
+```
+
+Si legge come un import rotto o una dipendenza mancante, e porta a cercare un pacchetto, un alias
+o una versione di Next: e' invece una richiesta HTTP verso Google fallita. **L'indizio che
+decide:** lo stesso commit aveva gia' compilato la stessa app in un altro lavoro della stessa
+corsa. Se la stessa sorgente compila in un posto e non nell'altro, non e' la sorgente.
+
+Il rilancio del solo lavoro fallito e' passato. Proprio per questo **va annotato ogni volta**: un
+difetto che sparisce rilanciando nessuno lo indaga, finche' non cade sul lavoro `immagine`, cioe'
+sul rilascio. Anche `apps/landing` usa `next/font/google` (`src/app/layout.tsx`): l'esposizione
+e' doppia, e sulla landing tocca la superficie pubblica.
 
 _(Segnalato dalla sessione gdprhub, che ci si e' imbattuta quando un aggiornamento ha invalidato
 la cache dei font e Google ha limitato dodici richieste in raffica: build precedente 0 avvisi di
