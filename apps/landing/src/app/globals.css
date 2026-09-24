@@ -1,0 +1,314 @@
+@import "tailwindcss";
+
+/*
+ * TOKEN DI FinBeacon.
+ *
+ * Primo strato: le tinte di DESIGN.md, con gli STESSI nomi e gli STESSI valori
+ * del frontmatter. Non si ritoccano qui: `src/lib/token.test.ts` li confronta uno
+ * per uno con DESIGN.md e fallisce alla prima differenza. Il prodotto e la
+ * landing devono parlare con la stessa voce.
+ *
+ * Secondo strato: i ruoli (fondo, testo, accento...). La pagina è su carta; la
+ * classe `.notte` rimappa i ruoli per i due soli momenti scuri, dove parla il
+ * prodotto. Un componente non sa mai su quale fondo si trova: usa i ruoli.
+ */
+:root {
+  --fondo-notte: oklch(0.17 0.014 250);
+  --superficie-notte: oklch(0.215 0.014 250);
+  --sidebar-notte: oklch(0.14 0.014 250);
+  --inchiostro-chiaro: oklch(0.95 0.006 240);
+  --inchiostro-attenuato-notte: oklch(0.74 0.012 245);
+  --bordo-notte: oklch(0.32 0.016 250);
+  --filetto-notte: oklch(0.27 0.016 250);
+  --ottanio-luce: oklch(0.76 0.11 205);
+  --verde-ottimo-notte: oklch(0.76 0.14 155);
+  --verde-buono-notte: oklch(0.77 0.075 170);
+  --ambra-attenzione-notte: oklch(0.82 0.14 80);
+  --rosso-critico-notte: oklch(0.7 0.18 25);
+
+  --fondo-carta: oklch(0.985 0.004 240);
+  --superficie-carta: oklch(0.997 0.002 240);
+  --sidebar-carta: oklch(0.965 0.006 245);
+  --inchiostro-scuro: oklch(0.22 0.012 250);
+  --inchiostro-attenuato-carta: oklch(0.45 0.012 245);
+  --bordo-carta: oklch(0.9 0.008 240);
+  --filetto-carta: oklch(0.93 0.008 240);
+  --ottanio-profondo: oklch(0.5 0.09 210);
+  --verde-ottimo-carta: oklch(0.55 0.13 155);
+  --verde-buono-carta: oklch(0.64 0.075 168);
+  --ambra-attenzione-carta: oklch(0.7 0.13 75);
+  --rosso-critico-carta: oklch(0.55 0.19 25);
+
+  /* Ruoli su carta */
+  --fondo: var(--fondo-carta);
+  --superficie: var(--superficie-carta);
+  --tonale: var(--sidebar-carta);
+  --testo: var(--inchiostro-scuro);
+  --testo-attenuato: var(--inchiostro-attenuato-carta);
+  --bordo: var(--bordo-carta);
+  --filetto: var(--filetto-carta);
+  --accento: var(--ottanio-profondo);
+  --su-accento: oklch(0.985 0.005 210);
+
+  /* Giudizi su carta: tinta del segno, testo, fondo del badge */
+  --ottimo: var(--verde-ottimo-carta);
+  --ottimo-testo: oklch(0.4 0.1 155);
+  --ottimo-fondo: oklch(0.96 0.025 155);
+  --buono: var(--verde-buono-carta);
+  --buono-testo: oklch(0.48 0.06 168);
+  --buono-fondo: oklch(0.968 0.012 168);
+  --attenzione: var(--ambra-attenzione-carta);
+  --attenzione-testo: oklch(0.47 0.1 70);
+  --attenzione-fondo: oklch(0.97 0.03 85);
+  --critico: var(--rosso-critico-carta);
+  --critico-testo: oklch(0.45 0.16 25);
+  --critico-fondo: oklch(0.965 0.015 25);
+
+  color-scheme: light;
+}
+
+/* Un momento notte: stessi ruoli, passi scelti sul fondo scuro (non invertiti). */
+.notte {
+  --fondo: var(--fondo-notte);
+  --superficie: var(--superficie-notte);
+  --tonale: var(--sidebar-notte);
+  --testo: var(--inchiostro-chiaro);
+  --testo-attenuato: var(--inchiostro-attenuato-notte);
+  --bordo: var(--bordo-notte);
+  --filetto: var(--filetto-notte);
+  --accento: var(--ottanio-luce);
+  --su-accento: oklch(0.16 0.03 220);
+
+  --ottimo: var(--verde-ottimo-notte);
+  --ottimo-testo: oklch(0.86 0.12 155);
+  --ottimo-fondo: oklch(0.27 0.05 155);
+  --buono: var(--verde-buono-notte);
+  --buono-testo: oklch(0.85 0.065 170);
+  --buono-fondo: oklch(0.25 0.022 170);
+  --attenzione: var(--ambra-attenzione-notte);
+  --attenzione-testo: oklch(0.88 0.12 85);
+  --attenzione-fondo: oklch(0.29 0.05 75);
+  --critico: var(--rosso-critico-notte);
+  --critico-testo: oklch(0.83 0.14 25);
+  --critico-fondo: oklch(0.29 0.07 25);
+
+  color-scheme: dark;
+  background-color: var(--fondo);
+  color: var(--testo);
+}
+
+/* Un documento stampato dentro un momento notte torna su carta (il report). */
+.carta {
+  --fondo: var(--fondo-carta);
+  --superficie: var(--superficie-carta);
+  --tonale: var(--sidebar-carta);
+  --testo: var(--inchiostro-scuro);
+  --testo-attenuato: var(--inchiostro-attenuato-carta);
+  --bordo: var(--bordo-carta);
+  --filetto: var(--filetto-carta);
+  --accento: var(--ottanio-profondo);
+  --critico: var(--rosso-critico-carta);
+  --critico-testo: oklch(0.45 0.16 25);
+  --critico-fondo: oklch(0.965 0.015 25);
+  color-scheme: light;
+  color: var(--testo);
+}
+
+@theme inline {
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-tonale: var(--tonale);
+  --color-testo: var(--testo);
+  --color-testo-attenuato: var(--testo-attenuato);
+  --color-bordo: var(--bordo);
+  --color-filetto: var(--filetto);
+  --color-accento: var(--accento);
+  --color-su-accento: var(--su-accento);
+  --color-ottimo: var(--ottimo);
+  --color-ottimo-testo: var(--ottimo-testo);
+  --color-ottimo-fondo: var(--ottimo-fondo);
+  --color-buono: var(--buono);
+  --color-buono-testo: var(--buono-testo);
+  --color-buono-fondo: var(--buono-fondo);
+  --color-attenzione: var(--attenzione);
+  --color-attenzione-testo: var(--attenzione-testo);
+  --color-attenzione-fondo: var(--attenzione-fondo);
+  --color-critico: var(--critico);
+  --color-critico-testo: var(--critico-testo);
+  --color-critico-fondo: var(--critico-fondo);
+
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  --radius-pulsante: 0.4rem;
+  --radius-scheda: 0.7rem;
+
+  /* Uscita esponenziale: niente rimbalzi, niente elastico. */
+  --ease-uscita: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background-color: var(--fondo);
+    color: var(--testo);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  /* Il focus da tastiera si vede sempre, nell'accento del fondo su cui si trova. */
+  :focus-visible {
+    outline: 2px solid var(--accento);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  ::selection {
+    background-color: color-mix(in oklch, var(--accento) 22%, transparent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+@layer utilities {
+  /* Ogni cifra che si confronta con un'altra: mono tabellare (Regola della Colonna Tabellare). */
+  .cifre {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  /* Micro-etichetta: la «label» del prodotto. */
+  .etichetta {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+}
+
+/* Pagine di solo testo: prosa a misura di lettura, titoli con respiro. */
+.testo-legale {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--testo);
+}
+.testo-legale > * + * {
+  margin-top: 1rem;
+}
+.testo-legale h2 {
+  margin-top: 2.5rem;
+  font-size: 1.25rem;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.testo-legale a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* Un segnaposto si vede come tale: non può sembrare testo definitivo. */
+.testo-legale .da-completare {
+  border: 1px dashed var(--attenzione);
+  background: var(--attenzione-fondo);
+  color: var(--attenzione-testo);
+  padding: 0.75rem 1rem;
+  border-radius: 0.4rem;
+  font-weight: 500;
+}
+
+/* Le leve dell'anteprima: il cursore nativo, accessibile da tastiera, nell'accento. */
+.leva {
+  accent-color: var(--accento);
+  height: 1.75rem;
+  cursor: pointer;
+}
+
+/*
+ * Comparsa allo scorrimento: solo opacity e transform, una volta, sotto la
+ * piega. Lo stato nascosto esiste SOLO quando lo script ha confermato di poter
+ * mostrare l'elemento dopo (`html.js`): senza JavaScript tutto è visibile.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html.js .comparsa {
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 240ms var(--ease-uscita),
+      transform 240ms var(--ease-uscita);
+  }
+  html.js .comparsa[data-visibile] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Il motivo «soglia sul grafico», in movimento.
+ *
+ * La serie non si disegna animando il tratto (sarebbe una proprietà di
+ * pittura): un velo del colore del fondo la copre e SCORRE via verso destra,
+ * con un transform. Quando il velo arriva alla soglia, il punto si accende
+ * (opacity e scale) e il raggio scende (scaleY). Una volta sola.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  /*
+   * Velocità COSTANTE per il velo: è la penna che scrive la serie, e il punto
+   * si accende nell'istante in cui la raggiunge (--ritardo-luce è calcolato
+   * dalla posizione dell'attraversamento nel componente).
+   */
+  .soglia-animata .soglia-velo {
+    transform-box: fill-box;
+    animation: soglia-scopri var(--durata-scoperta) linear var(--attesa-scoperta) both;
+  }
+  .soglia-animata .soglia-luce {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: soglia-accendi 420ms var(--ease-uscita) var(--ritardo-luce) both;
+  }
+  .soglia-animata .soglia-raggio {
+    transform-box: fill-box;
+    transform-origin: top;
+    animation: soglia-scendi 480ms var(--ease-uscita) calc(var(--ritardo-luce) + 80ms) both;
+  }
+}
+
+/* Il velo è opaco SOLO dentro l'animazione: finita, o senza movimento, sparisce. */
+@keyframes soglia-scopri {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  99.9% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(101%);
+  }
+}
+@keyframes soglia-accendi {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes soglia-scendi {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}

@@ -176,6 +176,51 @@ jobs:
           path: apps/web/playwright-report
           retention-days: 7
 
+  landing:
+    name: Landing, statica, end-to-end e Lighthouse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Nessun `version:`: la decide `packageManager` in package.json (vedi sopra).
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Fuori produzione (VERCEL_ENV assente) il controllo dei dati di lancio si
+      # salta da solo: qui si verifica il codice, non la configurazione del titolare.
+      - name: Build
+        run: pnpm --filter landing build
+
+      # La landing DEVE restare statica: un headers() o un layout dinamico
+      # passerebbe il build e renderebbe solo la pagina piu' lenta, in silenzio.
+      - name: Ogni pagina e' pre-renderizzata
+        run: pnpm --filter landing verifica:statica
+
+      - name: Browser per Playwright
+        run: pnpm --filter landing exec playwright install --with-deps chromium
+
+      # Il modulo spedisce davvero verso un ricevitore SMTP avviato dai test.
+      - name: Test end-to-end sulla build di produzione
+        run: pnpm --filter landing test:e2e
+
+      # Risultati salvati come artefatto, MAI caricati su un servizio pubblico.
+      # Niente SEO qui: fuori produzione la pagina e' volutamente noindex, e
+      # Lighthouse la penalizzerebbe per questo. La SEO si misura sulla produzione.
+      - name: Lighthouse (prestazioni, accessibilita', buone pratiche)
+        run: npx --yes @lhci/cli@0.14.0 autorun --config=apps/landing/lighthouserc.json
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: landing-diagnosi
+          path: |
+            apps/landing/test-results
+            apps/landing/.lighthouseci
+          retention-days: 7
+
   sicurezza:
     name: Dipendenze e segreti
     runs-on: ubuntu-latest

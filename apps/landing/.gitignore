@@ -1,0 +1,16 @@
+# dipendenze e build
+/node_modules
+/.next/
+/out/
+*.tsbuildinfo
+next-env.d.ts
+
+# ambiente: mai nel repository
+.env*
+!.env.example
+.vercel
+
+# test
+/test-results
+/playwright-report
+/.lighthouseci
