@@ -151,19 +151,26 @@ export default async function ImmagineAnteprima() {
             padding: 28,
           }}
         >
+          {/*
+           * Il valore su una riga sua: accanto all'etichetta spaziata non ci
+           * stava, e usciva dal bordo destro della scheda (visto sull'anteprima).
+           */}
+          <span style={{ fontSize: 15, letterSpacing: 2, color: C.attenuatoNotte }}>
+            DSCR PROSPETTICO · 6 MESI
+          </span>
           <div
-            style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              marginTop: 10,
+            }}
           >
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ fontSize: 15, letterSpacing: 2, color: C.attenuatoNotte }}>
-                DSCR PROSPETTICO · 6 MESI
-              </span>
-              <span style={{ marginTop: 6, fontSize: 17, color: C.attenuatoNotte }}>
-                soglia {formatNumero(SOGLIA_DSCR6M, 2)} · art. 3 CCII
-              </span>
-            </div>
+            <span style={{ fontSize: 17, color: C.attenuatoNotte, paddingBottom: 6 }}>
+              soglia {formatNumero(SOGLIA_DSCR6M, 2)} · art. 3 CCII
+            </span>
             <span
-              style={{ fontFamily: "PlexMono", fontSize: 64, lineHeight: 1, color: C.criticoTesto }}
+              style={{ fontFamily: "PlexMono", fontSize: 60, lineHeight: 1, color: C.criticoTesto }}
             >
               {formatNumero(dscr6m, 2)}
             </span>
