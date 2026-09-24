@@ -55,14 +55,22 @@ const nextConfig: NextConfig = {
     return [{ source: "/:path*", headers: intestazioni }];
   },
   async redirects() {
-    // L'alias di produzione su vercel.app duplicherebbe la pagina canonica.
-    // Solo quello: le anteprime (altri host *.vercel.app) devono restare
-    // raggiungibili per essere verificate. www e finbeacon.it si rimandano
-    // dalle impostazioni di dominio di Vercel.
+    // In PRODUZIONE un solo host serve la pagina: finbeacon.eu. Qualunque altro
+    // (gli alias *.vercel.app che Vercel assegna da sé) rimanda lì, altrimenti
+    // la stessa pagina sarebbe indicizzabile a due indirizzi.
+    //
+    // Non si elencano gli alias per nome: la prima versione lo faceva, e il nome
+    // scritto a memoria (finbeacon-landing.vercel.app) non era quello assegnato
+    // davvero (finbeacon-landing-docallfixs-projects.vercel.app). La regola non
+    // sarebbe mai scattata. La negazione copre anche gli alias futuri.
+    //
+    // Fuori produzione niente: le anteprime devono restare raggiungibili al loro
+    // indirizzo. www e finbeacon.it si rimandano dalle impostazioni di dominio.
+    if (!produzione) return [];
     return [
       {
         source: "/:path*",
-        has: [{ type: "host", value: "finbeacon-landing.vercel.app" }],
+        has: [{ type: "host", value: "^(?!finbeacon\\.eu$).+$" }],
         destination: "https://finbeacon.eu/:path*",
         permanent: true,
       },
