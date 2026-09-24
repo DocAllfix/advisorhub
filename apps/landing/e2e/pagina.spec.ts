@@ -178,3 +178,26 @@ test("i dati strutturati sono JSON valido e la FAQ coincide con la pagina", asyn
   const faq = dati["@graph"].find((n) => n["@type"] === "FAQPage");
   expect(faq?.mainEntity?.length).toBe(await page.locator("#domande details").count());
 });
+
+test("il giro guidato apre una voce alla volta e mostra il pezzo di prodotto giusto", async ({
+  page,
+}) => {
+  const spia = osservaConsole(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/#cosa-fa");
+  const voci = page.locator("#cosa-fa ol > li > button");
+  await expect(voci.first()).toHaveAttribute("aria-expanded", "true");
+
+  await voci.nth(3).click();
+  await expect(voci.nth(3)).toHaveAttribute("aria-expanded", "true");
+  await expect(voci.first()).toHaveAttribute("aria-expanded", "false");
+
+  const dopo = analizza(BILANCIO_ESEMPIO, {
+    ...PREVISIONALE_ESEMPIO,
+    liquiditaIniziale: PREVISIONALE_ESEMPIO.liquiditaIniziale + 40_000,
+  });
+  const pannello = page.locator("#cosa-fa .pannello-giro").filter({ visible: true }).first();
+  await expect(pannello).toContainText("Simulatore");
+  await expect(pannello).toContainText(formatNumero(dopo.indicatori.dscrProspettico!, 2));
+  spia.verifica("giro guidato");
+});

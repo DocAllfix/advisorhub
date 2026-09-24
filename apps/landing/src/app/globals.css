@@ -222,6 +222,40 @@
   font-weight: 500;
 }
 
+/* Il cambio di pannello nel giro guidato: comparsa breve, solo opacity e transform. */
+@media (prefers-reduced-motion: no-preference) {
+  .pannello-giro {
+    animation: pannello-entra 280ms var(--ease-uscita) both;
+  }
+}
+@keyframes pannello-entra {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Carta rigata: il «bilancio stampato» del brief, come trama sotto l'hero.
+ * Solo decorativa; un filetto ogni 32px, cioè sulla griglia di 8pt. Nessun costo:
+ * è CSS, niente immagini.
+ *
+ * Concentrata attorno al pannello del prodotto e sfumata verso il testo: la prima
+ * versione passava dietro al titolo e sembrava un quaderno, non un prospetto.
+ */
+.carta-rigata {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 31px,
+    color-mix(in oklch, var(--bordo) 38%, transparent) 31px 32px
+  );
+  mask-image: radial-gradient(ellipse 55% 75% at 78% 45%, black 0%, transparent 72%);
+}
+
 /* Le leve dell'anteprima: il cursore nativo, accessibile da tastiera, nell'accento. */
 .leva {
   accent-color: var(--accento);

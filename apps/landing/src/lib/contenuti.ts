@@ -60,6 +60,28 @@ export const FUNZIONI = [
   },
 ] as const;
 
+export const PASSI = {
+  occhiello: "Come funziona",
+  titolo: "Dal bilancio al report, in tre passi.",
+  passi: [
+    {
+      titolo: "Carichi il bilancio",
+      testo:
+        "Dieci grandezze per esercizio, a mano o da un file CSV. Per il DSCR a sei mesi bastano quattro dati di tesoreria.",
+    },
+    {
+      titolo: "Leggi il giudizio",
+      testo:
+        "Punteggio, fascia di salute e sette indicatori con soglia e consiglio. Il DSCR prospettico dice se la cassa regge i prossimi sei mesi.",
+    },
+    {
+      titolo: "Consegni il report",
+      testo:
+        "Il PDF con il nome dello studio in testata, per il cliente e per la banca. Gli stessi numeri dell'analisi, senza ricopiarli.",
+    },
+  ],
+} as const;
+
 export const REPORT = {
   occhiello: "Il documento",
   titolo: "Il report che consegni, generato dai numeri.",

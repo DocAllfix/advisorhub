@@ -36,7 +36,7 @@ export function Titolo2({
   return (
     <h2
       id={id}
-      className={`mt-5 text-[clamp(1.75rem,1.2rem+2vw,2.625rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance ${className}`}
+      className={`mt-5 text-[clamp(2rem,1.35rem+2.5vw,3.25rem)] leading-[1.06] tracking-[-0.025em] font-semibold text-balance ${className}`}
     >
       {children}
     </h2>

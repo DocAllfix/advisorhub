@@ -43,8 +43,10 @@ export function Intestazione() {
 
 export function Hero() {
   return (
-    <section aria-labelledby="titolo-principale" className="overflow-x-clip">
-      <Contenitore className="grid items-center gap-x-14 gap-y-12 pt-14 pb-20 md:pt-20 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)] lg:pt-24 lg:pb-28">
+    <section aria-labelledby="titolo-principale" className="relative overflow-x-clip">
+      {/* Carta rigata: il bilancio stampato, come trama. Solo decorativa. */}
+      <div className="carta-rigata pointer-events-none absolute inset-0" aria-hidden />
+      <Contenitore className="relative grid items-center gap-x-14 gap-y-12 pt-14 pb-20 md:pt-20 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)] lg:pt-24 lg:pb-28">
         <div className="max-w-[36rem]">
           <p className="etichetta flex items-center gap-3 text-testo-attenuato">
             <span className="h-px w-6 bg-testo-attenuato" aria-hidden />

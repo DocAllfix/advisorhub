@@ -1,43 +1,51 @@
 import { ArrowDownToLine } from "lucide-react";
 
+import {
+  ArtefattoDscr,
+  ArtefattoIndicatori,
+  ArtefattoPortafoglio,
+  ArtefattoReport,
+  ArtefattoScadenze,
+  ArtefattoSimulatore,
+} from "@/components/artefatti";
 import { Contenitore, Occhiello, Paragrafo, Titolo2 } from "@/components/base";
+import { GiroProdotto } from "@/components/giro-prodotto";
 import { PaginaReport } from "@/components/pagina-report";
 import { FUNZIONI, REPORT } from "@/lib/contenuti";
 
 import { reportEsempioPresente } from "./apertura";
 
 /**
- * «Cosa fa»: righe, non una griglia di schede tutte uguali. Un prospetto che si
- * legge dall'alto in basso, con l'indice in mono come le righe di un bilancio.
+ * «Cosa fa»: un giro guidato del prodotto, non un elenco. Ogni funzione ha il
+ * suo pezzo di prodotto accanto, calcolato dal motore (modello: Mercury). Il
+ * titolo resta a tutta larghezza sopra, così il giro ha tutto lo spazio.
  */
 export function Funzioni() {
+  const pannelli = [
+    <ArtefattoPortafoglio key="portafoglio" />,
+    <ArtefattoIndicatori key="indicatori" />,
+    <ArtefattoDscr key="dscr" />,
+    <ArtefattoSimulatore key="simulatore" />,
+    <ArtefattoReport key="report" />,
+    <ArtefattoScadenze key="scadenze" />,
+  ];
   return (
-    <section id="cosa-fa" aria-labelledby="titolo-funzioni" className="scroll-mt-20">
-      <Contenitore className="grid gap-10 py-24 md:py-32 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)] lg:gap-16">
-        <div className="comparsa">
-          <Occhiello>Cosa fa</Occhiello>
-          <Titolo2 id="titolo-funzioni">Lo studio che guarda avanti, non solo indietro.</Titolo2>
-          <Paragrafo className="mt-5 max-w-[34rem]">
+    <section id="cosa-fa" aria-labelledby="titolo-funzioni" className="scroll-mt-20 bg-tonale">
+      <Contenitore className="py-24 md:py-32">
+        <div className="comparsa grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
+          <div>
+            <Occhiello>Cosa fa</Occhiello>
+            <Titolo2 id="titolo-funzioni">Lo studio che guarda avanti, non solo indietro.</Titolo2>
+          </div>
+          <Paragrafo className="max-w-[34rem] self-end">
             Il bilancio racconta l&apos;anno passato. FinBeacon lo legge insieme alla tesoreria dei
-            prossimi sei mesi, e mette ogni cliente al suo posto.
+            prossimi sei mesi, e mette ogni cliente al suo posto. Apri una voce per vederla al
+            lavoro.
           </Paragrafo>
         </div>
-        <ol className="border-t border-bordo">
-          {FUNZIONI.map((f, i) => (
-            <li
-              key={f.titolo}
-              className="comparsa grid gap-x-6 gap-y-1.5 border-b border-filetto py-6 sm:grid-cols-[2.5rem_minmax(0,1fr)] md:grid-cols-[2.5rem_minmax(0,0.9fr)_minmax(0,1.1fr)]"
-            >
-              <span className="cifre pt-0.5 text-sm text-testo-attenuato" aria-hidden>
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <h3 className="text-[1.0625rem] leading-snug font-semibold">{f.titolo}</h3>
-              <p className="text-[0.9375rem] leading-[1.6] text-testo-attenuato sm:col-start-2 md:col-start-auto">
-                {f.testo}
-              </p>
-            </li>
-          ))}
-        </ol>
+        <div className="mt-14">
+          <GiroProdotto voci={FUNZIONI} pannelli={pannelli} />
+        </div>
       </Contenitore>
     </section>
   );
@@ -46,11 +54,7 @@ export function Funzioni() {
 /** Il secondo pilastro: gli artefatti. Il report che il commercialista consegna. */
 export function Report() {
   return (
-    <section
-      id="report"
-      aria-labelledby="titolo-report"
-      className="scroll-mt-20 border-t border-filetto bg-tonale"
-    >
+    <section id="report" aria-labelledby="titolo-report" className="scroll-mt-20">
       <Contenitore className="grid items-center gap-12 py-24 md:py-32 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16">
         <div className="comparsa">
           <Occhiello>{REPORT.occhiello}</Occhiello>

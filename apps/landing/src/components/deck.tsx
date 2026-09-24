@@ -118,7 +118,7 @@ export function Deck() {
   );
 }
 
-function SchedaDscr({ ombra = false }: { ombra?: boolean }) {
+export function SchedaDscr({ ombra = false }: { ombra?: boolean }) {
   const a = ANALISI_ESEMPIO;
   const dscr6m = a.indicatori.dscrProspettico!;
   const giudizio6m = a.giudizi.dscrPro;
