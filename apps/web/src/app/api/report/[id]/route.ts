@@ -1,4 +1,4 @@
-import { analizza } from "@advisorhub/engine";
+import { analizza } from "@finbeacon/engine";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";

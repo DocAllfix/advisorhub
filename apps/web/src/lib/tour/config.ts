@@ -8,7 +8,7 @@
  * un tour si avvia.
  *
  * Il tono dei tour segue PRODUCT.md: "calma operativa". *
- * Il tono segue PRODUCT.md: "calma operativa". Chi usa advisorhub sta
+ * Il tono segue PRODUCT.md: "calma operativa". Chi usa finbeacon sta
  * lavorando, non giocando: nessun rimbalzo, nessuna esuberanza. Un velo
  * leggero che de-enfatizza il resto e un anello attorno all'elemento di cui
  * si sta parlando.
@@ -20,8 +20,8 @@
  * rivederla mai.
  */
 
-const PREFISSO_TOUR = "advisorhub:tour:";
-const CHIAVE_BENVENUTO = "advisorhub:tour:benvenuto";
+const PREFISSO_TOUR = "finbeacon:tour:";
+const CHIAVE_BENVENUTO = "finbeacon:tour:benvenuto";
 
 export function tourCompletato(idPagina: string): boolean {
   if (typeof window === "undefined") return false;

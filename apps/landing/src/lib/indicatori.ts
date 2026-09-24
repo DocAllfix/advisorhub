@@ -10,7 +10,7 @@ import {
   SOGLIE_GIUDIZIO,
   type Analisi,
   type Giudizio,
-} from "@advisorhub/engine";
+} from "@finbeacon/engine";
 
 /**
  * I sette indicatori come li mostra il prodotto: titolo, descrizione in chiaro,

@@ -5,7 +5,7 @@ import {
   type Analisi,
   type DatiBilancio,
   type DatiPrevisionali6M,
-} from "@advisorhub/engine";
+} from "@finbeacon/engine";
 import { RotateCcw } from "lucide-react";
 import { useMemo, useState } from "react";
 

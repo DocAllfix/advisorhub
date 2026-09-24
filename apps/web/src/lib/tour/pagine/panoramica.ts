@@ -10,7 +10,7 @@ export function tourPanoramica(demo: boolean) {
   const passi: DriveStep[] = [
     {
       popover: {
-        title: "Benvenuto in advisorhub",
+        title: "Benvenuto in FinBeacon",
         description:
           "In un minuto ti mostro come si legge la salute del portafoglio e come si arriva al report da consegnare al cliente. Puoi uscire quando vuoi con Esc, e ritrovare questa guida dal punto interrogativo in alto.",
       },

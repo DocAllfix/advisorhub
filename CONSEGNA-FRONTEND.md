@@ -80,7 +80,7 @@ Le fasce di salute (30/55/75/90), le soglie di giudizio (ROS 10%, DSCR 1,20…) 
 scala delle barre** vivono in `packages/engine`:
 
 ```ts
-import { FASCE_SALUTE, fasciaSalute, SOGLIE_GIUDIZIO } from "@advisorhub/engine";
+import { FASCE_SALUTE, fasciaSalute, SOGLIE_GIUDIZIO } from "@finbeacon/engine";
 import { SCALE } from "@/lib/report/soglie"; // fondi scala, condivisi con il report
 ```
 
@@ -212,7 +212,7 @@ spazio torna a Windows solo dopo `wsl --shutdown` (**G-21**). Se pulisci e il di
 muove, non è che non ha funzionato.
 
 Su questa macchina lavorano altre sessioni. Metti sempre un `name:` esplicito nei compose
-(il nostro è `advisorhub-dev`): senza, Compose deriva il nome dalla cartella e **ricrea i
+(il nostro è `finbeacon-dev`): senza, Compose deriva il nome dalla cartella e **ricrea i
 container di un altro progetto azzerandone il volume, senza errori** (**G-01**).
 
 ---

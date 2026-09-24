@@ -1,6 +1,6 @@
 "use client";
 
-import { analizza, formatEuro, formatNumero, SOGLIE_GIUDIZIO } from "@advisorhub/engine";
+import { analizza, formatEuro, formatNumero, SOGLIE_GIUDIZIO } from "@finbeacon/engine";
 import { useId, useMemo, useState } from "react";
 
 import { BILANCIO_ESEMPIO, PREVISIONALE_ESEMPIO } from "@/lib/esempio";

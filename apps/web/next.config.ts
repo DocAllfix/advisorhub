@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
   // Server autosufficiente per l'immagine Docker: .next/standalone contiene già
   // le sole dipendenze necessarie, senza node_modules completo.
   output: "standalone",
-  // Monorepo: il tracing deve partire dalla radice, altrimenti @advisorhub/engine
+  // Monorepo: il tracing deve partire dalla radice, altrimenti @finbeacon/engine
   // (che vive fuori da apps/web ed è TypeScript sorgente) non viene incluso.
   outputFileTracingRoot: path.join(__dirname, "../../"),
   async headers() {

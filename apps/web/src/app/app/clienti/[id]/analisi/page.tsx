@@ -1,4 +1,4 @@
-import { analizza } from "@advisorhub/engine";
+import { analizza } from "@finbeacon/engine";
 import { FileBarChart } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";

@@ -7,7 +7,7 @@ import {
   serializzaCsv,
   type DatiBilancio,
   type DatiPrevisionali6M,
-} from "@advisorhub/engine";
+} from "@finbeacon/engine";
 import { revalidatePath } from "next/cache";
 import { and, desc, eq, sql } from "drizzle-orm";
 

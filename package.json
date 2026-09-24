@@ -1,5 +1,5 @@
 {
-  "name": "advisorhub",
+  "name": "finbeacon",
   "private": true,
   "packageManager": "pnpm@11.2.2",
   "scripts": {

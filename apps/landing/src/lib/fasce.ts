@@ -1,4 +1,4 @@
-import { fasciaSalute, type FasciaSalute, type Tono } from "@advisorhub/engine";
+import { fasciaSalute, type FasciaSalute, type Tono } from "@finbeacon/engine";
 
 /**
  * Etichetta e tono di una fascia di salute: sono PRESENTAZIONE, e sono le

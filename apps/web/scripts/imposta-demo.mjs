@@ -1,8 +1,8 @@
 /**
  * Marca (o smarca) uno studio come dimostrativo.
  *
- *   node scripts/imposta-demo.mjs demo@advisorhub.it        # attiva la demo
- *   node scripts/imposta-demo.mjs demo@advisorhub.it --off  # la disattiva
+ *   node scripts/imposta-demo.mjs demo@finbeacon.it        # attiva la demo
+ *   node scripts/imposta-demo.mjs demo@finbeacon.it --off  # la disattiva
  *
  * Il flag vive in organization.metadata (JSON gestito da Better Auth), quindi
  * non richiede migrazioni. requireStudio lo legge e vietatoInDemo blocca le

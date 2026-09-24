@@ -1,4 +1,4 @@
-import type { Tono } from "@advisorhub/engine";
+import type { Tono } from "@finbeacon/engine";
 
 /**
  * Il badge di giudizio del prodotto (DESIGN.md): pillola, pallino da 6px ED

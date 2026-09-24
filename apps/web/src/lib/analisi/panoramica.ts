@@ -1,6 +1,6 @@
 import "server-only";
 
-import { fasciaSalute, type FasciaSalute } from "@advisorhub/engine";
+import { fasciaSalute, type FasciaSalute } from "@finbeacon/engine";
 import { sql } from "drizzle-orm";
 
 import { requireStudio } from "@/lib/auth-helpers";

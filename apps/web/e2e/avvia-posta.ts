@@ -22,7 +22,7 @@ export async function avvia() {
     );
   }
   const db =
-    process.env.E2E_DATABASE_URL ?? "postgresql://advisorhub:sviluppo@127.0.0.1:5433/advisorhub";
+    process.env.E2E_DATABASE_URL ?? "postgresql://finbeacon:sviluppo@127.0.0.1:5433/finbeacon";
 
   const figlio = spawn(process.execPath, [BUNDLE], {
     env: {
@@ -30,7 +30,7 @@ export async function avvia() {
       DATABASE_URL: db,
       SMTP_HOST: "127.0.0.1",
       SMTP_PORT: "1025",
-      SMTP_FROM: "no-reply@advisorhub.test",
+      SMTP_FROM: "no-reply@finbeacon.test",
       MAIL_INTERVALLO_MS: "2000",
       NODE_ENV: "production",
     },

@@ -53,7 +53,7 @@ if [ -n "$EXPORT" ]; then
   mkdir -p "$EXPORT"
   DEST="$EXPORT/${SLUG}-$(date -u +%F).dump"
   "${SSH[@]}" "cd '$PERCORSO' && docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod exec -T db \
-     pg_dump -U advisorhub -d advisorhub --format=custom" > "$DEST"
+     pg_dump -U finbeacon -d finbeacon --format=custom" > "$DEST"
   chmod 600 "$DEST"
   echo "      salvato in $DEST ($(du -h "$DEST" | cut -f1))"
   echo "      NOTA: contiene dati personali dei clienti dello studio. Consegnarlo"
@@ -83,10 +83,10 @@ fi
 # ── 5. Distruzione del server ───────────────────────────────────────────────
 echo "[5/6] server Hetzner"
 if [ "$DISTRUGGI" = 1 ]; then
-  hcloud server delete "advisorhub-$SLUG"
-  hcloud ssh-key delete "advisorhub-$SLUG" 2>/dev/null || true
+  hcloud server delete "finbeacon-$SLUG"
+  hcloud ssh-key delete "finbeacon-$SLUG" 2>/dev/null || true
 else
-  echo "      [sicura] hcloud server delete advisorhub-$SLUG"
+  echo "      [sicura] hcloud server delete finbeacon-$SLUG"
 fi
 
 # ── 6. Registro ─────────────────────────────────────────────────────────────

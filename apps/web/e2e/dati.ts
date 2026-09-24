@@ -11,7 +11,7 @@ import type { APIRequestContext } from "@playwright/test";
  * controlli nelle action stesse.
  */
 const URL_DB =
-  process.env.E2E_DATABASE_URL ?? "postgresql://advisorhub:sviluppo@127.0.0.1:5433/advisorhub";
+  process.env.E2E_DATABASE_URL ?? "postgresql://finbeacon:sviluppo@127.0.0.1:5433/finbeacon";
 
 export async function conDatabase<T>(fn: (c: Client) => Promise<T>): Promise<T> {
   const c = new Client({ connectionString: URL_DB });

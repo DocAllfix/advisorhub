@@ -16,7 +16,7 @@ export function intestazioni(baseURL: string) {
 
 /** Email irripetibile: i test condividono un database e non devono collidere. */
 export function emailUnica(prefisso: string): string {
-  return `${prefisso}-${Date.now()}-${Math.floor(Math.random() * 1e4)}@advisorhub.test`;
+  return `${prefisso}-${Date.now()}-${Math.floor(Math.random() * 1e4)}@finbeacon.test`;
 }
 
 export type Studio = {

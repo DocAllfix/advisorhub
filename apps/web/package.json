@@ -22,7 +22,7 @@
     "build:bundle": "pnpm build:migratore && pnpm build:worker && pnpm build:titolare"
   },
   "dependencies": {
-    "@advisorhub/engine": "workspace:*",
+    "@finbeacon/engine": "workspace:*",
     "@formkit/auto-animate": "^0.10.0",
     "@hookform/resolvers": "^5.4.0",
     "@number-flow/react": "^0.6.2",

@@ -14,7 +14,7 @@ importers:
 
   apps/landing:
     dependencies:
-      '@advisorhub/engine':
+      '@finbeacon/engine':
         specifier: workspace:*
         version: link:../../packages/engine
       lucide-react:
@@ -72,7 +72,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@advisorhub/engine':
+      '@finbeacon/engine':
         specifier: workspace:*
         version: link:../../packages/engine
       '@formkit/auto-animate':

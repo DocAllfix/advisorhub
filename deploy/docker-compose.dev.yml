@@ -11,15 +11,15 @@
 # e collide con gli altri prodotti che usano la stessa struttura. La collisione
 # non da' errore: ricrea i container dell'altro progetto con la propria
 # configurazione, azzerando il database.
-name: advisorhub-dev
+name: finbeacon-dev
 
 services:
   db:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: advisorhub
+      POSTGRES_USER: finbeacon
       POSTGRES_PASSWORD: sviluppo
-      POSTGRES_DB: advisorhub
+      POSTGRES_DB: finbeacon
     ports:
       # 5433 e non 5432: su questa macchina la porta standard e' gia' occupata
       # da un altro progetto. Il container resta sulla 5432 internamente.
@@ -27,7 +27,7 @@ services:
     volumes:
       - db_dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U advisorhub -d advisorhub"]
+      test: ["CMD-SHELL", "pg_isready -U finbeacon -d finbeacon"]
       interval: 5s
       timeout: 5s
       retries: 10

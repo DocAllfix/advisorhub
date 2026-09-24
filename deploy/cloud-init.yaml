@@ -26,7 +26,7 @@ packages:
 write_files:
   # SSH: solo chiave. La chiave e' gia' installata da hcloud al provisioning,
   # quindi disabilitare la password non chiude fuori nessuno.
-  - path: /etc/ssh/sshd_config.d/99-advisorhub.conf
+  - path: /etc/ssh/sshd_config.d/99-finbeacon.conf
     permissions: "0644"
     content: |
       PasswordAuthentication no
@@ -78,7 +78,7 @@ runcmd:
   - ufw allow 443/tcp
   - ufw --force enable
 
-  - mkdir -p /opt/advisorhub/deploy /var/backups/advisorhub
-  - chmod 700 /opt/advisorhub /var/backups/advisorhub
+  - mkdir -p /opt/finbeacon/deploy /var/backups/finbeacon
+  - chmod 700 /opt/finbeacon /var/backups/finbeacon
 
-final_message: "advisorhub: server pronto dopo $UPTIME secondi"
+final_message: "finbeacon: server pronto dopo $UPTIME secondi"

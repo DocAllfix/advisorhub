@@ -9,7 +9,7 @@
 
 export type Messaggio = { oggetto: string; testo: string; html: string };
 
-const MITTENTE_VISIBILE = "advisorhub";
+const MITTENTE_VISIBILE = "FinBeacon";
 
 function guscio(titolo: string, paragrafi: string[], azione?: { testo: string; url: string }) {
   const corpo = paragrafi
@@ -35,11 +35,11 @@ function guscio(titolo: string, paragrafi: string[], azione?: { testo: string; u
 export function recuperoPassword(url: string): Messaggio {
   const titolo = "Reimposta la tua password";
   const paragrafi = [
-    "Abbiamo ricevuto una richiesta di reimpostazione della password per il tuo accesso ad advisorhub.",
+    "Abbiamo ricevuto una richiesta di reimpostazione della password per il tuo accesso a FinBeacon.",
     "Il link è valido per un'ora e può essere usato una sola volta.",
   ];
   return {
-    oggetto: "Reimposta la tua password — advisorhub",
+    oggetto: "Reimposta la tua password — FinBeacon",
     testo: [
       titolo,
       "",
@@ -63,15 +63,15 @@ export function recuperoPassword(url: string): Messaggio {
 export function invitoCollaboratore(nomeStudio: string, url: string): Messaggio {
   const titolo = `Sei stato invitato in ${nomeStudio}`;
   const paragrafi = [
-    `Hai ricevuto un invito a collaborare nello studio <strong>${nomeStudio}</strong> su advisorhub.`,
+    `Hai ricevuto un invito a collaborare nello studio <strong>${nomeStudio}</strong> su FinBeacon.`,
     "Accetta l'invito per creare il tuo accesso personale.",
   ];
   return {
-    oggetto: `Invito a collaborare in ${nomeStudio} — advisorhub`,
+    oggetto: `Invito a collaborare in ${nomeStudio} — FinBeacon`,
     testo: [
       titolo,
       "",
-      `Hai ricevuto un invito a collaborare nello studio ${nomeStudio} su advisorhub.`,
+      `Hai ricevuto un invito a collaborare nello studio ${nomeStudio} su FinBeacon.`,
       "Accetta l'invito per creare il tuo accesso personale.",
       "",
       url,
@@ -83,11 +83,11 @@ export function invitoCollaboratore(nomeStudio: string, url: string): Messaggio 
 export function verificaEmail(url: string): Messaggio {
   const titolo = "Conferma il tuo indirizzo email";
   const paragrafi = [
-    "Conferma questo indirizzo per completare l'attivazione del tuo accesso ad advisorhub.",
+    "Conferma questo indirizzo per completare l'attivazione del tuo accesso a FinBeacon.",
     "È l'indirizzo che useremo per farti recuperare la password: senza conferma, non potremmo aiutarti a rientrare.",
   ];
   return {
-    oggetto: "Conferma il tuo indirizzo email — advisorhub",
+    oggetto: "Conferma il tuo indirizzo email — FinBeacon",
     testo: [titolo, "", paragrafi.join("\n\n").replace(/<[^>]+>/g, ""), "", url].join("\n"),
     html: guscio(titolo, paragrafi, { testo: "Conferma l'indirizzo", url }),
   };

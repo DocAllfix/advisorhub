@@ -34,7 +34,7 @@ done
 
 DOMINIO_BRAND="${DOMINIO_BRAND:-finbeacon.it}"
 REGIONE="${REGIONE:-nbg1}"          # Norimberga: UE, per il GDPR
-IMMAGINE="${IMMAGINE:?Imposta IMMAGINE (es. ghcr.io/org/advisorhub:<git-sha>)}"
+IMMAGINE="${IMMAGINE:?Imposta IMMAGINE (es. ghcr.io/org/finbeacon:<git-sha>)}"
 FLEET="deploy/fleet.txt"
 
 passo() { echo ""; echo "── $1"; }
@@ -57,33 +57,33 @@ for C in hcloud curl ssh openssl dig; do command -v "$C" >/dev/null || fatale "m
 
 # ------------------------------------------------------------- 2. chiave SSH
 passo "2/15  chiave SSH dedicata all'istanza"
-CHIAVE="$HOME/.ssh/advisorhub-$SLUG"
+CHIAVE="$HOME/.ssh/finbeacon-$SLUG"
 if [ ! -f "$CHIAVE" ]; then
-  esegui ssh-keygen -t ed25519 -N "" -C "advisorhub-$SLUG" -f "$CHIAVE"
-  esegui hcloud ssh-key create --name "advisorhub-$SLUG" --public-key-from-file "$CHIAVE.pub"
+  esegui ssh-keygen -t ed25519 -N "" -C "finbeacon-$SLUG" -f "$CHIAVE"
+  esegui hcloud ssh-key create --name "finbeacon-$SLUG" --public-key-from-file "$CHIAVE.pub"
 else
   echo "    esiste gia': $CHIAVE"
 fi
 
 # --------------------------------------------------- 3. server con cloud-init
 passo "3/15  server Hetzner"
-if hcloud server describe "advisorhub-$SLUG" >/dev/null 2>&1; then
+if hcloud server describe "finbeacon-$SLUG" >/dev/null 2>&1; then
   echo "    esiste gia'"
 else
   esegui hcloud server create \
-    --name "advisorhub-$SLUG" --type "$PIANO" --image ubuntu-24.04 \
-    --location "$REGIONE" --ssh-key "advisorhub-$SLUG" \
+    --name "finbeacon-$SLUG" --type "$PIANO" --image ubuntu-24.04 \
+    --location "$REGIONE" --ssh-key "finbeacon-$SLUG" \
     --user-data-from-file deploy/cloud-init.yaml \
-    --label "prodotto=advisorhub" --label "cliente=$SLUG"
+    --label "prodotto=finbeacon" --label "cliente=$SLUG"
 fi
-IP="$(hcloud server ip "advisorhub-$SLUG" 2>/dev/null || echo '<ip>')"
+IP="$(hcloud server ip "finbeacon-$SLUG" 2>/dev/null || echo '<ip>')"
 echo "    indirizzo: $IP"
 
 # ------------------------------------------------------------- 4. firewall
 passo "4/15  firewall"
 # 22 solo dal nostro indirizzo di gestione, 80/443 aperte (Let's Encrypt).
-esegui hcloud firewall apply-to-resource advisorhub-cliente \
-  --type server --server "advisorhub-$SLUG" || echo "    (gia' applicato)"
+esegui hcloud firewall apply-to-resource finbeacon-cliente \
+  --type server --server "finbeacon-$SLUG" || echo "    (gia' applicato)"
 
 # ------------------------------------------------------------------ 5. DNS
 passo "5/15  record DNS su Hostinger"
@@ -109,22 +109,22 @@ esegui bash deploy/storagebox-sottoaccount.sh crea "$SLUG"
 
 # --------------------------------------------------------------- 8. segreti
 passo "8/15  segreti dell'istanza"
-ENV_REMOTO="/opt/advisorhub/deploy/.env.prod"
+ENV_REMOTO="/opt/finbeacon/deploy/.env.prod"
 if [ "$DRY" = 0 ]; then
   SSH=(ssh -i "$CHIAVE" -o StrictHostKeyChecking=accept-new "root@$IP")
   if "${SSH[@]}" "test -f $ENV_REMOTO"; then
     echo "    esiste gia' — NON lo rigenero (i segreti cambierebbero sotto i piedi)"
   else
-    "${SSH[@]}" "mkdir -p /opt/advisorhub/deploy"
+    "${SSH[@]}" "mkdir -p /opt/finbeacon/deploy"
     "${SSH[@]}" "cat > $ENV_REMOTO && chmod 600 $ENV_REMOTO" <<EOF
 SLUG=$SLUG
 DOMINIO=$DOMINIO
 ACME_EMAIL=${ACME_EMAIL:-tecnico@$DOMINIO_BRAND}
 IMMAGINE=$IMMAGINE
 GIT_SHA=${IMMAGINE##*:}
-POSTGRES_USER=advisorhub
+POSTGRES_USER=finbeacon
 POSTGRES_PASSWORD=$(openssl rand -hex 24)
-POSTGRES_DB=advisorhub
+POSTGRES_DB=finbeacon
 BETTER_AUTH_SECRET=$(openssl rand -hex 32)
 SMTP_HOST=${SMTP_HOST:-}
 SMTP_PORT=${SMTP_PORT:-587}
@@ -144,7 +144,7 @@ esegui bash deploy/registra-monitor.sh "$SLUG" "$DOMINIO"
 # ---------------------------------------------------------- 10. avvio stack
 passo "10/15  avvio dello stack"
 if [ "$DRY" = 0 ]; then
-  "${SSH[@]}" "cd /opt/advisorhub && \
+  "${SSH[@]}" "cd /opt/finbeacon && \
     docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod pull && \
     docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod up -d"
 fi
@@ -154,7 +154,7 @@ passo "11/15  titolare e mail di primo accesso"
 # REGISTRAZIONE_APERTA vale solo per QUESTO container una-tantum: il server
 # pubblico resta chiuso. Nessuna password viene consegnata a mano.
 if [ "$DRY" = 0 ]; then
-  "${SSH[@]}" "cd /opt/advisorhub && \
+  "${SSH[@]}" "cd /opt/finbeacon && \
     docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod \
     run --rm -e REGISTRAZIONE_APERTA=true web \
     node apps/web/crea-titolare.js '$STUDIO' '$EMAIL'"
@@ -163,20 +163,20 @@ fi
 # ---------------------------------------------------------------- 12. cron
 passo "12/15  backup, prova di ripristino, sentinella"
 if [ "$DRY" = 0 ]; then
-  "${SSH[@]}" "cat > /etc/cron.d/advisorhub <<'CRON'
-15 2 * * * root cd /opt/advisorhub && ./deploy/backup.sh >> /var/log/advisorhub-backup.log 2>&1
-0 4 1 * * root cd /opt/advisorhub && ./deploy/restore-test.sh >> /var/log/advisorhub-restore.log 2>&1
-*/10 * * * * root cd /opt/advisorhub && ./deploy/sentinella.sh >> /var/log/advisorhub-sentinella.log 2>&1
+  "${SSH[@]}" "cat > /etc/cron.d/finbeacon <<'CRON'
+15 2 * * * root cd /opt/finbeacon && ./deploy/backup.sh >> /var/log/finbeacon-backup.log 2>&1
+0 4 1 * * root cd /opt/finbeacon && ./deploy/restore-test.sh >> /var/log/finbeacon-restore.log 2>&1
+*/10 * * * * root cd /opt/finbeacon && ./deploy/sentinella.sh >> /var/log/finbeacon-sentinella.log 2>&1
 CRON
-chmod 644 /etc/cron.d/advisorhub"
+chmod 644 /etc/cron.d/finbeacon"
 fi
 
 # ------------------------------------ 13. primo backup e prima prova di ripristino
 passo "13/15  primo backup + prima prova di ripristino"
 # Subito, non "quando capita": un backup mai provato non e' un backup.
 if [ "$DRY" = 0 ]; then
-  "${SSH[@]}" "cd /opt/advisorhub && ./deploy/backup.sh" || fatale "primo backup fallito"
-  "${SSH[@]}" "cd /opt/advisorhub && ./deploy/restore-test.sh" || fatale "prova di ripristino fallita: NON dichiarare l'istanza pronta"
+  "${SSH[@]}" "cd /opt/finbeacon && ./deploy/backup.sh" || fatale "primo backup fallito"
+  "${SSH[@]}" "cd /opt/finbeacon && ./deploy/restore-test.sh" || fatale "prova di ripristino fallita: NON dichiarare l'istanza pronta"
 fi
 
 # ------------------------------------------------------------ 14. smoke-test
@@ -194,7 +194,7 @@ fi
 # -------------------------------------------------------------- 15. registro
 passo "15/15  registro della flotta"
 if [ "$DRY" = 0 ]; then
-  printf '%s\t%s\t%s\t%s\n' "$SLUG" "root@$IP" "/opt/advisorhub" "$DOMINIO" >> "$FLEET"
+  printf '%s\t%s\t%s\t%s\n' "$SLUG" "root@$IP" "/opt/finbeacon" "$DOMINIO" >> "$FLEET"
 fi
 
 cat <<FINE

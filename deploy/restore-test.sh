@@ -32,7 +32,7 @@ avvisa() {
 trap 'avvisa restore_test_fallito "riga $LINENO"' ERR
 
 LAVORO="$(mktemp -d)"
-EFFIMERO="advisorhub-restore-$$"
+EFFIMERO="finbeacon-restore-$$"
 pulisci() {
   docker rm -f "$EFFIMERO" >/dev/null 2>&1 || true
   rm -rf "$LAVORO"
@@ -103,5 +103,5 @@ trap - ERR
 echo "[restore-test] PASSED — il backup e' ripristinabile"
 
 # --- Cron mensile -----------------------------------------------------------
-#  0 4 1 * *  cd /opt/advisorhub && RESTIC_REPOSITORY=... RESTIC_PASSWORD_FILE=... \
-#             ./deploy/restore-test.sh >> /var/log/advisorhub-restore.log 2>&1
+#  0 4 1 * *  cd /opt/finbeacon && RESTIC_REPOSITORY=... RESTIC_PASSWORD_FILE=... \
+#             ./deploy/restore-test.sh >> /var/log/finbeacon-restore.log 2>&1

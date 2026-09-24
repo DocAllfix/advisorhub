@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <main className="grid min-h-screen place-items-center px-5 py-14">
       <div className="w-full max-w-[26rem]">
         <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-primary">
-          advisorhub
+          FinBeacon
         </p>
         <div className="mt-9">{children}</div>
         <p className="mt-12 border-t border-hairline pt-5 text-xs leading-relaxed text-muted-foreground">

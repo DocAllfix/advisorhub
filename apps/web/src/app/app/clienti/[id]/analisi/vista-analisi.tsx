@@ -1,4 +1,4 @@
-import type { Analisi, DatiBilancio } from "@advisorhub/engine";
+import type { Analisi, DatiBilancio } from "@finbeacon/engine";
 import type { ReactNode } from "react";
 
 import { MicroEtichetta } from "@/components/ui/micro-etichetta";

@@ -1,7 +1,7 @@
 "use client";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { mappaBilancioDaCsv } from "@advisorhub/engine";
+import { mappaBilancioDaCsv } from "@finbeacon/engine";
 import { ChevronDown, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { useRouter } from "next/navigation";

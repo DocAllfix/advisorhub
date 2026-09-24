@@ -1,4 +1,4 @@
-import { SOGLIE_GIUDIZIO } from "@advisorhub/engine";
+import { SOGLIE_GIUDIZIO } from "@finbeacon/engine";
 
 import type { ChiaveIndicatore } from "@/lib/analisi/indicatori-meta";
 

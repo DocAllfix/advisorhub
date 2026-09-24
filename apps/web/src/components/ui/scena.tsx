@@ -1,4 +1,4 @@
-import type { Tono } from "@advisorhub/engine";
+import type { Tono } from "@finbeacon/engine";
 import * as React from "react";
 
 import { Cifra } from "@/components/ui/cifra";

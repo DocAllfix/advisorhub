@@ -1,4 +1,4 @@
-# advisorhub
+# FinBeacon
 
 SaaS per commercialisti: monitoraggio della salute economico-finanziaria del portafoglio clienti dello studio. Trasforma i dati di bilancio in indicatori, giudizi e azioni, con report da consegnare a cliente e banca.
 
@@ -94,7 +94,7 @@ di avere la telemetria senza averla.
 automatico. Il cliente non configura nulla.
 
 ```bash
-export IMMAGINE=ghcr.io/<org>/advisorhub:<git-sha>
+export IMMAGINE=ghcr.io/<org>/finbeacon:<git-sha>
 ./deploy/provision-cliente.sh acme --studio "Studio Rossi" --email referente@studiorossi.it
 ```
 
@@ -120,8 +120,8 @@ simulatore, download del report) ma ogni scrittura è rifiutata dal server con
 un messaggio esplicito, così i due clienti di esempio non sono alterabili.
 
 ```bash
-node scripts/imposta-demo.mjs demo@advisorhub.it        # attiva
-node scripts/imposta-demo.mjs demo@advisorhub.it --off  # disattiva
+node scripts/imposta-demo.mjs demo@finbeacon.it        # attiva
+node scripts/imposta-demo.mjs demo@finbeacon.it --off  # disattiva
 ```
 
 La creazione di nuovi studi dalla pagina pubblica è chiusa in produzione: il

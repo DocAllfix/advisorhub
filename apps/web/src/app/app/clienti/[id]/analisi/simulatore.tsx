@@ -1,6 +1,6 @@
 "use client";
 
-import { formatEuro, type DatiBilancio, type DatiPrevisionali6M } from "@advisorhub/engine";
+import { formatEuro, type DatiBilancio, type DatiPrevisionali6M } from "@finbeacon/engine";
 import { useState } from "react";
 
 import { Label } from "@/components/ui/label";

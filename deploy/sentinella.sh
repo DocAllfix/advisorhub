@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sentinella di monitoraggio proattivo, sulla macchina del cliente.
 #
-#   */10 * * * *  cd /opt/advisorhub && SENTINELLA_WEBHOOK=... ./deploy/sentinella.sh
+#   */10 * * * *  cd /opt/finbeacon && SENTINELLA_WEBHOOK=... ./deploy/sentinella.sh
 #
 # Quello che Uptime Kuma NON vede: lui sa solo se la porta risponde. Qui si
 # guarda dentro — disco, container, database, coda di posta, certificati — per

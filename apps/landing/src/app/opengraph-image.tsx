@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { formatNumero } from "@advisorhub/engine";
+import { formatNumero } from "@finbeacon/engine";
 import { ImageResponse } from "next/og";
 
 import { HERO } from "@/lib/contenuti";

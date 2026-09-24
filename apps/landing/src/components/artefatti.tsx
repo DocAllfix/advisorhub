@@ -1,4 +1,4 @@
-import { analizza, formatEuro, formatNumero } from "@advisorhub/engine";
+import { analizza, formatEuro, formatNumero } from "@finbeacon/engine";
 
 import {
   ANALISI_ESEMPIO,
