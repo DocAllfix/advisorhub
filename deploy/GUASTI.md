@@ -1674,6 +1674,76 @@ rm -rf apps/web/.next && pnpm --filter web build
 
 ---
 
+## G-44 — Il primo deployment di un progetto Vercel nuovo è di PRODUZIONE, anche da un ramo qualunque
+
+**Sintomo.** Si crea un progetto Vercel collegato al repository, con ramo di produzione `main`, e
+si spinge un ramo di lavoro (`landing`) per avere un'anteprima. Il deployment che parte è marcato
+**`target: production`** e si prende l'**alias di produzione** del progetto, pur venendo da un ramo
+che non è `main`.
+
+Osservato il 24/09 su `finbeacon-landing`: il primo deployment (`landing`, commit `d578f2f`) era
+`production`; il deployment del push successivo, dallo stesso ramo, era `preview`.
+
+**Perché inganna.** Tutto dice «anteprima»: il ramo non è quello di produzione, la PR è aperta, il
+commento di Vercel sulla PR parla di preview. Nessuno si aspetta che un ramo non rivisto finisca
+sull'indirizzo di produzione del progetto.
+
+**Cosa l'ha fermato.** Il cancello di lancio (`apps/landing/scripts/verifica-lancio.mjs`) blocca il
+build quando `VERCEL_ENV=production` e mancano i dati obbligatori. È scattato **su quello che si
+credeva un'anteprima**, ed è stato così che la cosa si è vista. Senza quel controllo il ramo sarebbe
+andato in produzione senza che nessuno lo decidesse.
+
+**Diagnosi.**
+
+```bash
+curl -s -H "Authorization: Bearer $VERCEL_TOKEN"   "https://api.vercel.com/v6/deployments?projectId=<progetto>&teamId=<team>&limit=5"   | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{for(const x of JSON.parse(d).deployments)console.log(x.state,x.target||"preview",x.meta.githubCommitRef)})'
+```
+
+**Rimedio.** Per un progetto nuovo: o il primo push viene da `main` quando è pronto per la
+produzione, o si crea esplicitamente un'anteprima via API (`POST /v13/deployments` con `gitSource` e
+senza `target`). E un build che vale per la produzione deve avere un **cancello che lo sa
+distinguere**: è stato l'unico motivo per cui questo si è visto.
+
+> **Chi decide cos'è «produzione» è la piattaforma, non il nome del ramo.** Verificare il `target`,
+> non dedurlo.
+
+---
+
+## G-45 — I valori che una piattaforma assegna non sono quelli che si ricordano
+
+**Sintomo.** Due valori scritti a memoria, entrambi plausibili, entrambi sbagliati, nella stessa
+giornata e nello stesso progetto:
+
+| Cosa                | Scritto a memoria                             | Assegnato davvero da Vercel                                                                       |
+| ------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Record per l'apex   | `A 76.76.21.21`, `CNAME cname.vercel-dns.com` | **due** A (`216.150.1.1`, `216.150.16.1`) e un CNAME **del progetto** (`<id>.vercel-dns-016.com`) |
+| Alias di produzione | `finbeacon-landing.vercel.app`                | `finbeacon-landing-docallfixs-projects.vercel.app`                                                |
+
+**Perché inganna.** I valori a memoria sono quelli **della documentazione di qualche anno fa** e di
+mille guide: non sono inventati, sono datati. Il primo avrebbe prodotto uno switch DNS che «funziona
+a metà» (un solo indirizzo dei due, su un'infrastruttura che nel frattempo è cambiata); il secondo
+un redirect che non scatta mai, con la pagina indicizzabile a due indirizzi. **Nessuno dei due dà
+errore.**
+
+**Diagnosi.** Leggere dalla piattaforma, dopo aver creato la risorsa:
+
+```bash
+# record richiesti per un dominio aggiunto al progetto
+curl -s -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com/v6/domains/<dominio>/config?teamId=<team>"
+# alias realmente assegnati a un deployment
+curl -s -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com/v13/deployments/<id>?teamId=<team>"
+```
+
+**Rimedio.** `deploy/dns-landing.sh` accetta più indirizzi e i valori si passano dopo averli letti
+da Vercel. Il redirect verso l'host canonico non elenca più gli alias per nome: **in produzione ogni
+host diverso da `finbeacon.eu`** rimanda lì (`apps/landing/next.config.ts`), e copre anche gli alias
+futuri.
+
+> **Un valore che la piattaforma assegna si legge dalla piattaforma.** Scriverlo a memoria è
+> dedurre invece di verificare, con l'aggravante che la memoria ha una data.
+
+---
+
 ## Come si aggiunge una voce
 
 1. Numero progressivo `G-nn`.

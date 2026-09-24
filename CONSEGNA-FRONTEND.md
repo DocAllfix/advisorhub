@@ -219,7 +219,7 @@ container di un altro progetto azzerandone il volume, senza errori** (**G-01**).
 
 ## 6. Se trovi un guasto nuovo
 
-`deploy/GUASTI.md` è un registro vivo, a 43 voci, condiviso in spirito con altri due prodotti
+`deploy/GUASTI.md` è un registro vivo, a 45 voci, condiviso in spirito con altri due prodotti
 sulla stessa macchina. Ogni voce ha: sintomo, **perché inganna**, diagnosi incollabile, rimedio.
 
 La sezione «perché inganna» è quella che fa risparmiare tempo a chi viene dopo — una voce
