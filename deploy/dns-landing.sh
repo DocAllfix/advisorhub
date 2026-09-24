@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Punta l'apex e il www di un dominio alla landing su Vercel, via API Hostinger.
 #
-#   ./deploy/dns-landing.sh punta finbeacon.eu 76.76.21.21 cname.vercel-dns.com. --prova
-#   ./deploy/dns-landing.sh punta finbeacon.eu 76.76.21.21 cname.vercel-dns.com.
+#   ./deploy/dns-landing.sh punta finbeacon.eu <ipv4[,ipv4...]> <cname> --prova
+#   ./deploy/dns-landing.sh punta finbeacon.eu <ipv4[,ipv4...]> <cname>
 #   CONFERMA=si ./deploy/dns-landing.sh ripristina finbeacon.eu <istantanea.json>
 #
 # I valori di destinazione NON si scrivono a memoria: si leggono da Vercel dopo
-# aver aggiunto il dominio al progetto (GET /v6/domains/<dominio>/config).
+# aver aggiunto il dominio al progetto (GET /v6/domains/<dominio>/config). Non
+# e' prudenza teorica: il 24/09 Vercel ha chiesto DUE indirizzi per l'apex e un
+# CNAME specifico del progetto, non il 76.76.21.21 / cname.vercel-dns.com che si
+# trova in giro e che la prima versione di questo esempio riportava.
 #
 # PERCHE' UNO SCRIPT DIVERSO DA dns-hostinger.sh
 # Quello AGGIUNGE record con `overwrite: false` ed e' condiviso con gli altri
@@ -64,7 +67,10 @@ valori() { # stampa i contenuti di <nome> <tipo>
 
 case "$AZIONE" in
   punta)
-    IP="${3:?indirizzo IPv4 mancante (da Vercel)}"
+    IP="${3:?indirizzi IPv4 mancanti (da Vercel, separati da virgola)}"
+    # In forma canonica: ordinati, come li restituisce `valori`.
+    IP="$(printf '%s' "$IP" | tr ',' '\n' | sort | paste -sd, -)"
+    RECORD_A="$(printf '%s' "$IP" | tr ',' '\n' | sed 's/.*/{ "content": "&" }/' | paste -sd, -)"
     CNAME="${4:?CNAME mancante (da Vercel)}"
     PROVA="${5:-}"
     verifica_proprieta
@@ -88,10 +94,10 @@ case "$AZIONE" in
     curl -fsS -X PUT "${AUTH[@]}" "$API" -d "$(printf '{
       "overwrite": false,
       "zone": [
-        { "name": "@",   "type": "A",     "ttl": 300, "records": [{ "content": "%s" }] },
+        { "name": "@",   "type": "A",     "ttl": 300, "records": [%s] },
         { "name": "www", "type": "CNAME", "ttl": 300, "records": [{ "content": "%s" }] }
       ]
-    }' "$IP" "$CNAME")" > /dev/null
+    }' "$RECORD_A" "$CNAME")" > /dev/null
 
     DOPO="$(zona)"
     ESITO=0
