@@ -32,7 +32,7 @@ docker compose -f deploy/docker-compose.dev.yml ps
 | `db`      | `localhost:5433`                                           | PostgreSQL 17 di sviluppo                   |
 | `mailpit` | SMTP `localhost:1025`, interfaccia <http://localhost:8025> | Cattura **ogni** email: nulla parte davvero |
 
-Il compose dichiara `name: advisorhub-dev`. Non toglierlo: senza, Docker deriva il nome
+Il compose dichiara `name: finbeacon-dev`. Non toglierlo: senza, Docker deriva il nome
 dalla cartella (`deploy`) e i container collidono con gli altri prodotti sulla stessa
 macchina — **G-01**.
 
@@ -45,13 +45,13 @@ La porta è `5433`, non `5432`, perché la standard è spesso occupata — **G-0
 Crea `apps/web/.env.local` (è gitignorato, e ha precedenza su `.env`):
 
 ```bash
-DATABASE_URL=postgresql://advisorhub:sviluppo@localhost:5433/advisorhub
-DIRECT_URL=postgresql://advisorhub:sviluppo@localhost:5433/advisorhub
+DATABASE_URL=postgresql://finbeacon:sviluppo@localhost:5433/finbeacon
+DIRECT_URL=postgresql://finbeacon:sviluppo@localhost:5433/finbeacon
 BETTER_AUTH_SECRET=<openssl rand -hex 32>
 BETTER_AUTH_URL=http://localhost:3000
 SMTP_HOST=localhost
 SMTP_PORT=1025
-SMTP_FROM=no-reply@advisorhub.local
+SMTP_FROM=no-reply@finbeacon.local
 NEXT_PUBLIC_REGISTRAZIONE_APERTA=true
 ```
 
@@ -71,7 +71,7 @@ pnpm --filter web db:migrate
 **Verifica:** l'output stampa il bersaglio e il conteggio finale.
 
 ```
-[migra] bersaglio:  localhost:5433/advisorhub
+[migra] bersaglio:  localhost:5433/finbeacon
 [migra] migrazioni: …/apps/web/drizzle
 [migra] fatto: 14 tabelle nello schema public.
 ```
@@ -93,7 +93,7 @@ pnpm --filter web db:seed-demo          # richiede l'app in esecuzione (passo 6)
 Sono gli stessi dei golden test: se differiscono, il motore è cambiato e i report già
 consegnati al committente non sono più coerenti.
 
-Accesso creato: `demo@advisorhub.it` / `DemoAdvisor2026!`
+Accesso creato: `demo@finbeacon.it` / `DemoAdvisor2026!`
 
 ---
 
@@ -137,9 +137,9 @@ Da eseguire **tutte** prima di dichiarare l'ambiente pronto.
 curl -s http://localhost:3000/api/health
 # {"status":"ok","db":"up","version":"…"}
 
-docker stop advisorhub-dev-db-1
+docker stop finbeacon-dev-db-1
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3000/api/health   # 503
-docker start advisorhub-dev-db-1
+docker start finbeacon-dev-db-1
 curl -s http://localhost:3000/api/health                                    # di nuovo ok
 ```
 
@@ -154,10 +154,10 @@ O='Origin: http://localhost:3000'
 # 1. richiesta
 curl -s -X POST http://localhost:3000/api/auth/request-password-reset \
   -H 'Content-Type: application/json' -H "$O" \
-  -d '{"email":"demo@advisorhub.it","redirectTo":"/reimposta-password"}'
+  -d '{"email":"demo@finbeacon.it","redirectTo":"/reimposta-password"}'
 
 # 2. il messaggio è in coda
-docker exec advisorhub-dev-db-1 psql -U advisorhub -d advisorhub \
+docker exec finbeacon-dev-db-1 psql -U finbeacon -d finbeacon \
   -c "select oggetto, tentativi, inviata_at from mail_outbox order by created_at desc limit 1;"
 
 # 3. il worker lo spedisce  →  leggilo su http://localhost:8025
@@ -169,10 +169,10 @@ docker exec advisorhub-dev-db-1 psql -U advisorhub -d advisorhub \
 ### 7.3 La prova che giustifica la coda
 
 ```bash
-docker stop advisorhub-dev-mailpit-1
+docker stop finbeacon-dev-mailpit-1
 # richiedi un recupero password  →  deve rispondere 200 lo stesso
 # la riga resta in coda, `tentativi` sale a ogni giro del worker
-docker start advisorhub-dev-mailpit-1
+docker start finbeacon-dev-mailpit-1
 # il worker riparte da solo e la spedisce
 ```
 
@@ -183,9 +183,9 @@ Se la richiesta dell'utente fallisce quando il relay è giù, la coda non sta fu
 ```bash
 curl -s -c /tmp/c.txt -X POST http://localhost:3000/api/auth/sign-in/email \
   -H 'Content-Type: application/json' -H "$O" \
-  -d '{"email":"demo@advisorhub.it","password":"DemoAdvisor2026!"}'
+  -d '{"email":"demo@finbeacon.it","password":"DemoAdvisor2026!"}'
 
-CLID=$(docker exec advisorhub-dev-db-1 psql -U advisorhub -d advisorhub -tA \
+CLID=$(docker exec finbeacon-dev-db-1 psql -U finbeacon -d finbeacon -tA \
   -c "select id from clienti where ragione_sociale like 'Mario Rossi%' limit 1;" | tr -d '\r')
 
 curl -s -b /tmp/c.txt -o /tmp/report.pdf "http://localhost:3000/api/report/$CLID"
@@ -236,7 +236,7 @@ dentro lo standalone (**G-06**), e il bundle del worker della posta — che il
 Se i test sulla posta scadono, la coda dice il perche':
 
 ```bash
-docker exec advisorhub-dev-db-1 psql -U advisorhub -d advisorhub   -c "select destinatario, tentativi, ultimo_errore from mail_outbox where inviata_at is null;"
+docker exec finbeacon-dev-db-1 psql -U finbeacon -d finbeacon   -c "select destinatario, tentativi, ultimo_errore from mail_outbox where inviata_at is null;"
 ```
 
 > **Non scrivere i log dei test in `/tmp`**: in Git Bash su Windows e' una cartella
@@ -249,8 +249,8 @@ docker exec advisorhub-dev-db-1 psql -U advisorhub -d advisorhub   -c "select de
 
 ```bash
 # dati di prova
-docker exec advisorhub-dev-db-1 psql -U advisorhub -d advisorhub \
-  -c "delete from \"user\" where email like '%@advisorhub.local';"
+docker exec finbeacon-dev-db-1 psql -U finbeacon -d finbeacon \
+  -c "delete from \"user\" where email like '%@finbeacon.local';"
 
 # ambiente
 docker compose -f deploy/docker-compose.dev.yml down          # tiene i dati

@@ -1,4 +1,4 @@
-import { analizza, formatNumero } from "@advisorhub/engine";
+import { analizza, formatNumero } from "@finbeacon/engine";
 import { expect, test, type Page } from "@playwright/test";
 
 import { BILANCIO_ESEMPIO, PREVISIONALE_ESEMPIO } from "../src/lib/esempio";

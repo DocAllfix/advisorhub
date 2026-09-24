@@ -28,7 +28,7 @@ export const CONFIG_BASE: Partial<Config> = {
   disableActiveInteraction: true,
   stagePadding: 6,
   stageRadius: 10,
-  popoverClass: "tour-advisorhub",
+  popoverClass: "tour-finbeacon",
   overlayColor: "oklch(0.12 0.012 250)",
   overlayOpacity: 0.6,
   nextBtnText: "Avanti",

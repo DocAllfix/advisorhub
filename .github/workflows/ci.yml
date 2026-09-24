@@ -54,16 +54,16 @@ jobs:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_USER: advisorhub
+          POSTGRES_USER: finbeacon
           POSTGRES_PASSWORD: ci
-          POSTGRES_DB: advisorhub
+          POSTGRES_DB: finbeacon
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U advisorhub -d advisorhub"
+          --health-cmd "pg_isready -U finbeacon -d finbeacon"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      DATABASE_URL: postgresql://advisorhub:ci@localhost:5432/advisorhub
-      DIRECT_URL: postgresql://advisorhub:ci@localhost:5432/advisorhub
+      DATABASE_URL: postgresql://finbeacon:ci@localhost:5432/finbeacon
+      DIRECT_URL: postgresql://finbeacon:ci@localhost:5432/finbeacon
       BETTER_AUTH_SECRET: ci-secret-non-usato-in-produzione
       BETTER_AUTH_URL: http://localhost:3000
 
@@ -98,12 +98,12 @@ jobs:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_USER: advisorhub
+          POSTGRES_USER: finbeacon
           POSTGRES_PASSWORD: ci
-          POSTGRES_DB: advisorhub
+          POSTGRES_DB: finbeacon
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U advisorhub -d advisorhub"
+          --health-cmd "pg_isready -U finbeacon -d finbeacon"
           --health-interval 5s --health-timeout 5s --health-retries 10
       mailpit:
         image: axllent/mailpit:latest
@@ -112,9 +112,9 @@ jobs:
           MP_SMTP_AUTH_ACCEPT_ANY: 1
           MP_SMTP_AUTH_ALLOW_INSECURE: 1
     env:
-      E2E_DATABASE_URL: postgresql://advisorhub:ci@127.0.0.1:5432/advisorhub
-      DATABASE_URL: postgresql://advisorhub:ci@127.0.0.1:5432/advisorhub
-      DIRECT_URL: postgresql://advisorhub:ci@127.0.0.1:5432/advisorhub
+      E2E_DATABASE_URL: postgresql://finbeacon:ci@127.0.0.1:5432/finbeacon
+      DATABASE_URL: postgresql://finbeacon:ci@127.0.0.1:5432/finbeacon
+      DIRECT_URL: postgresql://finbeacon:ci@127.0.0.1:5432/finbeacon
       BETTER_AUTH_SECRET: ci-secret-non-usato-in-produzione
       BETTER_AUTH_URL: http://127.0.0.1:3100
 

@@ -37,7 +37,7 @@ DOMINIO="${2:?dominio mancante}"
 
 API="https://developers.hostinger.com/api/dns/v1/zones/${DOMINIO}"
 AUTH=(-H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json")
-ISTANTANEE="${ISTANTANEE:-$HOME/.advisorhub/dns}"
+ISTANTANEE="${ISTANTANEE:-$HOME/.finbeacon/dns}"
 mkdir -p "$ISTANTANEE"
 
 verifica_proprieta() {

@@ -7,7 +7,7 @@
 # e collide con gli altri prodotti che usano la stessa struttura. La collisione
 # non da' errore: ricrea i container dell'altro progetto e ne azzera il volume
 # (GUASTI G-01).
-name: advisorhub
+name: finbeacon
 
 services:
   db:

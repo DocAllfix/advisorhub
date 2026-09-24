@@ -1,5 +1,5 @@
 ---
-name: advisorhub
+name: FinBeacon
 description: Analisi economico-finanziaria per studi professionali, con la calma di uno sportello privato.
 colors:
   # Tema scuro: la base dell'applicazione.
@@ -122,13 +122,13 @@ components:
     padding: "14px 0"
 ---
 
-# Design System: advisorhub
+# Design System: FinBeacon
 
 ## 1. Overview
 
 **Creative North Star: «Lo sportello privato»**
 
-Un colloquio in private banking: poco sul tavolo, tutto in ordine, nessuna fretta. Il commercialista apre advisorhub accanto al gestionale e lo tiene aperto per ore; quello che trova deve avere la calma di chi non ha bisogno di convincere. PRODUCT.md lo chiama «fiducia da private banking» e «calma operativa»: il sistema visivo è la traduzione di quelle due espressioni, non una decorazione sopra di esse.
+Un colloquio in private banking: poco sul tavolo, tutto in ordine, nessuna fretta. Il commercialista apre FinBeacon accanto al gestionale e lo tiene aperto per ore; quello che trova deve avere la calma di chi non ha bisogno di convincere. PRODUCT.md lo chiama «fiducia da private banking» e «calma operativa»: il sistema visivo è la traduzione di quelle due espressioni, non una decorazione sopra di esse.
 
 La scena che decide il tema: **un professionista fra i 30 e i 65 anni, in studio, sotto luce artificiale, con lo strumento aperto tutto il giorno accanto ad altre finestre.** Per questo il tema di base è scuro (decisione del committente, luglio 2026): un fondo profondo stanca meno e fa risaltare i numeri, che sono il contenuto. Il tema scuro è **scelto, non invertito**: ha passi propri, con la sidebar più profonda del fondo e le superfici appena sopra, e un accento rialzato in chiarezza perché regga il contrasto. Il chiaro resta dal selettore ed è **sempre** quello del report di stampa, perché il report va su carta, al cliente e alla banca.
 

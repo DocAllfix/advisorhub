@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Backup notturno di un'istanza cliente su Hetzner Storage Box.
 #
-#   cd /opt/advisorhub && ./deploy/backup.sh
+#   cd /opt/finbeacon && ./deploy/backup.sh
 #
 # Evoluzione di WhistleVault (gpg + rclone) con tre differenze volute:
 #
@@ -71,8 +71,8 @@ trap - ERR
 echo "[backup] completato"
 
 # --- Cron (root sulla macchina del cliente) ---------------------------------
-#  15 2 * * *  cd /opt/advisorhub && \
+#  15 2 * * *  cd /opt/finbeacon && \
 #              RESTIC_REPOSITORY=sftp:uXXXXX@uXXXXX.your-storagebox.de:/backup/acme \
-#              RESTIC_PASSWORD_FILE=/root/.advisorhub-restic \
+#              RESTIC_PASSWORD_FILE=/root/.finbeacon-restic \
 #              SENTINELLA_WEBHOOK=https://monitor.finbeacon.it/push/xxxx \
-#              ./deploy/backup.sh >> /var/log/advisorhub-backup.log 2>&1
+#              ./deploy/backup.sh >> /var/log/finbeacon-backup.log 2>&1

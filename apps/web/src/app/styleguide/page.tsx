@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 
 export const metadata: Metadata = {
-  title: "Styleguide — advisorhub",
+  title: "Styleguide — FinBeacon",
   robots: { index: false, follow: false },
 };
 
@@ -100,7 +100,7 @@ export default function StyleguidePage() {
     <main className="mx-auto w-full max-w-4xl px-6 py-12">
       <header>
         <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-          advisorhub — fase 1
+          FinBeacon — fase 1
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Styleguide</h1>
         <p className="mt-2 max-w-prose text-sm text-muted-foreground">

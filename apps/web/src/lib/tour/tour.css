@@ -3,14 +3,14 @@
  * riportato dentro il nostro sistema di token, così il riquadro della guida
  * sembra parte dell'app e non un componente esterno incollato sopra.
  *
- * Tutto è agganciato a `.tour-advisorhub` (classe passata via popoverClass),
+ * Tutto è agganciato a `.tour-finbeacon` (classe passata via popoverClass),
  * tranne il riflettore che è una classe globale di driver.js.
  */
 
 @import "driver.js/dist/driver.css";
 
 /* ---------- Riquadro della guida ---------- */
-.driver-popover.tour-advisorhub {
+.driver-popover.tour-finbeacon {
   background-color: var(--popover);
   color: var(--popover-foreground);
   border: 1px solid var(--border);
@@ -21,7 +21,7 @@
   font-family: var(--font-sans);
 }
 
-.driver-popover.tour-advisorhub .driver-popover-title {
+.driver-popover.tour-finbeacon .driver-popover-title {
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -30,7 +30,7 @@
   padding: 0;
 }
 
-.driver-popover.tour-advisorhub .driver-popover-description {
+.driver-popover.tour-finbeacon .driver-popover-description {
   font-size: 0.825rem;
   line-height: 1.55;
   color: var(--muted-foreground);
@@ -39,21 +39,21 @@
 }
 
 /* La punta segue il fondo del riquadro, altrimenti resta bianca */
-.driver-popover.tour-advisorhub .driver-popover-arrow-side-top {
+.driver-popover.tour-finbeacon .driver-popover-arrow-side-top {
   border-top-color: var(--popover);
 }
-.driver-popover.tour-advisorhub .driver-popover-arrow-side-bottom {
+.driver-popover.tour-finbeacon .driver-popover-arrow-side-bottom {
   border-bottom-color: var(--popover);
 }
-.driver-popover.tour-advisorhub .driver-popover-arrow-side-left {
+.driver-popover.tour-finbeacon .driver-popover-arrow-side-left {
   border-left-color: var(--popover);
 }
-.driver-popover.tour-advisorhub .driver-popover-arrow-side-right {
+.driver-popover.tour-finbeacon .driver-popover-arrow-side-right {
   border-right-color: var(--popover);
 }
 
 /* ---------- Piede: avanzamento e pulsanti ---------- */
-.driver-popover.tour-advisorhub .driver-popover-footer {
+.driver-popover.tour-finbeacon .driver-popover-footer {
   margin-top: 0.95rem;
   padding: 0;
   border: 0;
@@ -63,7 +63,7 @@
   gap: 0.5rem;
 }
 
-.driver-popover.tour-advisorhub .driver-popover-progress-text {
+.driver-popover.tour-finbeacon .driver-popover-progress-text {
   font-size: 0.6875rem;
   font-weight: 500;
   letter-spacing: 0.12em;
@@ -72,13 +72,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-.driver-popover.tour-advisorhub .driver-popover-navigation-btns {
+.driver-popover.tour-finbeacon .driver-popover-navigation-btns {
   display: flex;
   gap: 0.4rem;
 }
 
-.driver-popover.tour-advisorhub .driver-popover-next-btn,
-.driver-popover.tour-advisorhub .driver-popover-prev-btn {
+.driver-popover.tour-finbeacon .driver-popover-next-btn,
+.driver-popover.tour-finbeacon .driver-popover-prev-btn {
   font-family: inherit;
   font-size: 0.8125rem;
   font-weight: 500;
@@ -89,31 +89,31 @@
   transition: background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.driver-popover.tour-advisorhub .driver-popover-next-btn {
+.driver-popover.tour-finbeacon .driver-popover-next-btn {
   background-color: var(--primary);
   color: var(--primary-foreground);
   border: 1px solid transparent;
 }
-.driver-popover.tour-advisorhub .driver-popover-next-btn:hover {
+.driver-popover.tour-finbeacon .driver-popover-next-btn:hover {
   background-color: color-mix(in oklch, var(--primary) 88%, var(--foreground));
 }
 
-.driver-popover.tour-advisorhub .driver-popover-prev-btn {
+.driver-popover.tour-finbeacon .driver-popover-prev-btn {
   background-color: transparent;
   color: var(--muted-foreground);
   border: 1px solid var(--border);
 }
-.driver-popover.tour-advisorhub .driver-popover-prev-btn:hover {
+.driver-popover.tour-finbeacon .driver-popover-prev-btn:hover {
   background-color: var(--muted);
   color: var(--foreground);
 }
 /* Al primo passo "Indietro" è inattivo: deve sembrarlo */
-.driver-popover.tour-advisorhub .driver-popover-prev-btn.driver-popover-btn-disabled {
+.driver-popover.tour-finbeacon .driver-popover-prev-btn.driver-popover-btn-disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.driver-popover.tour-advisorhub .driver-popover-close-btn {
+.driver-popover.tour-finbeacon .driver-popover-close-btn {
   position: absolute;
   top: 0.55rem;
   right: 0.6rem;
@@ -128,13 +128,13 @@
   cursor: pointer;
   transition: color 160ms ease-out;
 }
-.driver-popover.tour-advisorhub .driver-popover-close-btn:hover {
+.driver-popover.tour-finbeacon .driver-popover-close-btn:hover {
   color: var(--foreground);
   background-color: var(--muted);
 }
 
 /* La tastiera deve vedere dove si trova */
-.driver-popover.tour-advisorhub button:focus-visible {
+.driver-popover.tour-finbeacon button:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
@@ -148,8 +148,8 @@
 
 /* Rispetta chi ha chiesto meno movimento */
 @media (prefers-reduced-motion: reduce) {
-  .driver-popover.tour-advisorhub,
-  .driver-popover.tour-advisorhub * {
+  .driver-popover.tour-finbeacon,
+  .driver-popover.tour-finbeacon * {
     transition: none !important;
     animation: none !important;
   }

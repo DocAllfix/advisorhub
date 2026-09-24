@@ -62,29 +62,29 @@
 -- resa strutturale invece che affidata alla disciplina.
 --
 -- DUE RUOLI:
---   advisorhub      proprietario. Migrazioni, seed, backup. NON soggetto a RLS
+--   finbeacon      proprietario. Migrazioni, seed, backup. NON soggetto a RLS
 --                   (un proprietario la scavalca, salvo FORCE che qui non si usa).
---   advisorhub_app  applicazione. Nessun DDL, soggetto alle politiche.
+--   finbeacon_app  applicazione. Nessun DDL, soggetto alle politiche.
 --
--- DATABASE_URL usa advisorhub_app; DIRECT_URL resta sul proprietario.
+-- DATABASE_URL usa finbeacon_app; DIRECT_URL resta sul proprietario.
 
 -- Il ruolo esiste già su un'istanza riavviata: la creazione è idempotente.
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'advisorhub_app') THEN
-    CREATE ROLE advisorhub_app LOGIN;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'finbeacon_app') THEN
+    CREATE ROLE finbeacon_app LOGIN;
   END IF;
 END
 $$;
 
 -- Privilegi minimi: leggere e scrivere i dati, niente struttura.
-GRANT USAGE ON SCHEMA public TO advisorhub_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO advisorhub_app;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO advisorhub_app;
+GRANT USAGE ON SCHEMA public TO finbeacon_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO finbeacon_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO finbeacon_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO advisorhub_app;
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO finbeacon_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
-  GRANT USAGE, SELECT ON SEQUENCES TO advisorhub_app;
+  GRANT USAGE, SELECT ON SEQUENCES TO finbeacon_app;
 
 -- Il tenant corrente. `true` come secondo argomento: se la variabile non è
 -- impostata restituisce NULL invece di errore, e una politica che confronta con

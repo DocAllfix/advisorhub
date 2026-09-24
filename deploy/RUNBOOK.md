@@ -30,7 +30,7 @@ TLS automatico. Il cliente non configura nulla.
 - [ ] Token nel gestore di password, mai nel repository:
       `HCLOUD_TOKEN`, `HCLOUD_TOKEN_BACKUP`, `HOSTINGER_API_TOKEN`, `GLITCHTIP_TOKEN`,
       `KUMA_TOKEN`, credenziali SMTP.
-- [ ] Firewall Hetzner `advisorhub-cliente`: 22 solo dal nostro IP, 80/443 aperte.
+- [ ] Firewall Hetzner `finbeacon-cliente`: 22 solo dal nostro IP, 80/443 aperte.
 
 ### 0.1 Posta — il passo che nel riferimento non è scritto da nessuna parte
 
@@ -83,7 +83,7 @@ telefonata col loro informatico e non un campo da compilare.
 ### 1.1 Un comando
 
 ```bash
-export IMMAGINE=ghcr.io/<org>/advisorhub:<git-sha>
+export IMMAGINE=ghcr.io/<org>/finbeacon:<git-sha>
 ./deploy/provision-cliente.sh acme \
   --studio "Studio Rossi & Associati" \
   --email referente@studiorossi.it
@@ -127,8 +127,8 @@ referente, **spam compreso**, prima di dichiarare l'istanza attiva.
 Se non è arrivata, la coda dice il perché — non il relay:
 
 ```bash
-ssh root@<ip> "cd /opt/advisorhub && docker compose -f deploy/docker-compose.prod.yml \
-  --env-file deploy/.env.prod exec -T db psql -tA -U advisorhub -d advisorhub \
+ssh root@<ip> "cd /opt/finbeacon && docker compose -f deploy/docker-compose.prod.yml \
+  --env-file deploy/.env.prod exec -T db psql -tA -U finbeacon -d finbeacon \
   -c \"select destinatario, tentativi, ultimo_errore from mail_outbox where inviata_at is null;\""
 ```
 
@@ -154,7 +154,7 @@ curl -fsS https://acme.<dominio-brand>/api/health          # {"status":"ok","db"
 ## 2. Aggiornare la flotta
 
 ```bash
-IMMAGINE=ghcr.io/<org>/advisorhub:<git-sha> ./deploy/update-fleet.sh
+IMMAGINE=ghcr.io/<org>/finbeacon:<git-sha> ./deploy/update-fleet.sh
 IMMAGINE=... ./deploy/update-fleet.sh --solo acme          # una sola istanza
 ```
 
@@ -176,7 +176,7 @@ altrimenti per aggiornamento riuscito.
 ## 3. Ogni giorno
 
 ```bash
-ssh root@<ip> "cd /opt/advisorhub && docker compose -f deploy/docker-compose.prod.yml \
+ssh root@<ip> "cd /opt/finbeacon && docker compose -f deploy/docker-compose.prod.yml \
   --env-file deploy/.env.prod ps"
 curl -fsS https://acme.<dominio-brand>/api/health
 ```
@@ -203,7 +203,7 @@ tutto verde, non c'è niente da guardare.
 4. Fermare il web, caricare il dump, riavviare:
    ```bash
    docker compose ... stop web posta
-   docker compose ... exec -T db pg_restore -U advisorhub -d advisorhub --clean < db.dump
+   docker compose ... exec -T db pg_restore -U finbeacon -d finbeacon --clean < db.dump
    docker compose ... up -d
    ```
 5. Verificare con §1.4, poi **un accesso reale** e **un download del report**.

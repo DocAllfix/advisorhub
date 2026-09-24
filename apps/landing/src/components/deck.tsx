@@ -1,4 +1,4 @@
-import { formatNumero, SOGLIE_GIUDIZIO } from "@advisorhub/engine";
+import { formatNumero, SOGLIE_GIUDIZIO } from "@finbeacon/engine";
 
 import {
   ANALISI_ESEMPIO,

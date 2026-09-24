@@ -1,4 +1,4 @@
-import { formatNumero, sintetizzaPortafoglio, type Tono } from "@advisorhub/engine";
+import { formatNumero, sintetizzaPortafoglio, type Tono } from "@finbeacon/engine";
 import { ArrowRight, CalendarClock, Plus } from "lucide-react";
 import Link from "next/link";
 

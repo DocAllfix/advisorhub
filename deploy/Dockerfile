@@ -1,6 +1,6 @@
 # Immagine dell'istanza cliente.
 #
-#   docker build -f deploy/Dockerfile -t advisorhub:locale .
+#   docker build -f deploy/Dockerfile -t finbeacon:locale .
 #
 # Il contesto di build e' la RADICE del monorepo: `packages/engine` vive fuori da
 # apps/web ed e' TypeScript sorgente, quindi deve entrare nel contesto.

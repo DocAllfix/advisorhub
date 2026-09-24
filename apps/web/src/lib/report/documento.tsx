@@ -1,4 +1,4 @@
-import { formatEuro, formatNumero, type Analisi, type DatiBilancio } from "@advisorhub/engine";
+import { formatEuro, formatNumero, type Analisi, type DatiBilancio } from "@finbeacon/engine";
 import {
   Document,
   Font,
@@ -349,7 +349,7 @@ export function DocumentoReport({ d }: { d: DatiReport }): React.ReactElement<Do
       title={`Analisi ${d.ragioneSociale} ${d.anno}`}
       author={d.studio}
       subject="Analisi economico-finanziaria"
-      creator="advisorhub"
+      creator="FinBeacon"
     >
       {/* ---------- Pagina 1 ---------- */}
       <Page size="A4" style={s.pagina}>

@@ -1,4 +1,4 @@
-import type { Tono } from "@advisorhub/engine";
+import type { Tono } from "@finbeacon/engine";
 
 /**
  * Colore di un tono per elementi **grafici** (anelli, barre, pallini): il

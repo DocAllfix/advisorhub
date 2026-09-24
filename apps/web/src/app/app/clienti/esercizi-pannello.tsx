@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { formatEuro } from "@advisorhub/engine";
+import { formatEuro } from "@finbeacon/engine";
 import { Download, FileBarChart, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

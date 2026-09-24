@@ -1,4 +1,4 @@
-import { formatEuro, formatNumero } from "@advisorhub/engine";
+import { formatEuro, formatNumero } from "@finbeacon/engine";
 import { FileText } from "lucide-react";
 
 import { Contenitore, Occhiello, Titolo2 } from "@/components/base";

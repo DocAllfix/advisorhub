@@ -1,4 +1,4 @@
-import { formatEuro, formatNumero, type Analisi, type DatiBilancio } from "@advisorhub/engine";
+import { formatEuro, formatNumero, type Analisi, type DatiBilancio } from "@finbeacon/engine";
 
 import { SCALE } from "@/lib/report/soglie";
 

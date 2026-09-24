@@ -35,7 +35,7 @@ const plexMono = IBM_Plex_Mono({
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "advisorhub",
+  title: "FinBeacon",
   description: "Analisi economico-finanziaria per studi professionali",
 };
 

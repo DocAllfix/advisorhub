@@ -1,4 +1,4 @@
-import { fasciaSalute, type FasciaSalute, type Tono } from "@advisorhub/engine";
+import { fasciaSalute, type FasciaSalute, type Tono } from "@finbeacon/engine";
 
 /**
  * Etichetta breve del punteggio, per liste e tabelle.

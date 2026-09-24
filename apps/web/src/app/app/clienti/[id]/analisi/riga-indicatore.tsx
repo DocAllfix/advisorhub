@@ -1,4 +1,4 @@
-import type { Analisi, DatiBilancio, Giudizio } from "@advisorhub/engine";
+import type { Analisi, DatiBilancio, Giudizio } from "@finbeacon/engine";
 import { ChevronDown } from "lucide-react";
 
 import { Cifra } from "@/components/ui/cifra";

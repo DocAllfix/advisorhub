@@ -16,6 +16,12 @@ Due regole attraversano metà di questo elenco:
 > **2. Un successo dichiarato non è un successo verificato.**
 > Dopo ogni passo, misura l'effetto: conta le tabelle, scarica il file, leggi l'header.
 
+> **Nota sui nomi (24/09/2026).** Fino a questa data il nome tecnico del prodotto era
+> `advisorhub`: pacchetti, progetti Docker (`advisorhub`, `advisorhub-dev`), utente e database
+> Postgres, percorsi sui server. Oggi è `finbeacon` ovunque, come il marchio. **Le voci scritte prima
+> citano i nomi com'erano allora**, e restano così di proposito: sono il resoconto di ciò che è
+> successo. Nei comandi da copiare, sostituisci `advisorhub` con `finbeacon`.
+
 ---
 
 ## G-01 — Due progetti si sovrascrivono i container a vicenda

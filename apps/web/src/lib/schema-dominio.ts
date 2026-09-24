@@ -16,7 +16,7 @@ import {
 import { organization, user } from "./auth-schema";
 
 /**
- * Schema di dominio advisorhub (Fase 4). L'autenticazione (organization, user,
+ * Schema di dominio finbeacon (Fase 4). L'autenticazione (organization, user,
  * member, ...) vive in auth-schema.ts; qui solo le entità di business, tutte
  * riconducibili a uno studio (organization) per il tenant scoping.
  *
@@ -117,7 +117,7 @@ export const esercizi = pgTable(
 /**
  * Analisi: snapshot versionato del calcolo del motore per un esercizio
  * (o una simulazione what-if, con esercizioId null). input e output sono i
- * JSON di @advisorhub/engine; score denormalizzato per liste/ordinamenti.
+ * JSON di @finbeacon/engine; score denormalizzato per liste/ordinamenti.
  */
 export const analisi = pgTable(
   "analisi",

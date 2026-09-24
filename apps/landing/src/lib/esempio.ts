@@ -5,7 +5,7 @@ import {
   type Analisi,
   type DatiBilancio,
   type DatiPrevisionali6M,
-} from "@advisorhub/engine";
+} from "@finbeacon/engine";
 
 /**
  * IL CLIENTE DI ESEMPIO della landing. Tutto ciò che la pagina mostra come

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Aggiornamento di TUTTE le istanze cliente.
 #
-#   IMMAGINE=ghcr.io/org/advisorhub:<git-sha> ./deploy/update-fleet.sh
+#   IMMAGINE=ghcr.io/org/finbeacon:<git-sha> ./deploy/update-fleet.sh
 #   IMMAGINE=... ./deploy/update-fleet.sh --solo acme       # una sola istanza
 #
 # Inventario: deploy/fleet.txt (gitignorato), una riga per istanza:
@@ -21,7 +21,7 @@ RADICE="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$RADICE"
 
 FLEET="${FLEET:-deploy/fleet.txt}"
-: "${IMMAGINE:?Imposta IMMAGINE (es. ghcr.io/org/advisorhub:<git-sha>)}"
+: "${IMMAGINE:?Imposta IMMAGINE (es. ghcr.io/org/finbeacon:<git-sha>)}"
 SOLO=""
 [ "${1:-}" = "--solo" ] && SOLO="${2:?slug mancante dopo --solo}"
 

@@ -1,4 +1,4 @@
-import { fasciaSalute, FASCE_SALUTE } from "@advisorhub/engine";
+import { fasciaSalute, FASCE_SALUTE } from "@finbeacon/engine";
 import { describe, expect, it } from "vitest";
 
 import { PORTAFOGLIO_ESEMPIO } from "./portafoglio-esempio";

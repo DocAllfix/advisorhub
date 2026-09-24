@@ -31,7 +31,7 @@ SLUG="${2:?slug mancante}"
 
 API="https://api.hetzner.com/v1/storage_boxes/${STORAGEBOX_ID}"
 AUTH=(-H "Authorization: Bearer $HCLOUD_TOKEN_BACKUP" -H "Content-Type: application/json")
-CHIAVI="${CHIAVI:-$HOME/.advisorhub/chiavi}"
+CHIAVI="${CHIAVI:-$HOME/.finbeacon/chiavi}"
 mkdir -p "$CHIAVI" && chmod 700 "$CHIAVI"
 
 # Perche' un token SEPARATO: `hcloud` gestisce ormai anche le Storage Box.
@@ -42,7 +42,7 @@ case "$AZIONE" in
   crea)
     PRIV="$CHIAVI/backup-$SLUG"
     if [ ! -f "$PRIV" ]; then
-      ssh-keygen -t ed25519 -N "" -C "advisorhub-backup-$SLUG" -f "$PRIV" >/dev/null
+      ssh-keygen -t ed25519 -N "" -C "finbeacon-backup-$SLUG" -f "$PRIV" >/dev/null
       chmod 600 "$PRIV"
       echo "[storagebox] chiave generata: $PRIV"
     else
@@ -62,8 +62,8 @@ case "$AZIONE" in
         "ssh_enabled": true,
         "webdav_enabled": false
       },
-      "description": "advisorhub %s",
-      "labels": { "prodotto": "advisorhub", "cliente": "%s" }
+      "description": "finbeacon %s",
+      "labels": { "prodotto": "finbeacon", "cliente": "%s" }
     }' "$SLUG" "$SLUG" "$SLUG")" | head -c 400
     echo ""
 

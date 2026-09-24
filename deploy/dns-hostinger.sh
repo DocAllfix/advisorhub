@@ -25,7 +25,7 @@ IP="${3:-}"
 
 # Il dominio-brand e' finbeacon.it, verificato sull'account Hostinger.
 #
-# Il valore predefinito era advisorhub.it, che NON e' fra i domini dell'account:
+# Il valore predefinito era finbeacon.it, che NON e' fra i domini dell'account:
 # scritto quando il token non c'era ancora e nessuno poteva controllarlo.
 #
 # E il difetto non si sarebbe fatto notare, perche' la rete di sicurezza qui
@@ -33,7 +33,7 @@ IP="${3:-}"
 # non posseduto, compreso uno inventato:
 #
 #     GET zones/finbeacon.it                  -> 200  [due record]
-#     GET zones/advisorhub.it                 -> 200  []
+#     GET zones/finbeacon.it                 -> 200  []
 #     GET zones/dominio-inventato-12345.it    -> 200  []
 #
 # Una zona inesistente e' quindi INDISTINGUIBILE da una zona vuota: l'istantanea
@@ -44,7 +44,7 @@ API="https://developers.hostinger.com/api/dns/v1/zones/${DOMINIO_BRAND}"
 : "${HOSTINGER_API_TOKEN:?Imposta HOSTINGER_API_TOKEN (dal gestore di password, mai nel repository)}"
 AUTH=(-H "Authorization: Bearer $HOSTINGER_API_TOKEN" -H "Content-Type: application/json")
 
-ISTANTANEE="${ISTANTANEE:-$HOME/.advisorhub/dns}"
+ISTANTANEE="${ISTANTANEE:-$HOME/.finbeacon/dns}"
 mkdir -p "$ISTANTANEE"
 
 # Il dominio-brand e' davvero NOSTRO? Senza questo, scrivere su un dominio che

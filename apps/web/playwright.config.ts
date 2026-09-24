@@ -22,7 +22,7 @@ const PORTA_CHIUSA = PORTA + 1;
 export const BASE_CHIUSA = `http://127.0.0.1:${PORTA_CHIUSA}`;
 const SEGRETO = "e2e-".padEnd(48, "0");
 const DB =
-  process.env.E2E_DATABASE_URL ?? "postgresql://advisorhub:sviluppo@127.0.0.1:5433/advisorhub";
+  process.env.E2E_DATABASE_URL ?? "postgresql://finbeacon:sviluppo@127.0.0.1:5433/finbeacon";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -62,7 +62,7 @@ export default defineConfig({
         REGISTRAZIONE_APERTA: "true",
         SMTP_HOST: "127.0.0.1",
         SMTP_PORT: "1025",
-        SMTP_FROM: "no-reply@advisorhub.test",
+        SMTP_FROM: "no-reply@finbeacon.test",
         GIT_SHA: "e2e",
       },
     },
@@ -85,7 +85,7 @@ export default defineConfig({
         BETTER_AUTH_URL: BASE_CHIUSA,
         SMTP_HOST: "127.0.0.1",
         SMTP_PORT: "1025",
-        SMTP_FROM: "no-reply@advisorhub.test",
+        SMTP_FROM: "no-reply@finbeacon.test",
         GIT_SHA: "e2e-chiusa",
       },
     },

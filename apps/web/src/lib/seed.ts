@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { analizza, type DatiBilancio, type DatiPrevisionali6M } from "@advisorhub/engine";
+import { analizza, type DatiBilancio, type DatiPrevisionali6M } from "@finbeacon/engine";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -72,14 +72,14 @@ async function seed() {
     .values({
       id: userId,
       name: "Titolare Demo",
-      email: "demo@advisorhub.test",
+      email: "demo@finbeacon.test",
       emailVerified: true,
     })
     .onConflictDoNothing({ target: authSchema.user.email });
   const [titolare] = await db
     .select({ id: authSchema.user.id })
     .from(authSchema.user)
-    .where(eq(authSchema.user.email, "demo@advisorhub.test"))
+    .where(eq(authSchema.user.email, "demo@finbeacon.test"))
     .limit(1);
 
   await db.insert(authSchema.member).values({

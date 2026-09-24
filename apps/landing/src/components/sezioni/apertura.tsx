@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import { FASCE_SALUTE, formatNumero, SOGLIE_GIUDIZIO } from "@advisorhub/engine";
+import { FASCE_SALUTE, formatNumero, SOGLIE_GIUDIZIO } from "@finbeacon/engine";
 import { ArrowDownToLine } from "lucide-react";
 import Link from "next/link";
 

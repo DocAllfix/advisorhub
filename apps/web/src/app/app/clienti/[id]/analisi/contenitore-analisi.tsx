@@ -1,6 +1,6 @@
 "use client";
 
-import type { Analisi, DatiBilancio, DatiPrevisionali6M } from "@advisorhub/engine";
+import type { Analisi, DatiBilancio, DatiPrevisionali6M } from "@finbeacon/engine";
 import { Download, SlidersHorizontal } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";

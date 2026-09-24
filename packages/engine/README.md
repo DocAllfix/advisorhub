@@ -1,4 +1,4 @@
-# @advisorhub/engine
+# @finbeacon/engine
 
 Motore di calcolo KPI: TypeScript puro, zero dipendenze, unica fonte di verità per formule, soglie e testi. Usato da UI, API, report e (in futuro) AI.
 
@@ -22,7 +22,7 @@ I due CSV in `archivio/` sono la verità di riferimento dei **golden test** (`te
 ## API
 
 ```ts
-import { analizza } from "@advisorhub/engine";
+import { analizza } from "@finbeacon/engine";
 
 const a = analizza(datiBilancio /* 10 grandezze */, previsionale6M /* opzionale */);
 a.indicatori; // valori numerici (null = non calcolabile)

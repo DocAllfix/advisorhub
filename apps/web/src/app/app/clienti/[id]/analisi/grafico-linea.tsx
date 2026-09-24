@@ -1,6 +1,6 @@
 "use client";
 
-import { formatNumero } from "@advisorhub/engine";
+import { formatNumero } from "@finbeacon/engine";
 import {
   CartesianGrid,
   Line,

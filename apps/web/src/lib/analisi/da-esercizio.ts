@@ -1,4 +1,4 @@
-import type { DatiBilancio, DatiPrevisionali6M } from "@advisorhub/engine";
+import type { DatiBilancio, DatiPrevisionali6M } from "@finbeacon/engine";
 
 /** Riga di esercizio come arriva dal database (campi previsionali opzionali). */
 type RigaEsercizio = {

@@ -76,7 +76,7 @@ test("il form di recupero non rivela se un indirizzo è registrato", async ({
   // altrimenti il form diventa un modo per enumerare gli utenti.
   const inesistente = await request.post("/api/auth/request-password-reset", {
     headers: intestazioni(base),
-    data: { email: "nessuno-mai-registrato@advisorhub.test", redirectTo: "/reimposta-password" },
+    data: { email: "nessuno-mai-registrato@finbeacon.test", redirectTo: "/reimposta-password" },
   });
   expect(inesistente.status()).toBe(200);
 });
@@ -85,7 +85,7 @@ test("l'invito a un collaboratore viene recapitato per email", async ({ context,
   const request = context.request;
   const base = baseURL!;
   const studio = await creaStudio(request, base, "invito");
-  const invitato = `collaboratore-${Date.now()}@advisorhub.test`;
+  const invitato = `collaboratore-${Date.now()}@finbeacon.test`;
 
   const invito = await request.post("/api/auth/organization/invite-member", {
     headers: intestazioni(base),

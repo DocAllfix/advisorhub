@@ -4,7 +4,7 @@ import {
   type Analisi,
   type DatiBilancio,
   type DatiPrevisionali6M,
-} from "@advisorhub/engine";
+} from "@finbeacon/engine";
 
 import {
   BILANCIO_ESEMPIO,
